@@ -36,11 +36,11 @@ This repositories is a bitbake meta-layer for gemini platform
 ### Yocto environment setup
 - `DISTRO=fsl-imx-wayland MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build-wayland`
 - Add following lines to `conf/local.conf`:
-  - BB_NUMBER_THREADS = "15"
-  - PARALLEL_MAKE = "-j 15"
-  - CORE_IMAGE_EXTRA_INSTALL += "chromium-ozone-wayland"
-  - IMAGE_INSTALL:append = "qtwebengine qtwebsockets qtmqtt qtmultimedia qtserialport qtserialbus qtwebview"
-  - BBMASK += "/meta-browser/meta-chromium/recipes-browser/chromium/gn-native_.*\.bb" (this part is requested for forcing `qtwebengine` to use its own gn-native instead the one coming from chromium; but this settings is not compatible with chromium itself... so firstly compile the image without this line and without `qtwebengine`; then after the image is cooked, add this line and `qtwebengine` and compile the image again)
+  - `BB_NUMBER_THREADS = "15"`
+  - `PARALLEL_MAKE = "-j 15"`
+  - `CORE_IMAGE_EXTRA_INSTALL += "chromium-ozone-wayland"`
+  - `IMAGE_INSTALL:append = "qtwebengine qtwebsockets qtmqtt qtmultimedia qtserialport qtserialbus qtwebview"`
+  - `BBMASK += "/meta-browser/meta-chromium/recipes-browser/chromium/gn-native_.*\.bb"` (this part is requested for forcing `qtwebengine` to use its own gn-native instead the one coming from chromium; but this settings is not compatible with chromium itself... so firstly compile the image without this line and without `qtwebengine`; then after the image is cooked, add this line and `qtwebengine` and compile the image again)
   
 ### Image cooking
 - `bitbake imx-image-full`
@@ -50,9 +50,9 @@ This repositories is a bitbake meta-layer for gemini platform
 ## Chromium settings
 - remove `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line)
 - Chromium flags:
-  - #enable-rdrc=enabled
-  - #canvas-oop-rasterization=enabled
-  - #enable-raw-draw=enabled
+  - `#enable-rdrc=enabled`
+  - `#canvas-oop-rasterization=enabled`
+  - `#enable-raw-draw=enabled`
   
 ## Image writing on uSD
 - `zstdcat imx-image-full-imx8mp-lpddr4-evk.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
