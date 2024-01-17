@@ -42,18 +42,16 @@
 			clock-frequency = <100000000>;
 	};
 
-	/**
 	reg_can1_stby: regulator-can1-stby {
 		compatible = "regulator-fixed";
 		regulator-name = "can1-stby";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+		/** pinctrl-names = "default"; */
+		/** pinctrl-0 = <&pinctrl_flexcan1_reg>; */
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+		/** gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>; */
 		enable-active-high;
 	};
-	*/
 
 	/**
 	reg_can2_stby: regulator-can2-stby {
@@ -67,19 +65,18 @@
 		enable-active-high;
 	}; */
 
-	/**
-	reg_pcie0: regulator-pcie {
-		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_pcie0_reg>;
-		regulator-name = "MPCIE_3V3";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio2 6 GPIO_ACTIVE_HIGH>;
-		enable-active-high;
-		regulator-always-on;
-	};
-	*/
+	// //**
+	// reg_pcie0: regulator-pcie {
+	// 	compatible = "regulator-fixed";
+	// 	/** pinctrl-names = "default"; */
+	// 	/** pinctrl-0 = <&pinctrl_pcie0_reg>; */
+	// 	regulator-name = "MPCIE_3V3";
+	// 	regulator-min-microvolt = <3300000>;
+	// 	regulator-max-microvolt = <3300000>;
+	// 	/** gpio = <&gpio2 6 GPIO_ACTIVE_HIGH>; */
+	// 	enable-active-high;
+	// 	regulator-always-on;
+	// };
 
 	reg_usb_vbus: regulator-vbus {
 		compatible = "regulator-fixed";

@@ -41,19 +41,17 @@
 		clock-frequency = <100000000>;
 	};
 
-	/**
 	reg_can1_stby: regulator-can1-stby {
 		compatible = "regulator-fixed";
 		regulator-name = "can1-stby";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_flexcan1_reg>;
+		/** pinctrl-names = "default"; */
+		/** pinctrl-0 = <&pinctrl_flexcan1_reg>; */
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>;
+		/** gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>; */
 		enable-active-high;
 	};
-	*/
-
+	
 	/**
 	reg_can2_stby: regulator-can2-stby {
 		compatible = "regulator-fixed";
@@ -67,19 +65,17 @@
 	};
 	*/
 
-	/**
 	reg_pcie0: regulator-pcie {
 		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_pcie0_reg>;
+		/** pinctrl-names = "default"; */
+		/** pinctrl-0 = <&pinctrl_pcie0_reg>; */
 		regulator-name = "MPCIE_3V3";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio2 6 GPIO_ACTIVE_HIGH>;
+		/** gpio = <&gpio2 6 GPIO_ACTIVE_HIGH>; */
 		enable-active-high;
 		regulator-always-on;
 	};
-	*/
 
 	reg_usb_vbus: regulator-vbus {
 		compatible = "regulator-fixed";
@@ -115,6 +111,10 @@
 		regulator-always-on;
 	};
 	*/
+
+	// /** reg_audio_pwr is requested by other DTS (e.g. mx8mp-evk-rpmsg.dtb)
+	reg_audio_pwr: regulator-audio-pwr {
+	};
 
 	/**
 	bt_sco_codec: bt_sco_codec {
@@ -471,6 +471,14 @@
 };
 */
 
+// //** ethphy1 is requested by other DTS (e.g. imx8mp-evk-dpdk.dtb)
+&fec {
+	mdio {
+		ethphy1: ethernet-phy@1 {
+		};
+	};
+};
+
 &flexcan1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexcan1>;
@@ -484,9 +492,9 @@
 	pinctrl-0 = <&pinctrl_flexcan2>;
 	xceiver-supply = <&reg_can2_stby>;
 	pinctrl-assert-gpios = <&pca6416 3 GPIO_ACTIVE_HIGH>;
-	status = "disabled";/* can2 pin conflict with pdm */
+	status = "disabled"; // can2 pin conflict with pdm
 };
-
+*/
 
 &i2c1 {
 	clock-frequency = <400000>;
@@ -624,6 +632,10 @@
 	};
 	*/
 
+	// /** adv_bridge is requested by other DTS (e.g. imx8mp-evk-rm67191.dtb)
+	adv_bridge: adv7535@3d {
+	};
+
 	/**
 	lvds_bridge: lvds-to-hdmi-bridge@4c {
 		compatible = "ite,it6263";
@@ -637,6 +649,10 @@
 		};
 	};
 	*/
+
+	// /** lvds_bridge is requested by other DTS (e.g. imx8mp-evk-it6263-lvds-dual-channel.dtb)
+	lvds_bridge: lvds-to-hdmi-bridge@4c {
+	};
 
 	/**
 	ov5640_0: ov5640_mipi@3c {
@@ -666,6 +682,10 @@
 		};
 	};
 	*/
+
+	// /** ov5640_0 is requested by other DTS (e.g. imx8mp-evk-os08a20-ov5640.dtb)
+	ov5640_0: ov5640_mipi@3c {
+	};
 
 	/**
 	ptn5110: tcpc@50 {
@@ -754,6 +774,10 @@
 	};
 	*/
 
+	// //** pca6416 is requested by other DTS (e.g. imx8mp-evk-spdif-lb.dtb)
+	pca6416: gpio@20 {
+	};
+
 	/**
 	codec: wm8960@1a {
 		compatible = "wlf,wm8960";
@@ -766,6 +790,10 @@
 		SPKVDD1-supply = <&reg_audio_pwr>;
 	};
 	*/
+
+	// //** codec is requested by other DTS (e.g. imx8mp-evk-dsp.dtb)
+	codec: wm8960@1a {
+	};
 
 	/**
 	ov5640_1: ov5640_mipi@3c {
@@ -795,6 +823,10 @@
 		};
 	};
 	*/
+
+	// //** ov5640_1 is requested by other DTS (e.g. imx8mp-evk-basler-ov5640.dtb)
+	ov5640_1: ov5640_mipi@3c {
+	};
 };
 
 /* I2C on expansion connector J22. */
@@ -1208,6 +1240,11 @@
 		>;
 	};
 
+	// /**  pinctrl_mipi_dsi_en is requested by other DTS (e.g.mx8mp-evk-rm67191.dtb)
+	pinctrl_mipi_dsi_en: mipi_dsi_en {
+		fsl,pins = <>;
+	};
+
 	pinctrl_emmc_gpios: emmc_gpios {
 		fsl,pins = <
 			MX8MP_IOMUXC_SAI5_RXD2__GPIO3_IO23		0x00000140	// eMMC_nRESET
@@ -1218,9 +1255,9 @@
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00		0x00000106
 			MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06		0x00000106
-			MX8MP_IOMUXC_GPIO4_IO03__GPIO4_IO03		0x00000106
-			MX8MP_IOMUXC_GPIO4_IO04__GPIO4_IO04		0x00000106
-			MX8MP_IOMUXC_GPIO4_IO05__GPIO4_IO05		0x00000106
+			MX8MP_IOMUXC_SAI1_RXD1__GPIO4_IO03		0x00000106
+			MX8MP_IOMUXC_SAI1_RXD2__GPIO4_IO04		0x00000106
+			MX8MP_IOMUXC_SAI1_RXD3__GPIO4_IO05		0x00000106
 			MX8MP_IOMUXC_SAI1_TXD1__GPIO4_IO13		0x00000106
 			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14		0x00000106
 			MX8MP_IOMUXC_SAI1_TXD3__GPIO4_IO15		0x00000106
@@ -1545,6 +1582,11 @@
 	};
 	*/
 
+	// /**  pincctrl_pdm is requested by other DTS (e.g. imx8mp-evk-sof-pdm.dtb)
+	pinctrl_pdm: pdmgrp {
+		fsl,pins = <>;
+	};
+
 	pinctrl_sai1: sai1grp {
 		fsl,pins = <
  			MX8MP_IOMUXC_SAI1_MCLK__AUDIOMIX_SAI1_MCLK 		0x00000116
@@ -1552,20 +1594,8 @@
 			MX8MP_IOMUXC_SAI1_RXD0__AUDIOMIX_SAI1_RX_DATA00 0x00000116
 			MX8MP_IOMUXC_SAI1_RXFS__AUDIOMIX_SAI1_RX_SYNC 	0x00000116
 			MX8MP_IOMUXC_SAI1_TXC__AUDIOMIX_SAI1_TX_BCLK 	0x00000116
-			MX8MP_IOMUXC_SAI1_TXD0__AUDIOMIX_SAI1_TX_DATA00 0x00000116
+			MX8MP_IOMUXC_SAI1_TXD0__AUDIOMIX_SAI1_TX_DATA00	0x00000116
 			MX8MP_IOMUXC_SAI1_TXFS__AUDIOMIX_SAI1_TX_SYNC 	0x00000116
-		>;
-	};
-
-	pinctrl_sai6: sai6grp {
-		fsl,pins = <
- 			MX8MP_IOMUXC_SAI6_MCLK__AUDIOMIX_SAI6_MCLK 		0x00000116
-			MX8MP_IOMUXC_SAI6_RXC__AUDIOMIX_SAI6_RX_BCLK 	0x00000116
-			MX8MP_IOMUXC_SAI6_RXD0__AUDIOMIX_SAI6_RX_DATA00 0x00000116
-			MX8MP_IOMUXC_SAI6_RXFS__AUDIOMIX_SAI6_RX_SYNC 	0x00000116
-			MX8MP_IOMUXC_SAI6_TXC__AUDIOMIX_SAI6_TX_BCLK 	0x00000116
-			MX8MP_IOMUXC_SAI6_TXD0__AUDIOMIX_SAI6_TX_DATA00 0x00000116
-			MX8MP_IOMUXC_SAI6_TXFS__AUDIOMIX_SAI6_TX_SYNC 	0x00000116
 		>;
 	};
 
@@ -1594,6 +1624,23 @@
 	};
 	*/
 
+	// /** pinctrl_sai3 is requested by other DTS (e.g. imx8mp-evk-sof-wm8960.dtb)
+	pinctrl_sai3: sai3grp {
+		fsl,pins = <>;
+	};
+
+	pinctrl_sai6: sai6grp {
+		fsl,pins = <
+ 			MX8MP_IOMUXC_SAI1_RXD7__AUDIOMIX_SAI6_MCLK		0x00000116
+			MX8MP_IOMUXC_SAI1_RXD4__AUDIOMIX_SAI6_RX_BCLK	0x00000116
+			MX8MP_IOMUXC_SAI1_RXD5__AUDIOMIX_SAI6_RX_DATA00	0x00000116
+			MX8MP_IOMUXC_SAI1_RXD6__AUDIOMIX_SAI6_RX_SYNC	0x00000116
+			MX8MP_IOMUXC_SAI1_TXD4__AUDIOMIX_SAI6_TX_BCLK	0x00000116
+			MX8MP_IOMUXC_SAI1_TXD5__AUDIOMIX_SAI6_TX_DATA00	0x00000116
+			MX8MP_IOMUXC_SAI1_TXD6__AUDIOMIX_SAI6_TX_SYNC	0x00000116
+		>;
+	};
+
 	/**
 	pinctrl_i2c2_synaptics_dsx_io: synaptics_dsx_iogrp {
 		fsl,pins = <
@@ -1601,6 +1648,11 @@
 		>;
 	};
 	*/
+
+	// /** pinctrl_i2c2_synaptics_dsx_io is requested by other DTS (e.g. imx8mp-evk-rm67191.dtb)
+	pinctrl_i2c2_synaptics_dsx_io: synaptics_dsx_iogrp {
+		fsl,pins = <>;
+	};
 
 	pinctrl_uart1: uart1grp {
 		fsl,pins = <
@@ -1824,6 +1876,11 @@
 	};
 	*/
 
+	// /** pinctrl_csi0_pwn is requested by other DTS (e.g. imx8mp-evk-dual-ov2775.dtb)
+	pinctrl_csi0_pwn: csi0_pwn_grp {
+		fsl,pins = <>;
+	};
+
 	/**
 	pinctrl_csi0_rst: csi0_rst_grp {
 		fsl,pins = <
@@ -1832,6 +1889,11 @@
 	};
 	*/
 
+	// /** pinctrl_csi0_rst is requested by other DTS (e.g. imx8mp-evk-dual-ov2775.dtb)
+	pinctrl_csi0_rst: csi0_rst_grp {
+		fsl,pins = <>;
+	};
+
 	/**
 	pinctrl_csi_mclk: csi_mclk_grp {
 		fsl,pins = <
@@ -1839,6 +1901,11 @@
 		>;
 	};
 	*/
+
+	// /** pinctrl_csi_mclk is requested by other DTS (e.g. imx8mp-evk-basler-ov2775.dtb)
+	pinctrl_csi_mclk: csi_mclk_grp {
+		fsl,pins = <>;
+	};
 };
 
 &vpu_g1 {
@@ -1892,6 +1959,15 @@
 };
 */
 
+// /** mipi_csi0_ep is requested by other DTS (e.g. imx8mp-evk-dual-os08a20.dtb)
+&mipi_csi_0 {
+	port@0 {
+		reg = <0>;
+		mipi_csi0_ep: endpoint {
+		};
+	};
+};
+
 /**
 &mipi_csi_1 {
 	#address-cells = <1>;
@@ -1910,6 +1986,15 @@
 	};
 };
 */
+
+// /** mipi_csi1_ep is requested by other DTS (e.g. imx8mp-evk-rpmsg.dtb)
+&mipi_csi_1 {
+	port@1 {
+		reg = <1>;
+		mipi_csi1_ep: endpoint {
+		};
+	};
+};
 
 /**
 &cameradev {
