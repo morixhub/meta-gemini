@@ -6,10 +6,10 @@
  * Code generated with DDR Tool v2.0.0_9.
  */
 
+/** AESYS: Exported by i.MX Config Tools for DDR @ 3600 MTS */
+
 #include <linux/kernel.h>
 #include <asm/arch/ddr.h>
-
-/* MAESTRO new */
 
 struct dram_cfg_param ddr_ddrc_cfg[] = {
     /** Initialize DDRC registers **/

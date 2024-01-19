@@ -1,5 +1,5 @@
-#FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
-#SRC_URI += " file://0001-Imported-DTS-from-i.MX-Config-Tool.patch"
+FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+SRC_URI += " file://0001-Added-PLL-DIV-for-3600MTS.patch"
 
 COPYSOURCE := "${THISDIR}/${PN}"
 
