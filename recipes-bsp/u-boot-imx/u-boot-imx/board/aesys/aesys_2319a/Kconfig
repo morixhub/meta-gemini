@@ -1,0 +1,15 @@
+if TARGET_AESYS_2319A
+
+config SYS_BOARD
+	default "aesys_2319a"
+
+config SYS_VENDOR
+	default "aesys"
+
+config SYS_CONFIG_NAME
+	default "aesys_2319a"
+
+config IMX_CONFIG
+	default "board/aesys/aesys_2319a/aesys_2319a-lpddr4.cfg"
+
+endif

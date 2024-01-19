@@ -10,7 +10,7 @@
 #include "imx8mp.dtsi"
 
 / {
-	model = "NXP i.MX8MPlus LPDDR4 EVK board";
+	model = "AESYS 2319A";
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 
 	chosen {
