@@ -23,6 +23,7 @@
 #ifdef CONFIG_DISTRO_DEFAULTS
 #define BOOT_TARGET_DEVICES(func) \
 	func(USB, usb, 0) \
+	func(PXE, pxe, 0) \
 	func(MMC, mmc, 1) \
 	func(MMC, mmc, 2)
 
@@ -90,6 +91,7 @@
 	"prepare_mcore=setenv mcore_clk clk-imx8mp.mcore_booted;\0" \
 	"scriptaddr=0x43500000\0" \
 	"kernel_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
+	"pxefile_addr_r=" __stringify(CONFIG_SYS_LOAD_ADDR) "\0" \
 	"bsp_script=boot.scr\0" \
 	"image=Image\0" \
 	"splashimage=0x50000000\0" \

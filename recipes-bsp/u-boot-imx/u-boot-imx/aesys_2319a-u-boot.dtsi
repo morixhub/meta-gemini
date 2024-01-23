@@ -197,19 +197,19 @@
 	u-boot,dm-spl;
 };
 
-/**
 &eqos {
 	/delete-property/ assigned-clocks;
 	/delete-property/ assigned-clock-parents;
 	/delete-property/ assigned-clock-rates;
 };
-*/
 
 &ethphy0 {
 	/** reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>; */
+	/**
 	reset-gpios = <&gpio4 28 GPIO_ACTIVE_LOW>;
 	reset-assert-us = <15000>;
 	reset-deassert-us = <100000>;
+	*/
 };
 
 /**
