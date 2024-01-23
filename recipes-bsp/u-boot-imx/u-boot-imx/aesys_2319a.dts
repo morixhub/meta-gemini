@@ -201,8 +201,8 @@
 			eee-broken-1000t;
 			/** reset-gpios = <&gpio4 22 GPIO_ACTIVE_LOW>; */
 			reset-gpios = <&gpio4 28 GPIO_ACTIVE_LOW>;
-			reset-assert-us = <10000>;
-			reset-deassert-us = <80000>;
+			reset-assert-us = <15000>;
+			reset-deassert-us = <100000>;
 			realtek,clkout-disable;
 		};
 	};
