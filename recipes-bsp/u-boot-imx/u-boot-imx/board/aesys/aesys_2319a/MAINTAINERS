@@ -1,6 +1,6 @@
-i.MX8MP EVK BOARD
-M:	Peng Fan <peng.fan@nxp.com>
+AESYS 2319A board
+M:	Morix Dev <morix.dev@gmail.com>
 S:	Maintained
-F:	board/freescale/imx8mp_evk/
-F:	include/configs/imx8mp_evk.h
-F:	configs/imx8mp_evk_defconfig
+F:	board/aesys/aesys_2319a/
+F:	include/configs/aesys_2319a.h
+F:	configs/aesys_2319a_defconfig
