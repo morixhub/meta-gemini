@@ -34,7 +34,7 @@ This repositories is a bitbake meta-layer for gemini platform
 - `bitbake-layers add-layer meta-gemini`
 
 ### Yocto environment setup
-- `DISTRO=fsl-imx-wayland MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build-wayland`
+- `DISTRO=fsl-imx-wayland MACHINE=aesys-2319a source imx-setup-release.sh -b build-wayland`
 - Add following lines to `conf/local.conf`:
   - `BB_NUMBER_THREADS = "15"`
   - `PARALLEL_MAKE = "-j 15"`
@@ -43,6 +43,8 @@ This repositories is a bitbake meta-layer for gemini platform
   - `BBMASK += "/meta-browser/meta-chromium/recipes-browser/chromium/gn-native_.*\.bb"` (this part is requested for forcing `qtwebengine` to use its own gn-native instead the one coming from chromium; but this settings is not compatible with chromium itself... so firstly compile the image without this line and without `qtwebengine`; then after the image is cooked, add this line and `qtwebengine` and compile the image again)
   
 ### Image cooking
+- `bitbake aesys-hwtest-image`
+or
 - `bitbake imx-image-full`
 
 
@@ -55,7 +57,7 @@ This repositories is a bitbake meta-layer for gemini platform
   - `#enable-raw-draw=enabled`
   
 ## Image writing on uSD
-- `zstdcat imx-image-full-imx8mp-lpddr4-evk.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
+- `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
 ## Qt6 toolchain
 - add `qtwebengine` (if requested) to `RDEPENDS_{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb`
