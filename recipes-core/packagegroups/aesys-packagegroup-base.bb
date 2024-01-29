@@ -3,4 +3,4 @@ SUMMARY = "Aesys packagegroup - base"
 
 inherit packagegroup
 
-RDEPENDS:${PN} = "minicom"
+RDEPENDS:${PN} = "util-linux minicom nano"

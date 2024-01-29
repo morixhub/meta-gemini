@@ -7,6 +7,7 @@
 
 #include <dt-bindings/phy/phy-imx8-pcie.h>
 #include <dt-bindings/usb/pd.h>
+#include <dt-bindings/leds/common.h>
 #include "imx8mp.dtsi"
 
 / {
@@ -399,6 +400,20 @@
 			reset-assert-us = <10000>;
 			reset-deassert-us = <80000>;
 			realtek,clkout-disable;
+			led-link-mode;
+		};
+
+		leds {
+			led@0 {
+				reg = <0>;
+				function = LED_FUNCTION_MULTICOLOR;
+				multicolor-function = LED_MC_FUNCTION_ENCODED_SPEED;
+			};
+
+			led@1 {
+				reg = <1>;
+				function = LED_FUNCTION_ACTIVITY;
+			};
 		};
 	};
 
@@ -1634,10 +1649,16 @@
 			MX8MP_IOMUXC_UART3_RXD__UART1_DCE_CTS	0x140
 			MX8MP_IOMUXC_UART3_TXD__UART1_DCE_RTS	0x140
 			*/
+			/**
 			MX8MP_IOMUXC_SAI2_RXC__UART1_DTE_TX		0x00000140
 			MX8MP_IOMUXC_SAI2_RXD0__UART1_DTE_CTS	0x00000140
 			MX8MP_IOMUXC_SAI2_RXFS__UART1_DTE_RX	0x00000140
 			MX8MP_IOMUXC_SAI2_TXFS__UART1_DTE_RTS	0x00000140
+			*/
+			MX8MP_IOMUXC_SAI2_RXC__UART1_DCE_RX		0x00000140
+			MX8MP_IOMUXC_SAI2_RXD0__UART1_DCE_RTS	0x00000140
+			MX8MP_IOMUXC_SAI2_RXFS__UART1_DCE_TX	0x00000140
+			MX8MP_IOMUXC_SAI2_TXFS__UART1_DCE_CTS	0x00000140
 		>;
 	};
 

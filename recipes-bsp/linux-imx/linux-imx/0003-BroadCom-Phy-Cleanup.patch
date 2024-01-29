@@ -1,0 +1,117 @@
+diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
+index acd3a8b1cb14..95ccf174db8b 100644
+--- a/drivers/net/phy/broadcom.c
++++ b/drivers/net/phy/broadcom.c
+@@ -339,19 +339,16 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ {
+ 	int reg, err, val;
+ 
+-	printk(KERN_ERR "***** [A]\n"); //!!
+ 	reg = phy_read(phydev, MII_BCM54XX_ECR);
+ 	if (reg < 0)
+ 		return reg;
+ 
+-	printk(KERN_ERR "***** [B]\n"); //!!
+ 	/* Mask interrupts globally.  */
+ 	reg |= MII_BCM54XX_ECR_IM;
+ 	err = phy_write(phydev, MII_BCM54XX_ECR, reg);
+ 	if (err < 0)
+ 		return err;
+ 
+-	printk(KERN_ERR "***** [C]\n"); //!!
+ 	/* Unmask events we are interested in.  */
+ 	reg = ~(MII_BCM54XX_INT_DUPLEX |
+ 		MII_BCM54XX_INT_SPEED |
+@@ -360,7 +357,6 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 	if (err < 0)
+ 		return err;
+ 
+-	printk(KERN_ERR "***** [D]\n"); //!!
+ 	if ((BRCM_PHY_MODEL(phydev) == PHY_ID_BCM50610 ||
+ 	     BRCM_PHY_MODEL(phydev) == PHY_ID_BCM50610M) &&
+ 	    (phydev->dev_flags & PHY_BRCM_CLEAR_RGMII_MODE))
+@@ -368,14 +364,12 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 
+ 	bcm54xx_adjust_rxrefclk(phydev);
+ 
+-	printk(KERN_ERR "***** [E]\n"); //!!
+ 	switch (BRCM_PHY_MODEL(phydev)) {
+ 	case PHY_ID_BCM50610:
+ 	case PHY_ID_BCM50610M:
+ 		err = bcm54xx_config_clock_delay(phydev);
+ 		break;
+ 	case PHY_ID_BCM54210E:
+-		printk(KERN_ERR "***** [F]\n"); //!!
+ 		err = bcm54210e_config_init(phydev);
+ 		break;
+ 	case PHY_ID_BCM54612E:
+@@ -397,10 +391,8 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 	if (err)
+ 		return err;
+ 
+-	printk(KERN_ERR "***** [G]\n"); //!!
+ 	bcm54xx_phydsp_config(phydev);
+ 
+-	printk(KERN_ERR "***** [H]\n"); //!!
+ 	/* For non-SFP setups, encode link speed into LED1 and LED3 pair
+ 	 * (green/amber).
+ 	 * Also flash these two LEDs on activity. This means configuring
+@@ -421,13 +413,11 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 		int ret;
+ 
+ 		/* Handle Link LED mode, if requested */
+-		printk(KERN_ERR "***** [1]\n"); //!!
+ 		if (of_property_read_bool(np, "led-link-mode"))
+ 		{
+ 			val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_SCR1);
+ 			if (val >= 0)
+ 			{
+-				printk(KERN_ERR "***** [2] %d\n", val); //!!
+ 				val = val | BCM54XX_SHD_SCR1_LINK_LED_MODE;
+ 				bcm_phy_write_shadow(phydev, BCM54XX_SHD_SCR1, val);
+ 			}
+@@ -436,18 +426,14 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 		/* Handle LEDs configuration */
+ 		leds = of_find_node_by_name(np, "leds");
+ 		if (leds) {
+-			printk(KERN_ERR "***** [3]\n"); //!!
+ 			for_each_available_child_of_node(leds, led) {
+-				printk(KERN_ERR "***** [4]\n"); //!!
+ 				ret = of_property_read_u32(led, "reg", &val);
+ 				if (ret < 0 || val >= 2)
+ 					continue;
+ 
+-				printk(KERN_ERR "***** [5]\n"); //!!
+ 				ret = of_property_read_string(led, "function", &func);
+ 				if (!ret)
+ 				{
+-					printk(KERN_ERR "***** [6] %s\n", func); //!!
+ 					if (!strcmp(func, LED_FUNCTION_SPEED1))
+ 						mode[val] = BCM_LED_SRC_LINKSPD1;
+ 					else if (!strcmp(func, LED_FUNCTION_SPEED2))
+@@ -476,11 +462,9 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 						mode[val] = BCM_LED_SRC_ON;
+ 				}
+ 
+-				printk(KERN_ERR "***** [7]\n"); //!!
+ 				ret = of_property_read_string(led, "multicolor-function", &mcfunc);
+ 				if (!ret)
+ 				{
+-					printk(KERN_ERR "***** [8] %s\n", mcfunc); //!!
+ 					if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_LINK_ACTIVITY))
+ 						mcmode[val] = BCM_LED_MULTICOLOR_LINK_ACT;
+ 					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_SPEED))
+@@ -509,13 +493,11 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ 
+ 		val = BCM5482_SHD_LEDS1_LED1(mode[0]) |
+ 			BCM5482_SHD_LEDS1_LED3(mode[1]);
+-		printk(KERN_ERR "***** [9] %d\n", val); //!!
+ 		bcm_phy_write_shadow(phydev, BCM5482_SHD_LEDS1, val);
+ 
+ 		val = BCM_LED_MULTICOLOR_IN_PHASE |
+ 			BCM5482_SHD_LEDS1_LED1(mcmode[0]) |
+ 			BCM5482_SHD_LEDS1_LED3(mcmode[1]);
+-		printk(KERN_ERR "***** [10] %d\n", val); //!!
+ 		bcm_phy_write_exp(phydev, BCM_EXP_MULTICOLOR, val);
+ 	}
+ 
