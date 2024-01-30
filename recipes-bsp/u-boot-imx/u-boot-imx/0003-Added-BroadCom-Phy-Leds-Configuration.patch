@@ -1,13 +1,8 @@
 diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
-index 566fcb8de7..aaaab8170d 100644
+index 566fcb8de7..ebc2952213 100644
 --- a/drivers/net/phy/broadcom.c
 +++ b/drivers/net/phy/broadcom.c
-@@ -5,9 +5,12 @@
-  * Copyright 2010-2011 Freescale Semiconductor, Inc.
-  * author Andy Fleming
-  */
-+#define DEBUG
-+
+@@ -8,6 +8,7 @@
  #include <common.h>
  #include <phy.h>
  #include <linux/delay.h>
@@ -15,7 +10,7 @@ index 566fcb8de7..aaaab8170d 100644
  
  /* Broadcom BCM54xx -- taken from linux sungem_phy */
  #define MIIM_BCM54xx_AUXCNTL			0x18
-@@ -20,20 +23,68 @@
+@@ -20,20 +21,68 @@
  #define MIIM_BCM54XX_SHD_WRITE			0x8000
  #define MIIM_BCM54XX_SHD_VAL(x)			((x & 0x1f) << 10)
  #define MIIM_BCM54XX_SHD_DATA(x)		((x & 0x3ff) << 0)
@@ -84,7 +79,7 @@ index 566fcb8de7..aaaab8170d 100644
  static void bcm_phy_write_misc(struct phy_device *phydev,
  			       u16 reg, u16 chl, u16 value)
  {
-@@ -62,6 +113,119 @@ static int bcm5461_config(struct phy_device *phydev)
+@@ -62,6 +111,119 @@ static int bcm5461_config(struct phy_device *phydev)
  	return 0;
  }
  
@@ -204,7 +199,7 @@ index 566fcb8de7..aaaab8170d 100644
  static int bcm54xx_parse_status(struct phy_device *phydev)
  {
  	unsigned int mii_reg;
-@@ -323,6 +487,27 @@ static int bcm5482_startup(struct phy_device *phydev)
+@@ -323,6 +485,27 @@ static int bcm5482_startup(struct phy_device *phydev)
  	return bcm54xx_parse_status(phydev);
  }
  
@@ -232,7 +227,7 @@ index 566fcb8de7..aaaab8170d 100644
  static struct phy_driver BCM5461S_driver = {
  	.name = "Broadcom BCM5461S",
  	.uid = 0x2060c0,
-@@ -365,6 +550,8 @@ static struct phy_driver BCM_CYGNUS_driver = {
+@@ -365,6 +548,8 @@ static struct phy_driver BCM_CYGNUS_driver = {
  
  int phy_broadcom_init(void)
  {
