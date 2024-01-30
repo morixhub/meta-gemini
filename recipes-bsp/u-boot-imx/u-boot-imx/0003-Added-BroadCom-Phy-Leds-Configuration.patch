@@ -1,0 +1,275 @@
+diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
+index 566fcb8de7..aaaab8170d 100644
+--- a/drivers/net/phy/broadcom.c
++++ b/drivers/net/phy/broadcom.c
+@@ -5,9 +5,12 @@
+  * Copyright 2010-2011 Freescale Semiconductor, Inc.
+  * author Andy Fleming
+  */
++#define DEBUG
++
+ #include <common.h>
+ #include <phy.h>
+ #include <linux/delay.h>
++#include <dt-bindings/leds/common.h>
+ 
+ /* Broadcom BCM54xx -- taken from linux sungem_phy */
+ #define MIIM_BCM54xx_AUXCNTL			0x18
+@@ -20,20 +23,68 @@
+ #define MIIM_BCM54XX_SHD_WRITE			0x8000
+ #define MIIM_BCM54XX_SHD_VAL(x)			((x & 0x1f) << 10)
+ #define MIIM_BCM54XX_SHD_DATA(x)		((x & 0x3ff) << 0)
++#define MIIM_BCM54XX_SHD_RD_ENCODE(val)	\
++	MIIM_BCM54XX_SHD_VAL(val)
+ #define MIIM_BCM54XX_SHD_WR_ENCODE(val, data)	\
+ 	(MIIM_BCM54XX_SHD_WRITE | MIIM_BCM54XX_SHD_VAL(val) | \
+ 	 MIIM_BCM54XX_SHD_DATA(data))
+ 
++#define MIIM_BCM54XX_SHD_VAL_SPARE_CONTROL_REGISTER_1 0x02
++#define MIIM_BCM54XX_SHD_VAL_SPARE_CONTROL_REGISTER_1_LINK_LED_MODE 0x01
++
++#define MIIM_BCM54XX_SHD_VAL_LED_SELECTOR_1 0x0d
++
+ #define MIIM_BCM54XX_EXP_DATA		0x15	/* Expansion register data */
+ #define MIIM_BCM54XX_EXP_SEL		0x17	/* Expansion register select */
+ #define MIIM_BCM54XX_EXP_SEL_SSD	0x0e00	/* Secondary SerDes select */
+ #define MIIM_BCM54XX_EXP_SEL_ER		0x0f00	/* Expansion register select */
+ 
++#define MIIM_BCM54XX_EXP_ER_MULTICOLOR_LED_SELECTOR 0x04
++#define MIIM_BCM54XX_EXP_ER_MULTICOLOR_LED_SELECTOR_IN_PHASE (1 << 8)
++
+ #define MIIM_BCM_AUXCNTL_SHDWSEL_MISC	0x0007
+ #define MIIM_BCM_AUXCNTL_ACTL_SMDSP_EN	0x0800
+ 
+ #define MIIM_BCM_CHANNEL_WIDTH    0x2000
+ 
++/*
++ * Broadcom LED source encodings.  These are used in BCM5461, BCM5481,
++ * BCM5482, and possibly some others.
++ */
++#define BCM_LED_SRC_LINKSPD1	0x0
++#define BCM_LED_SRC_LINKSPD2	0x1
++#define BCM_LED_SRC_XMITLED	0x2
++#define BCM_LED_SRC_ACTIVITYLED	0x3
++#define BCM_LED_SRC_FDXLED	0x4
++#define BCM_LED_SRC_SLAVE	0x5
++#define BCM_LED_SRC_INTR	0x6
++#define BCM_LED_SRC_QUALITY	0x7
++#define BCM_LED_SRC_RCVLED	0x8
++#define BCM_LED_SRC_WIRESPEED	0x9
++#define BCM_LED_SRC_MULTICOLOR1	0xa
++#define BCM_LED_SRC_OPENSHORT	0xb
++#define BCM_LED_SRC_ENERGY		0xc
++#define BCM_LED_SRC_OFF		0xe	/* Tied high */
++#define BCM_LED_SRC_ON		0xf	/* Tied low */
++
++/*
++ * Broadcom Multicolor LED configurations (expansion register 4)
++ */
++#define BCM_EXP_MULTICOLOR		(MII_BCM54XX_EXP_SEL_ER + 0x04)
++#define BCM_LED_MULTICOLOR_IN_PHASE	BIT(8)
++#define BCM_LED_MULTICOLOR_LINK_ACT	0x0
++#define BCM_LED_MULTICOLOR_SPEED	0x1
++#define BCM_LED_MULTICOLOR_ACT_FLASH	0x2
++#define BCM_LED_MULTICOLOR_FDX		0x3
++#define BCM_LED_MULTICOLOR_OFF		0x4
++#define BCM_LED_MULTICOLOR_ON		0x5
++#define BCM_LED_MULTICOLOR_ALT		0x6
++#define BCM_LED_MULTICOLOR_FLASH	0x7
++#define BCM_LED_MULTICOLOR_LINK		0x8
++#define BCM_LED_MULTICOLOR_ACT		0x9
++#define BCM_LED_MULTICOLOR_PROGRAM	0xa
++
++
+ static void bcm_phy_write_misc(struct phy_device *phydev,
+ 			       u16 reg, u16 chl, u16 value)
+ {
+@@ -62,6 +113,119 @@ static int bcm5461_config(struct phy_device *phydev)
+ 	return 0;
+ }
+ 
++/* Broadcom BCM5421 e BCM54210E */
++static int bcm5421_config(struct phy_device *phydev)
++{
++	int mode[2] = { BCM_LED_SRC_MULTICOLOR1, BCM_LED_SRC_MULTICOLOR1 };
++	int mcmode[2] = { BCM_LED_MULTICOLOR_LINK_ACT, BCM_LED_MULTICOLOR_LINK_ACT };
++	const char *func;
++	const char *mcfunc;
++	int val;
++	ofnode node, leds, led;
++
++	genphy_config_aneg(phydev);
++
++	phy_reset(phydev);
++
++	/* Get PHY DT node */
++	node = phy_get_ofnode(phydev);
++
++	if (!ofnode_valid(node))
++		return -EINVAL;
++
++	/* Handle Link LED mode, if requested */
++	if (ofnode_read_bool(node, "led-link-mode"))
++	{
++		phy_write(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_SHD, MIIM_BCM54XX_SHD_RD_ENCODE(MIIM_BCM54XX_SHD_VAL_SPARE_CONTROL_REGISTER_1));
++		val = MIIM_BCM54XX_SHD_DATA(phy_read(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_SHD));
++
++		val = val | MIIM_BCM54XX_SHD_VAL_SPARE_CONTROL_REGISTER_1_LINK_LED_MODE;
++		phy_write(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_SHD, MIIM_BCM54XX_SHD_WR_ENCODE(MIIM_BCM54XX_SHD_VAL_SPARE_CONTROL_REGISTER_1, val));
++	}
++	
++
++	/* Handle LEDs configuration */
++	leds = ofnode_find_subnode(node, "leds");
++	if (ofnode_valid(leds)) {
++
++		ofnode_for_each_subnode(led, leds) {
++
++			val = ofnode_read_u32_default(led, "reg", -1);
++			if (val < 0 || val >= 2)
++				continue;
++
++			func = ofnode_read_string(led, "function");
++			if (func)
++			{
++				if (!strcmp(func, LED_FUNCTION_SPEED1))
++					mode[val] = BCM_LED_SRC_LINKSPD1;
++				else if (!strcmp(func, LED_FUNCTION_SPEED2))
++					mode[val] = BCM_LED_SRC_LINKSPD2;
++				else if (!strcmp(func, LED_FUNCTION_TX))
++					mode[val] = BCM_LED_SRC_XMITLED;
++				else if (!strcmp(func, LED_FUNCTION_ACTIVITY))
++					mode[val] = BCM_LED_SRC_ACTIVITYLED;
++				else if (!strcmp(func, LED_FUNCTION_FDX))
++					mode[val] = BCM_LED_SRC_FDXLED;
++				else if (!strcmp(func, LED_FUNCTION_SLAVE))
++					mode[val] = BCM_LED_SRC_SLAVE;
++				else if (!strcmp(func, LED_FUNCTION_INTR))
++					mode[val] = BCM_LED_SRC_INTR;
++				else if (!strcmp(func, LED_FUNCTION_QUALITY))
++					mode[val] = BCM_LED_SRC_QUALITY;
++				else if (!strcmp(func, LED_FUNCTION_RX))
++					mode[val] = BCM_LED_SRC_RCVLED;
++				else if (!strcmp(func, LED_FUNCTION_MULTICOLOR))
++					mode[val] = BCM_LED_SRC_MULTICOLOR1;
++				else if (!strcmp(func, LED_FUNCTION_ENERGY))
++					mode[val] = BCM_LED_SRC_ENERGY;
++				else if (!strcmp(func, LED_FUNCTION_OFF))
++					mode[val] = BCM_LED_SRC_OFF;
++				else if (!strcmp(func, LED_FUNCTION_ON))
++					mode[val] = BCM_LED_SRC_ON;
++			}
++
++			mcfunc = ofnode_read_string(led, "multicolor-function");
++			if (mcfunc)
++			{
++				if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_LINK_ACTIVITY))
++					mcmode[val] = BCM_LED_MULTICOLOR_LINK_ACT;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_SPEED))
++					mcmode[val] = BCM_LED_MULTICOLOR_SPEED;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_ACTIVITY_FLASH))
++					mcmode[val] = BCM_LED_MULTICOLOR_ACT_FLASH;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_FDX))
++					mcmode[val] = BCM_LED_MULTICOLOR_FDX;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_OFF))
++					mcmode[val] = BCM_LED_MULTICOLOR_OFF;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_ON))
++					mcmode[val] = BCM_LED_MULTICOLOR_ON;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_ALTERNATING))
++					mcmode[val] = BCM_LED_MULTICOLOR_ALT;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_FLASHING))
++					mcmode[val] = BCM_LED_MULTICOLOR_FLASH;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_LINK))
++					mcmode[val] = BCM_LED_MULTICOLOR_LINK;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_ACTIVITY))
++					mcmode[val] = BCM_LED_MULTICOLOR_ACT;
++				else if (!strcmp(mcfunc, LED_MC_FUNCTION_PROGRAMMABLE_BLINK))
++					mcmode[val] = BCM_LED_MULTICOLOR_PROGRAM;
++			}
++		}
++	}
++
++	/* Set LED selector register */
++	val = (mode[0]) | (mode[1] << 4);
++	phy_write(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_SHD, MIIM_BCM54XX_SHD_WR_ENCODE(MIIM_BCM54XX_SHD_VAL_LED_SELECTOR_1, val));
++
++	/* Set LED multicolor selector register */
++	val = MIIM_BCM54XX_EXP_ER_MULTICOLOR_LED_SELECTOR_IN_PHASE | mcmode[0] | (mcmode[1] << 4);
++	phy_write(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_EXP_SEL, MIIM_BCM54XX_EXP_SEL_ER | MIIM_BCM54XX_EXP_ER_MULTICOLOR_LED_SELECTOR);
++	phy_write(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_EXP_DATA, val);
++
++	return 0;
++}
++
+ static int bcm54xx_parse_status(struct phy_device *phydev)
+ {
+ 	unsigned int mii_reg;
+@@ -323,6 +487,27 @@ static int bcm5482_startup(struct phy_device *phydev)
+ 	return bcm54xx_parse_status(phydev);
+ }
+ 
++static struct phy_driver BCM5421_driver = {
++	.name = "Broadcom BCM5421",
++	.uid = 0x2060e0,
++	.mask = 0xfffff0,
++	.features = PHY_GBIT_FEATURES,
++	.config = &bcm5421_config,
++	.startup = &bcm54xx_startup,
++	.shutdown = &genphy_shutdown,
++};
++
++static struct phy_driver BCM54210E_driver = {
++	.name = "Broadcom BCM54210E",
++	.uid = 0x600d84a0,
++	.mask = 0xfffff0,
++	.features = PHY_GBIT_FEATURES,
++	.config = &bcm5421_config,
++	.startup = &bcm54xx_startup,
++	.shutdown = &genphy_shutdown,
++};
++
++
+ static struct phy_driver BCM5461S_driver = {
+ 	.name = "Broadcom BCM5461S",
+ 	.uid = 0x2060c0,
+@@ -365,6 +550,8 @@ static struct phy_driver BCM_CYGNUS_driver = {
+ 
+ int phy_broadcom_init(void)
+ {
++	phy_register(&BCM5421_driver);
++	phy_register(&BCM54210E_driver);
+ 	phy_register(&BCM5482S_driver);
+ 	phy_register(&BCM5464S_driver);
+ 	phy_register(&BCM5461S_driver);
+diff --git a/include/dt-bindings/leds/common.h b/include/dt-bindings/leds/common.h
+index 3be89a7c20..b8e2661298 100644
+--- a/include/dt-bindings/leds/common.h
++++ b/include/dt-bindings/leds/common.h
+@@ -98,4 +98,27 @@
+ #define LED_FUNCTION_WLAN "wlan"
+ #define LED_FUNCTION_WPS "wps"
+ 
++#define LED_FUNCTION_SPEED1 "speed-1"
++#define LED_FUNCTION_SPEED2 "speed-2"
++#define LED_FUNCTION_FDX "fdx"
++#define LED_FUNCTION_SLAVE "slave"
++#define LED_FUNCTION_INTR "intr"
++#define LED_FUNCTION_QUALITY "quality"
++#define LED_FUNCTION_MULTICOLOR "multicolor"
++#define LED_FUNCTION_ENERGY "energy"
++#define LED_FUNCTION_OFF "off"
++#define LED_FUNCTION_ON "on"
++
++#define LED_MC_FUNCTION_ENCODED_LINK_ACTIVITY "encoded-link-activity"
++#define LED_MC_FUNCTION_ENCODED_SPEED "encoded-speed"
++#define LED_MC_FUNCTION_ACTIVITY_FLASH "activity-flash"
++#define LED_MC_FUNCTION_FDX "fdx"
++#define LED_MC_FUNCTION_OFF "off"
++#define LED_MC_FUNCTION_ON "on"
++#define LED_MC_FUNCTION_ALTERNATING "alternating"
++#define LED_MC_FUNCTION_FLASHING "flashing"
++#define LED_MC_FUNCTION_LINK "link"
++#define LED_MC_FUNCTION_ACTIVITY "activity"
++#define LED_MC_FUNCTION_PROGRAMMABLE_BLINK "programmable-blink"
++
+ #endif /* __DT_BINDINGS_LEDS_H */

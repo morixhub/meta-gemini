@@ -2,6 +2,7 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " file://0001-Added-PLL-DIV-for-3600MTS.patch"
 SRC_URI += " file://0002-Added-Board-Target-Kconfig.patch"
+SRC_URI += " file://0003-Added-BroadCom-Phy-Leds-Configuration.patch"
 
 # Copy additional stuff to working copy after patching
 COPYSOURCE := "${THISDIR}/${PN}"
@@ -13,7 +14,7 @@ do_after_patch() {
 	cp -rf "${COPYSOURCE}/board/aesys" "${WORKDIR}/git/board/"
 
 	# Create symlink to freescale common assets
-	ln -s "${WORKDIR}/git/board/freescale/common" "${WORKDIR}/git/board/aesys/common"
+	ln -f -s "${WORKDIR}/git/board/freescale/common" "${WORKDIR}/git/board/aesys/common"
 }
 
 addtask after_patch after do_patch before do_configure
