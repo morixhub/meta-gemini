@@ -382,9 +382,9 @@
 	pinctrl-0 = <&pinctrl_eqos>;
 	phy-mode = "rgmii-id";
 	phy-handle = <&ethphy0>;
-	snps,force_thresh_dma_mode;
-	snps,mtl-tx-config = <&mtl_tx_setup>;
-	snps,mtl-rx-config = <&mtl_rx_setup>;
+	/** snps,force_thresh_dma_mode; */
+	/** snps,mtl-tx-config = <&mtl_tx_setup>; */
+	/** snps,mtl-rx-config = <&mtl_rx_setup>; */
 	status = "okay";
 
 	mdio {
@@ -416,6 +416,7 @@
 		};
 	};
 
+	/**
 	mtl_tx_setup: tx-queues-config {
 		snps,tx-queues-to-use = <5>;
 		snps,tx-sched-sp;
@@ -479,7 +480,7 @@
 			snps,priority = <0xf0>;
 			snps,map-to-dma-channel = <4>;
 		};
-	};
+	}; */
 };
 
 /**
@@ -545,6 +546,7 @@
 		pinctrl-0 = <&pinctrl_pmic>;
 		interrupt-parent = <&gpio1>;
 		interrupts = <3 IRQ_TYPE_LEVEL_LOW>;
+		nxp,i2c-lt-enable;
 
 		regulators {
 			buck1: BUCK1 {
@@ -645,6 +647,16 @@
  	scl-gpios = <&gpio5 16 GPIO_ACTIVE_HIGH>;
  	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
 	status = "okay";
+
+	rtc_i2c: rtc@6f {
+		compatible = "microchip,mcp7940x";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_rtc_gpios>;
+		reg = <0x6f>;
+		interrupt-parent = <&gpio3>;
+        interrupts = <24 IRQ_TYPE_LEVEL_LOW>;
+		status = "okay";
+	};
 
 	/**
 	adv_bridge: adv7535@3d {
@@ -1210,7 +1222,7 @@
 
 &iomuxc {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog &pinctrl_mipi_csi_gpios &pinctrl_mipi_dsi_gpios &pinctrl_emmc_gpios &pinctrl_pin_gpios &pinctrl_rtc_gpios>;
+	pinctrl-0 = <&pinctrl_hog &pinctrl_mipi_csi_gpios &pinctrl_mipi_dsi_gpios &pinctrl_emmc_gpios &pinctrl_pin_gpios>;
 
 	pinctrl_hog: hoggrp {
 		fsl,pins = <
