@@ -400,18 +400,18 @@
 			reset-assert-us = <10000>;
 			reset-deassert-us = <80000>;
 			realtek,clkout-disable;
-		};
 
-		leds {
-			led@0 {
-				reg = <0>;
-				function = LED_FUNCTION_MULTICOLOR;
-				multicolor-function = LED_MC_FUNCTION_ENCODED_SPEED;
-			};
-
-			led@1 {
-				reg = <1>;
-				function = LED_FUNCTION_ACTIVITY;
+			leds {
+				led@0 {
+					reg = <0>;
+					function = LED_FUNCTION_MULTICOLOR;
+					multicolor-function = LED_MC_FUNCTION_ENCODED_SPEED;
+				};
+	
+				led@1 {
+					reg = <1>;
+					function = LED_FUNCTION_ACTIVITY;
+				};
 			};
 		};
 	};
