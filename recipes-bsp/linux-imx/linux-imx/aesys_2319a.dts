@@ -30,10 +30,16 @@
 		};
 	};
 
+	/**
 	memory@40000000 {
 		device_type = "memory";
 		reg = <0x0 0x40000000 0 0xc0000000>,
 		      <0x1 0x00000000 0 0xc0000000>;
+	};
+	*/
+	memory@40000000 {
+		device_type = "memory";
+		reg = <0x0 0x40000000 0 0x40000000>;
 	};
 
 	pcie0_refclk: pcie0-refclk {
@@ -1928,7 +1934,41 @@
 	status = "okay";
 };
 
+&resmem {
+	linux,cma {
+		size = <0 0x08000000>;
+		/delete-property/ alloc-ranges;
+	};
+};
+
+&gpu_reserved {
+	reg = <0x0 0x38000000 0 0x08000000>;
+};
+
+&dsp_reserved {
+	reg = <0 0x37000000 0 0x1000000>;
+	no-map;
+};
+
+&dsp_reserved_heap {
+	reg = <0 0x36110000 0 0xef0000>;
+	no-map;
+};
+
+&dsp_vdev0vring0 {
+	reg = <0 0x36108000 0 0x8000>;
+};
+
+&dsp_vdev0vring1 {
+	reg = <0 0x36100000 0 0x8000>;
+};
+
+&dsp_vdev0buffer {
+	reg = <0 0x36000000 0 0x100000>;
+};
+
 &mix_gpu_ml {
+	reg = <0x0 0x40000000 0x0 0x40000000>, <0x0 0x0 0x0 0x08000000>;
 	status = "okay";
 };
 
