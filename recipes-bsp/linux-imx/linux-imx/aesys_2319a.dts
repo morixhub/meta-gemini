@@ -388,7 +388,7 @@
 	pinctrl-0 = <&pinctrl_eqos>;
 	phy-mode = "rgmii-id";
 	phy-handle = <&ethphy0>;
-	/** snps,force_thresh_dma_mode; */
+	snps,force_thresh_dma_mode;
 	/** snps,mtl-tx-config = <&mtl_tx_setup>; */
 	/** snps,mtl-rx-config = <&mtl_rx_setup>; */
 	status = "okay";
@@ -945,18 +945,18 @@
 	status = "okay";
 };
 
+/**
 &mipi_dsi {
 	status = "okay";
 
-	/**
 	port@1 {
 		dsim_to_adv7535: endpoint {
 			remote-endpoint = <&adv7535_from_dsim>;
 			attach-bridge;
 		};
 	};
-	*/
 };
+*/
 
 &pcie_phy {
 	fsl,refclk-pad-mode = <IMX8_PCIE_REFCLK_PAD_INPUT>;
