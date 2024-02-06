@@ -14,6 +14,11 @@
 	model = "AESYS 2319A";
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 
+	aliases {
+		rtc0 = &rtc_i2c;
+		rtc1 = &snvs_rtc;
+	};
+
 	chosen {
 		stdout-path = &uart2;
 	};
@@ -310,6 +315,12 @@
 &pwm2 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm2>;
+	status = "okay";
+};
+
+&pwm3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_pwm3>;
 	status = "okay";
 };
 
