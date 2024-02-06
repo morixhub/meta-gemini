@@ -1936,7 +1936,7 @@
 
 &resmem {
 	linux,cma {
-		size = <0 0x08000000>;
+		size = <0 0x10000000>;
 		/delete-property/ alloc-ranges;
 	};
 };
