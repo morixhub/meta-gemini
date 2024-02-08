@@ -930,8 +930,8 @@
 &lcdif3 {
 	status = "okay";
 
-	thres-low  = <1 2>;             /* (FIFO * 1 / 2) */
-	thres-high = <3 4>;             /* (FIFO * 3 / 4) */
+	thres-low  = <1 2>;             //** (FIFO * 1 / 2)
+	thres-high = <3 4>;             //** (FIFO * 3 / 4)
 };
 
 &ldb {
@@ -968,6 +968,24 @@
 	};
 };
 */
+/**
+&mipi_dsi {
+	status = "okay";
+
+	panel@0 {
+		compatible = "disen,ds070bOe30t_078_a";
+		reg = <0>;
+		pinctrl-0 = <&pinctrl_mipi_dsi>;
+		//** reset-gpio = <&gpio1 8 GPIO_ACTIVE_LOW>;
+		dsi-lanes = <4>;
+		video-mode = <2>;	//** 0: burst mode
+					 		//** 1: non-burst mode with sync event
+					 		//** 2: non-burst mode with sync pulse
+		panel-width-mm = <154>;
+		panel-height-mm = <86>;
+		status = "okay";
+	};
+}; */
 
 &pcie_phy {
 	fsl,refclk-pad-mode = <IMX8_PCIE_REFCLK_PAD_INPUT>;
@@ -1239,7 +1257,7 @@
 
 &iomuxc {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog &pinctrl_mipi_csi_gpios &pinctrl_mipi_dsi_gpios &pinctrl_emmc_gpios &pinctrl_pin_gpios>;
+	pinctrl-0 = <&pinctrl_hog &pinctrl_mipi_csi_gpios &pinctrl_emmc_gpios &pinctrl_pin_gpios>;
 
 	pinctrl_hog: hoggrp {
 		fsl,pins = <
@@ -1269,7 +1287,7 @@
 		>;
 	};
 
-	pinctrl_mipi_dsi_gpios: mipi_dsi_gpios {
+	pinctrl_mipi_dsi: mipi_dsi_gpios {
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08		0x00000106	// DSI_EN
 			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09		0x00000140	// DSI_TS_nINT

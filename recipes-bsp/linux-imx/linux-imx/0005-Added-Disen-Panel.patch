@@ -1,0 +1,47 @@
+diff --git a/drivers/gpu/drm/panel/panel-simple.c b/drivers/gpu/drm/panel/panel-simple.c
+index b73669808347..bbe59fc293eb 100644
+--- a/drivers/gpu/drm/panel/panel-simple.c
++++ b/drivers/gpu/drm/panel/panel-simple.c
+@@ -845,6 +845,32 @@ static const struct panel_desc armadeus_st0700_adapt = {
+ 	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_SAMPLE_NEGEDGE,
+ };
+ 
++static const struct display_timing disen_ds070bOe30t_078_a_timing = {
++	.pixelclock = { 44900000, 51200000, 63000000 },
++	.hactive = { 1024, 1024, 1024 },
++	.hfront_porch = { 16, 160, 216 },
++	.hback_porch = { 160, 160, 160 },
++	.hsync_len = { 1, 70, 140 },
++	.vactive = { 600, 600, 600 },
++	.vfront_porch = { 1, 12, 127 },
++	.vback_porch = { 23, 23, 23 },
++	.vsync_len = { 1, 10, 20 },
++	.flags = DISPLAY_FLAGS_HSYNC_LOW | DISPLAY_FLAGS_VSYNC_LOW |
++		DISPLAY_FLAGS_DE_HIGH | DISPLAY_FLAGS_PIXDATA_POSEDGE
++};
++
++static const struct panel_desc disen_ds070bOe30t_078_a = {
++	.timings = &disen_ds070bOe30t_078_a_timing,
++	.num_timings = 1,
++	.bpc = 8,
++	.size = {
++		.width = 154,
++		.height = 86,
++	},
++	.bus_format = MEDIA_BUS_FMT_RGB888_1X24,
++	.bus_flags = DRM_BUS_FLAG_DE_HIGH | DRM_BUS_FLAG_PIXDATA_SAMPLE_NEGEDGE,
++};
++
+ static const struct drm_display_mode auo_b101aw03_mode = {
+ 	.clock = 51450,
+ 	.hdisplay = 1024,
+@@ -4047,6 +4073,9 @@ static const struct of_device_id platform_of_match[] = {
+ 	}, {
+ 		.compatible = "armadeus,st0700-adapt",
+ 		.data = &armadeus_st0700_adapt,
++	}, {
++		.compatible = "disen,ds070bOe30t_078_a",
++		.data = &disen_ds070bOe30t_078_a,
+ 	}, {
+ 		.compatible = "auo,b101aw03",
+ 		.data = &auo_b101aw03,
