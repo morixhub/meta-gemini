@@ -63,6 +63,14 @@
 		/** gpio = <&gpio5 5 GPIO_ACTIVE_HIGH>; */
 		enable-active-high;
 	};
+
+	reg_panel: regulator-panel {
+		compatible = "regulator-fixed";
+		regulator-name = "panel";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+	};
 	
 	/**
 	reg_can2_stby: regulator-can2-stby {
@@ -217,6 +225,11 @@
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 100000 0>;
 		status = "okay";
+
+		enable-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+
+		pinctrl-0 = <&pinctrl_mipi_dsi>;
+		pinctrl-names = "default";
 
 		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
 				     10 11 12 13 14 15 16 17 18 19
@@ -968,10 +981,29 @@
 	};
 };
 */
-/**
+
 &mipi_dsi {
 	status = "okay";
 
+	port@1 {
+		mipi_dsi_panel_out: endpoint {
+			remote-endpoint = <&panel_in>;
+		};
+	};
+
+	panel@0 {
+		compatible = "disen,ds070bOe30t_078_a";
+		power-supply = <&reg_panel>;
+		/** backlight = <&dsi_backlight>; */
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mipi_dsi_panel_out>;
+			};
+		};
+	};
+
+	/**
 	panel@0 {
 		compatible = "disen,ds070bOe30t_078_a";
 		reg = <0>;
@@ -985,7 +1017,8 @@
 		panel-height-mm = <86>;
 		status = "okay";
 	};
-}; */
+	*/
+};
 
 &pcie_phy {
 	fsl,refclk-pad-mode = <IMX8_PCIE_REFCLK_PAD_INPUT>;
