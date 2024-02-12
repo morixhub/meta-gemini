@@ -1,0 +1,80 @@
+diff --git a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+index 7d0ec13e1ad6..6669cd0cfdfd 100644
+--- a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
++++ b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+@@ -30,10 +30,14 @@ struct ds070boe30t_panel {
+ 	struct regulator *supply;
+ 
+ 	struct {
++		/**
+ 		struct gpio_desc *power;
++		*/
+ 		struct gpio_desc *reset;
++		/**
+ 		struct gpio_desc *updn;
+ 		struct gpio_desc *shlr;
++		*/
+ 	} gpios;
+ };
+ 
+@@ -53,8 +57,10 @@ static int ds070boe30t_panel_prepare(struct drm_panel *panel)
+ 		return ret;
+ 	}
+ 
++	/**
+ 	msleep(20);
+ 	gpiod_set_value(ctx->gpios.power, 1);
++	*/
+ 	msleep(20);
+ 	gpiod_set_value(ctx->gpios.reset, 1);
+ 	msleep(20);
+@@ -66,7 +72,9 @@ static int ds070boe30t_panel_unprepare(struct drm_panel *panel)
+ 	struct ds070boe30t_panel *ctx = panel_to_ds070boe30t_panel(panel);
+ 
+ 	gpiod_set_value(ctx->gpios.reset, 0);
++	/**
+ 	gpiod_set_value(ctx->gpios.power, 0);
++	*/
+ 	regulator_disable(ctx->supply);
+ 
+ 	return 0;
+@@ -162,32 +170,38 @@ static int ds070boe30t_panel_dsi_probe(struct mipi_dsi_device *dsi)
+ 		dev_err(&dsi->dev, "Couldn't get our reset GPIO\n");
+ 		return PTR_ERR(ctx->gpios.reset);
+ 	}
+-
++	
++	/**
+ 	ctx->gpios.power = devm_gpiod_get(&dsi->dev, "power", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.power)) {
+ 		dev_err(&dsi->dev, "Couldn't get our power GPIO\n");
+ 		return PTR_ERR(ctx->gpios.power);
+ 	}
++	*/
+ 
+ 	/*
+ 	 * We don't change the state of that GPIO later on but we need
+ 	 * to force it into a low state.
+ 	 */
++	/**
+ 	ctx->gpios.updn = devm_gpiod_get(&dsi->dev, "updn", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.updn)) {
+ 		dev_err(&dsi->dev, "Couldn't get our updn GPIO\n");
+ 		return PTR_ERR(ctx->gpios.updn);
+ 	}
++	*/
+ 
+ 	/*
+ 	 * We don't change the state of that GPIO later on but we need
+ 	 * to force it into a low state.
+ 	 */
++	/**
+ 	ctx->gpios.shlr = devm_gpiod_get(&dsi->dev, "shlr", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.shlr)) {
+ 		dev_err(&dsi->dev, "Couldn't get our shlr GPIO\n");
+ 		return PTR_ERR(ctx->gpios.shlr);
+ 	}
++	*/
+ 
+ 	ret = drm_panel_of_backlight(&ctx->panel);
+ 	if (ret)
