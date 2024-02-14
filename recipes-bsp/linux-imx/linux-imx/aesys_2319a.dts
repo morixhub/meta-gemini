@@ -692,6 +692,16 @@
 		status = "okay";
 	};
 
+	touchscreen: touchscreen@14 {
+		compatible = "goodix,gt911";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_touchscreen>;
+		reg = <0x14>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <9 0>;
+		irq-gpios = <&gpio1 9 0>;
+	};
+
 	/**
 	adv_bridge: adv7535@3d {
 		compatible = "adi,adv7535";
@@ -1332,6 +1342,11 @@
 	pinctrl_mipi_dsi: mipi_dsi_gpios {
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08		0x00000106	// DSI_EN
+		>;
+	};
+
+	pinctrl_touchscreen: touchscreen_gpios {
+		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09		0x00000140	// DSI_TS_nINT
 		>;
 	};
