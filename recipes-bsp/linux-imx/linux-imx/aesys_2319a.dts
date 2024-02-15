@@ -692,15 +692,6 @@
 		status = "okay";
 	};
 
-	touchscreen: touchscreen@14 {
-		compatible = "goodix,gt911";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_touchscreen>;
-		reg = <0x14>;
-		interrupt-parent = <&gpio1>;
-		interrupts = <9 IRQ_TYPE_LEVEL_LOW>;
-	};
-
 	/**
 	adv_bridge: adv7535@3d {
 		compatible = "adi,adv7535";
@@ -815,6 +806,19 @@
  	scl-gpios = <&gpio3 16 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
  	sda-gpios = <&gpio2 11 GPIO_ACTIVE_HIGH>;
 	status = "okay";
+
+	touchscreen: touchscreen@14 {
+		compatible = "goodix,gt911";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_touchscreen>;
+		reg = <0x14>;
+		irq-gpios = <&gpio1 9 GPIO_ACTIVE_HIGH>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <9 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio5 1 GPIO_ACTIVE_HIGH>;
+		dont-release-reset;
+		dont-drive-irq-for-address-configuration;
+	};
 
 	/**
 	pca6416: gpio@20 {
@@ -1007,7 +1011,10 @@
 	panel@1 {
 		compatible = "disen,ds070boe30t";
 		reg = <1>;
-		reset-gpios = <&gpio1 8 GPIO_ACTIVE_LOW>;
+		reset-gpios = <&gpio4 26 GPIO_ACTIVE_HIGH>;
+		power-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
+		updn-gpios = <&gpio4 14 GPIO_ACTIVE_HIGH>;
+		shlr-gpios = <&gpio4 13 GPIO_ACTIVE_HIGH>;
 		pinctrl-0 = <&pinctrl_mipi_dsi>;
 		pinctrl-names = "default";
 		vcc-lcd-supply = <&reg_panel>;
@@ -1334,19 +1341,24 @@
 		fsl,pins = <
 			MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25		0x00000140	// CSI_nRESET
 			MX8MP_IOMUXC_GPIO1_IO07__GPIO1_IO07		0x00000100	// CSI_PWDN
-			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05		0x00000100 // CSI_SYNC / M7_NMI
+			MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05		0x00000100 	// CSI_SYNC / M7_NMI
 		>;
 	};
 
 	pinctrl_mipi_dsi: mipi_dsi_gpios {
 		fsl,pins = <
 			MX8MP_IOMUXC_GPIO1_IO08__GPIO1_IO08		0x00000106	// DSI_EN
+			MX8MP_IOMUXC_SAI1_TXD1__GPIO4_IO13		0x00000106	// DSI L/R
+			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14		0x00000106	// DSI UP/DOWN
+			MX8MP_IOMUXC_SAI2_TXD0__GPIO4_IO26		0x00000106	// DSI nRESET
+			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27		0x00000146	// DSI nINT	
 		>;
 	};
 
 	pinctrl_touchscreen: touchscreen_gpios {
 		fsl,pins = <
-			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09		0x00000140	// DSI_TS_nINT
+			MX8MP_IOMUXC_GPIO1_IO09__GPIO1_IO09		0x00000140	// TS_nINT
+			MX8MP_IOMUXC_SAI3_TXD__GPIO5_IO01		0x00000106	// TS_nRESET
 		>;
 	};
 
@@ -1363,13 +1375,8 @@
 			MX8MP_IOMUXC_SAI1_RXD1__GPIO4_IO03		0x00000106
 			MX8MP_IOMUXC_SAI1_RXD2__GPIO4_IO04		0x00000106
 			MX8MP_IOMUXC_SAI1_RXD3__GPIO4_IO05		0x00000106
-			MX8MP_IOMUXC_SAI1_TXD1__GPIO4_IO13		0x00000106
-			MX8MP_IOMUXC_SAI1_TXD2__GPIO4_IO14		0x00000106
 			MX8MP_IOMUXC_SAI1_TXD3__GPIO4_IO15		0x00000106
 			MX8MP_IOMUXC_SAI1_TXD7__GPIO4_IO19		0x00000106
-			MX8MP_IOMUXC_SAI2_TXD0__GPIO4_IO26		0x00000106
-			MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27		0x00000146
-			MX8MP_IOMUXC_SAI3_TXD__GPIO5_IO01		0x00000106
 		>;
 	};
 

@@ -1,0 +1,128 @@
+diff --git a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+index 6669cd0cfdfd..e60ae29a46fa 100644
+--- a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
++++ b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+@@ -30,14 +30,10 @@ struct ds070boe30t_panel {
+ 	struct regulator *supply;
+ 
+ 	struct {
+-		/**
+ 		struct gpio_desc *power;
+-		*/
+ 		struct gpio_desc *reset;
+-		/**
+ 		struct gpio_desc *updn;
+ 		struct gpio_desc *shlr;
+-		*/
+ 	} gpios;
+ };
+ 
+@@ -57,10 +53,8 @@ static int ds070boe30t_panel_prepare(struct drm_panel *panel)
+ 		return ret;
+ 	}
+ 
+-	/**
+ 	msleep(20);
+ 	gpiod_set_value(ctx->gpios.power, 1);
+-	*/
+ 	msleep(20);
+ 	gpiod_set_value(ctx->gpios.reset, 1);
+ 	msleep(20);
+@@ -72,9 +66,7 @@ static int ds070boe30t_panel_unprepare(struct drm_panel *panel)
+ 	struct ds070boe30t_panel *ctx = panel_to_ds070boe30t_panel(panel);
+ 
+ 	gpiod_set_value(ctx->gpios.reset, 0);
+-	/**
+ 	gpiod_set_value(ctx->gpios.power, 0);
+-	*/
+ 	regulator_disable(ctx->supply);
+ 
+ 	return 0;
+@@ -171,37 +163,31 @@ static int ds070boe30t_panel_dsi_probe(struct mipi_dsi_device *dsi)
+ 		return PTR_ERR(ctx->gpios.reset);
+ 	}
+ 	
+-	/**
+ 	ctx->gpios.power = devm_gpiod_get(&dsi->dev, "power", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.power)) {
+ 		dev_err(&dsi->dev, "Couldn't get our power GPIO\n");
+ 		return PTR_ERR(ctx->gpios.power);
+ 	}
+-	*/
+ 
+ 	/*
+ 	 * We don't change the state of that GPIO later on but we need
+ 	 * to force it into a low state.
+ 	 */
+-	/**
+ 	ctx->gpios.updn = devm_gpiod_get(&dsi->dev, "updn", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.updn)) {
+ 		dev_err(&dsi->dev, "Couldn't get our updn GPIO\n");
+ 		return PTR_ERR(ctx->gpios.updn);
+ 	}
+-	*/
+ 
+ 	/*
+ 	 * We don't change the state of that GPIO later on but we need
+ 	 * to force it into a low state.
+ 	 */
+-	/**
+ 	ctx->gpios.shlr = devm_gpiod_get(&dsi->dev, "shlr", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.shlr)) {
+ 		dev_err(&dsi->dev, "Couldn't get our shlr GPIO\n");
+ 		return PTR_ERR(ctx->gpios.shlr);
+ 	}
+-	*/
+ 
+ 	ret = drm_panel_of_backlight(&ctx->panel);
+ 	if (ret)
+diff --git a/drivers/input/touchscreen/goodix.c b/drivers/input/touchscreen/goodix.c
+index d487ebfd82f4..ae7191452fb3 100644
+--- a/drivers/input/touchscreen/goodix.c
++++ b/drivers/input/touchscreen/goodix.c
+@@ -767,10 +767,13 @@ int goodix_reset_no_int_sync(struct goodix_ts_data *ts)
+ 
+ 	msleep(20);				/* T2: > 10ms */
+ 
+-	/* HIGH: 0x28/0x29, LOW: 0xBA/0xBB */
+-	error = goodix_irq_direction_output(ts, ts->client->addr == 0x14);
+-	if (error)
+-		goto error;
++	if (!device_property_read_bool(&ts->client->dev, "dont-drive-irq-for-address-configuration"))
++	{
++		/* HIGH: 0x28/0x29, LOW: 0xBA/0xBB */
++		error = goodix_irq_direction_output(ts, ts->client->addr == 0x14);
++		if (error)
++			goto error;
++	}
+ 
+ 	usleep_range(100, 2000);		/* T3: > 100us */
+ 
+@@ -780,15 +783,18 @@ int goodix_reset_no_int_sync(struct goodix_ts_data *ts)
+ 
+ 	usleep_range(6000, 10000);		/* T4: > 5ms */
+ 
+-	/*
+-	 * Put the reset pin back in to input / high-impedance mode to save
+-	 * power. Only do this in the non ACPI case since some ACPI boards
+-	 * don't have a pull-up, so there the reset pin must stay active-high.
+-	 */
+-	if (ts->irq_pin_access_method == IRQ_PIN_ACCESS_GPIO) {
+-		error = gpiod_direction_input(ts->gpiod_rst);
+-		if (error)
+-			goto error;
++	if (!device_property_read_bool(&ts->client->dev, "dont-release-reset"))
++	{
++		/*
++		* Put the reset pin back in to input / high-impedance mode to save
++		* power. Only do this in the non ACPI case since some ACPI boards
++		* don't have a pull-up, so there the reset pin must stay active-high.
++		*/
++		if (ts->irq_pin_access_method == IRQ_PIN_ACCESS_GPIO) {
++			error = gpiod_direction_input(ts->gpiod_rst);
++			if (error)
++				goto error;
++		}
+ 	}
+ 
+ 	return 0;
