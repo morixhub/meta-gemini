@@ -1,0 +1,221 @@
+diff --git a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+index 750b682449c7..98b85a532034 100644
+--- a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
++++ b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+@@ -38,6 +38,9 @@ struct ds070boe30t_panel {
+ 
+ 	bool prepared;
+ 	bool enabled;
++
++	bool updn;
++	bool shlr;
+ };
+ 
+ static inline struct ds070boe30t_panel *panel_to_ds070boe30t_panel(struct drm_panel *panel)
+@@ -183,6 +186,159 @@ static const struct drm_panel_funcs ds070boe30t_panel_funcs = {
+ 	.unprepare	= ds070boe30t_panel_unprepare,
+ };
+ 
++static ssize_t read_updn(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct mipi_dsi_device *dsi;
++	struct ds070boe30t_panel *ctx;
++
++	/* Retrieve driver data */
++	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
++
++	if(!dsi)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Retrieve panel data */
++	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++
++	if(!ctx)
++	{
++		dev_err(dev, "<%s> can't get panel data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Check GPIO availability */
++	if (IS_ERR(ctx->gpios.updn))
++	{
++		dev_err(dev, "<%s> updn GPIO not available\n", __func__);
++		return -EINVAL;
++	}
++
++	return scnprintf(buf, PAGE_SIZE, "%d\n", (ctx->updn ? 1 : 0));
++}
++
++static ssize_t write_updn(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++	struct mipi_dsi_device *dsi;
++	struct ds070boe30t_panel *ctx;
++
++	/* Retrieve driver data */
++	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
++
++	if(!dsi)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Retrieve panel data */
++	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++
++	if(!ctx)
++	{
++		dev_err(dev, "<%s> can't get panel data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Check GPIO availability */
++	if (IS_ERR(ctx->gpios.updn))
++	{
++		dev_err(dev, "<%s> updn GPIO not available\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Set status */
++	ctx->updn = (count > 0 && buf[0] == '1');
++
++	/* Set GPIO */
++	gpiod_set_value(ctx->gpios.updn, (ctx->updn ? 1 : 0));
++
++	// Dump
++	dev_info(dev, "<%s> updn set to %d\n", __func__, ctx->updn);
++
++	return count;
++}
++
++static ssize_t read_shlr(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct mipi_dsi_device *dsi;
++	struct ds070boe30t_panel *ctx;
++
++	/* Retrieve driver data */
++	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
++
++	if(!dsi)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Retrieve panel data */
++	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++
++	if(!ctx)
++	{
++		dev_err(dev, "<%s> can't get panel data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Check GPIO availability */
++	if (IS_ERR(ctx->gpios.shlr))
++	{
++		dev_err(dev, "<%s> shlr GPIO not available\n", __func__);
++		return -EINVAL;
++	}
++
++	return scnprintf(buf, PAGE_SIZE, "%d\n", (ctx->shlr ? 1 : 0));
++}
++
++static ssize_t write_shlr(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++	struct mipi_dsi_device *dsi;
++	struct ds070boe30t_panel *ctx;
++
++	/* Retrieve driver data */
++	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
++
++	if(!dsi)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Retrieve panel data */
++	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++
++	if(!ctx)
++	{
++		dev_err(dev, "<%s> can't get panel data\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Check GPIO availability */
++	if (IS_ERR(ctx->gpios.shlr))
++	{
++		dev_err(dev, "<%s> updn GPIO not available\n", __func__);
++		return -EINVAL;
++	}
++
++	/* Set status */
++	ctx->shlr = (count > 0 && buf[0] == '1');
++
++	/* Set GPIO */
++	gpiod_set_value(ctx->gpios.shlr, (ctx->shlr ? 1 : 0));
++
++	// Dump
++	dev_info(dev, "<%s> shlr set to %d\n", __func__, ctx->shlr);
++
++	return count;
++}
++
++static DEVICE_ATTR(updn, 0644, read_updn, write_updn);
++static DEVICE_ATTR(shlr, 0644, read_shlr, write_shlr);
++
+ static int ds070boe30t_panel_dsi_probe(struct mipi_dsi_device *dsi)
+ {
+ 	struct ds070boe30t_panel *ctx;
+@@ -214,28 +370,17 @@ static int ds070boe30t_panel_dsi_probe(struct mipi_dsi_device *dsi)
+ 		return PTR_ERR(ctx->gpios.power);
+ 	}
+ 
+-	/*
+-	 * We don't change the state of that GPIO later on but we need
+-	 * to force it into a low state.
+-	 */
+ 	ctx->gpios.updn = devm_gpiod_get_optional(&dsi->dev, "updn", GPIOD_OUT_LOW);
++	if (IS_ERR(ctx->gpios.updn))
++		dev_warn(&dsi->dev, "Couldn't get updn GPIO: function won't be available\n");
++	else
++		device_create_file(&dsi->dev, &dev_attr_updn);
+ 
+-	/*//!! 
+-	if (IS_ERR(ctx->gpios.updn)) {
+-		dev_err(&dsi->dev, "Couldn't get our updn GPIO\n");
+-		return PTR_ERR(ctx->gpios.updn);
+-	} */
+-
+-	/*
+-	 * We don't change the state of that GPIO later on but we need
+-	 * to force it into a low state.
+-	 */
+ 	ctx->gpios.shlr = devm_gpiod_get_optional(&dsi->dev, "shlr", GPIOD_OUT_LOW);
+-	/*//!!
+-	if (IS_ERR(ctx->gpios.shlr)) {
+-		dev_err(&dsi->dev, "Couldn't get our shlr GPIO\n");
+-		return PTR_ERR(ctx->gpios.shlr);
+-	}*/
++	if (IS_ERR(ctx->gpios.shlr))
++		dev_warn(&dsi->dev, "Couldn't get shlr GPIO: function won't be availablel\n");
++	else
++		device_create_file(&dsi->dev, &dev_attr_shlr);
+ 
+ 	ret = drm_panel_of_backlight(&ctx->panel);
+ 	if (ret)
+@@ -260,6 +405,9 @@ static void ds070boe30t_panel_dsi_remove(struct mipi_dsi_device *dsi)
+ {
+ 	struct ds070boe30t_panel *ctx = mipi_dsi_get_drvdata(dsi);
+ 
++	device_remove_file(&dsi->dev, &dev_attr_updn);
++	device_remove_file(&dsi->dev, &dev_attr_shlr);
++
+ 	mipi_dsi_detach(dsi);
+ 	drm_panel_remove(&ctx->panel);
+ }

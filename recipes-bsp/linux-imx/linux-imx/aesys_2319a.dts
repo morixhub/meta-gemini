@@ -1002,15 +1002,17 @@
 &mipi_dsi {
 	status = "okay";
 
+	/**
 	port@1 {
 		mipi_dsi_panel_out: endpoint {
 			remote-endpoint = <&panel_in>;
+			attach-bridge;
 		};
-	};
+	}; */
 
-	panel@1 {
+	panel@0 {
 		compatible = "disen,ds070boe30t";
-		reg = <1>;
+		reg = <0>;
 		reset-gpios = <&gpio4 26 GPIO_ACTIVE_HIGH>;
 		power-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>;
 		updn-gpios = <&gpio4 14 GPIO_ACTIVE_HIGH>;
@@ -1021,11 +1023,12 @@
 		backlight = <&dsi_backlight>;
 		status = "okay";
 
+		/**
 		port {
 			panel_in: endpoint {
 				remote-endpoint = <&mipi_dsi_panel_out>;
 			};
-		};
+		}; */
 	};
 
 	/**
