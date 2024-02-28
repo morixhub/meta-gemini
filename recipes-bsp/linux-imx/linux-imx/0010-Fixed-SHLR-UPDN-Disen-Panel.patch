@@ -1,0 +1,111 @@
+diff --git a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+index 98b85a532034..a4fddda783f8 100644
+--- a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
++++ b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
+@@ -188,20 +188,10 @@ static const struct drm_panel_funcs ds070boe30t_panel_funcs = {
+ 
+ static ssize_t read_updn(struct device *dev, struct device_attribute *attr, char *buf)
+ {
+-	struct mipi_dsi_device *dsi;
+ 	struct ds070boe30t_panel *ctx;
+ 
+ 	/* Retrieve driver data */
+-	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
+-
+-	if(!dsi)
+-	{
+-		dev_err(dev, "<%s> can't get driver data\n", __func__);
+-		return -EINVAL;
+-	}
+-
+-	/* Retrieve panel data */
+-	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++	ctx = dev_get_drvdata(dev);
+ 
+ 	if(!ctx)
+ 	{
+@@ -221,20 +211,10 @@ static ssize_t read_updn(struct device *dev, struct device_attribute *attr, char
+ 
+ static ssize_t write_updn(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+ {
+-	struct mipi_dsi_device *dsi;
+ 	struct ds070boe30t_panel *ctx;
+ 
+ 	/* Retrieve driver data */
+-	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
+-
+-	if(!dsi)
+-	{
+-		dev_err(dev, "<%s> can't get driver data\n", __func__);
+-		return -EINVAL;
+-	}
+-
+-	/* Retrieve panel data */
+-	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++	ctx = dev_get_drvdata(dev);
+ 
+ 	if(!ctx)
+ 	{
+@@ -263,20 +243,10 @@ static ssize_t write_updn(struct device *dev, struct device_attribute *attr, con
+ 
+ static ssize_t read_shlr(struct device *dev, struct device_attribute *attr, char *buf)
+ {
+-	struct mipi_dsi_device *dsi;
+ 	struct ds070boe30t_panel *ctx;
+ 
+ 	/* Retrieve driver data */
+-	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
+-
+-	if(!dsi)
+-	{
+-		dev_err(dev, "<%s> can't get driver data\n", __func__);
+-		return -EINVAL;
+-	}
+-
+-	/* Retrieve panel data */
+-	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++	ctx = dev_get_drvdata(dev);
+ 
+ 	if(!ctx)
+ 	{
+@@ -296,20 +266,10 @@ static ssize_t read_shlr(struct device *dev, struct device_attribute *attr, char
+ 
+ static ssize_t write_shlr(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+ {
+-	struct mipi_dsi_device *dsi;
+ 	struct ds070boe30t_panel *ctx;
+ 
+ 	/* Retrieve driver data */
+-	dsi = (struct mipi_dsi_device*)dev_get_drvdata(dev);
+-
+-	if(!dsi)
+-	{
+-		dev_err(dev, "<%s> can't get driver data\n", __func__);
+-		return -EINVAL;
+-	}
+-
+-	/* Retrieve panel data */
+-	ctx = (struct ds070boe30t_panel*)mipi_dsi_get_drvdata(dsi);
++	ctx = dev_get_drvdata(dev);
+ 
+ 	if(!ctx)
+ 	{
+@@ -358,6 +318,9 @@ static int ds070boe30t_panel_dsi_probe(struct mipi_dsi_device *dsi)
+ 	drm_panel_init(&ctx->panel, &dsi->dev, &ds070boe30t_panel_funcs,
+ 		       DRM_MODE_CONNECTOR_DSI);
+ 
++	/* Set default values */
++	ctx->shlr = 1;
++
+ 	ctx->gpios.reset = devm_gpiod_get(&dsi->dev, "reset", GPIOD_OUT_LOW);
+ 	if (IS_ERR(ctx->gpios.reset)) {
+ 		dev_err(&dsi->dev, "Couldn't get our reset GPIO\n");
+@@ -376,7 +339,7 @@ static int ds070boe30t_panel_dsi_probe(struct mipi_dsi_device *dsi)
+ 	else
+ 		device_create_file(&dsi->dev, &dev_attr_updn);
+ 
+-	ctx->gpios.shlr = devm_gpiod_get_optional(&dsi->dev, "shlr", GPIOD_OUT_LOW);
++	ctx->gpios.shlr = devm_gpiod_get_optional(&dsi->dev, "shlr", GPIOD_OUT_HIGH);
+ 	if (IS_ERR(ctx->gpios.shlr))
+ 		dev_warn(&dsi->dev, "Couldn't get shlr GPIO: function won't be availablel\n");
+ 	else
