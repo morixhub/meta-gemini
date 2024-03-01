@@ -45,12 +45,14 @@ This repositories is a bitbake meta-layer for gemini platform
 ### Image cooking
 - `bitbake aesys-hwtest-image`
 or
+- `bitbake aesys-qt6-image`
+or
 - `bitbake imx-image-full`
 
 
 # Useful notes
 ## Chromium settings
-- remove `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line)
+- remove `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line) (currently managed in `recipes-browser/chromium/chromium-ozone-wayland_%.bbappend`)
 - Chromium flags:
   - `#enable-rdrc=enabled`
   - `#canvas-oop-rasterization=enabled`
@@ -60,5 +62,6 @@ or
 - `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
 ## Qt6 toolchain
-- add `qtwebengine` (if requested) to `RDEPENDS_{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb`
+--> This has been currently managed in `recipes-qt/packagegroups/packagegroup-qt6-modules.bbappend` recipe
+- add `qtwebengine` (and others, if requested) to `RDEPENDS_{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb`
 - `bitbake meta-toolchain-qt6`
