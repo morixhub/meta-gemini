@@ -52,7 +52,7 @@ or
 
 # Useful notes
 ## Chromium settings
-- remove `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line) (currently managed in `recipes-browser/chromium/chromium-ozone-wayland_%.bbappend`)
+- remove `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line) (currently managed in `recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` recipe)
 - Chromium flags:
   - `#enable-rdrc=enabled`
   - `#canvas-oop-rasterization=enabled`
@@ -62,6 +62,5 @@ or
 - `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
 ## Qt6 toolchain
---> This has been currently managed in `recipes-qt/packagegroups/packagegroup-qt6-modules.bbappend` recipe
-- add `qtwebengine` (and others, if requested) to `RDEPENDS_{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb`
+- add `qtwebengine` (and others, if requested) to `RDEPENDS_{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb` (currently managed in `recipes-qt/packagegroups/packagegroup-qt6-modules.bbappend` recipe)
 - `bitbake meta-toolchain-qt6`
