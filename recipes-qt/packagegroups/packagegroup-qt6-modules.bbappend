@@ -1,5 +1,5 @@
 # Add dependencies
-RDEPENDS_{PN}:append = " \
+RDEPENDS:${PN}:append = " \
     qtmqtt \
     qtmultimedia \
     qtserialport \

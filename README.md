@@ -62,5 +62,5 @@ or
 - `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
 ## Qt6 toolchain
-- add `qtwebengine` (and others, if requested) to `RDEPENDS_{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb` (currently managed in `recipes-qt/packagegroups/packagegroup-qt6-modules.bbappend` recipe)
+- add `qtwebengine` (and others, if requested) to `RDEPENDS:{PN}` in `sources/meta-qt6/recipes-qt/packagegroups/packagegroup-qt6-modules.bb` (currently managed in `recipes-qt/packagegroups/packagegroup-qt6-modules.bbappend` recipe)
 - `bitbake meta-toolchain-qt6`
