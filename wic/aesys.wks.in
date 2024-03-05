@@ -13,10 +13,10 @@
 # 0 |        8MiB          72MiB       72MiB + 512 MiB     72MiB + 512MiB + rootfs + IMAGE_EXTRA_SPACE (default 10MiB)
 #   ${IMX_BOOT_SEEK} 32 or 33kiB, see reference manual
 #
-part u-boot --source rawcopy --sourceparams="file=imx-boot" --ondisk mmcblk --no-table --align ${IMX_BOOT_SEEK}
-part /boot --source bootimg-partition --ondisk mmcblk --fstype=vfat --label boot --active --align 8192 --size 64
-part / --source rootfs --ondisk mmcblk --fstype=ext4 --label root --exclude-path=var/ --align 8192 --size 6G
-part /var --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/var --ondisk mmcblk --fstype=ext4 --label var --align 8192 --size 512M
-part /data --ondisk mmcblk --fstype=ext4 --label data --align 8192 --size 2G
+part u-boot --source rawcopy --sourceparams="file=imx-boot" --ondisk mmcblk1 --no-table --align ${IMX_BOOT_SEEK}
+part /boot --source bootimg-partition --ondisk mmcblk1 --fstype=vfat --label boot --active --align 8192 --size 64M
+part / --source rootfs --ondisk mmcblk1 --fstype=ext4 --label root --exclude-path=var/ --align 8192 --size 6G
+part /var --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/var --ondisk mmcblk1 --fstype=ext4 --label var --align 8192 --size 512M
+part /data --ondisk mmcblk1 --fstype=ext4 --label data --align 8192 --size 64M --fsoptions="defaults,x-systemd.growfs"
 
 bootloader --ptable msdos

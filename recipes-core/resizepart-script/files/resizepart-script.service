@@ -1,0 +1,10 @@
+[Unit]
+Description=First boot resize-part script
+After=data.mount
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c 'sleep 5 ; /usr/sbin/resizepart-script.sh'
+
+[Install]
+WantedBy=multi-user.target

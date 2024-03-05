@@ -4,5 +4,5 @@ SUMMARY = "Aesys packagegroup - base"
 inherit packagegroup
 
 # Add basic utils
-RDEPENDS:${PN} = "ethtool i2c-tools iperf3 util-linux minicom nano"
+RDEPENDS:${PN} = "ethtool i2c-tools iperf3 util-linux minicom nano resizepart-script"
 
