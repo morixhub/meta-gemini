@@ -1,0 +1,66 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright 2020 NXP
+ */
+
+/dts-v1/;
+
+#include "aesys_2319a.dts"
+
+/ {
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		m7_reserved: m4@80000000 {
+			no-map;
+			reg = <0 0x80000000 0 0x1000000>;
+		};
+
+		m7_vdev0vring0: vdev0vring0@55000000 {
+			reg = <0 0x55000000 0 0x8000>;
+			no-map;
+		};
+
+		m7_vdev0vring1: vdev0vring1@55008000 {
+			reg = <0 0x55008000 0 0x8000>;
+			no-map;
+		};
+
+		m7_vdevbuffer: vdevbuffer@55400000 {
+			compatible = "shared-dma-pool";
+			reg = <0 0x55400000 0 0x100000>;
+			no-map;
+		};
+
+		m7_rsc_table: rsc-table@550ff000 {
+			reg = <0 0x550ff000 0 0x1000>;
+			no-map;
+		};
+	};
+
+	imx8mp-cm7 {
+		compatible = "fsl,imx8mp-cm7";
+		rsc-da = <0x55000000>;
+		clocks = <&clk IMX8MP_CLK_M7_DIV>,
+			 <&audio_blk_ctrl IMX8MP_CLK_AUDIO_BLK_CTRL_AUDPLL_ROOT>;
+		clock-names = "core", "audio";
+		mbox-names = "tx", "rx", "rxdb";
+		mboxes = <&mu 0 1
+			  &mu 1 1
+			  &mu 3 1>;
+		memory-region = <&m7_vdevbuffer>, <&m7_vdev0vring0>, <&m7_vdev0vring1>, <&m7_rsc_table>;
+		status = "okay";
+		fsl,startup-delay-ms = <500>;
+	};
+};
+
+/*
+ * ATTENTION: M7 may use IPs like below
+ * UART4
+ */
+
+&uart4 {
+	status = "disabled";
+};
