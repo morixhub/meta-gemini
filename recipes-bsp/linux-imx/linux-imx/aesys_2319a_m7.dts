@@ -8,37 +8,39 @@
 #include "aesys_2319a.dts"
 
 &resmem {
+	// M7 RAM
 	m7_reserved: m7@75000000 {
 		no-map;
 		reg = <0 0x75000000 0 0x1000000>;
 	};
 
-	m7_vdev0vring0: vdev0vring0@74ff8000 {
-		reg = <0 0x74ff8000 0 0x8000>;
-		no-map;
-	};
-
-	m7_vdev0vring1: vdev0vring1@74ff0000 {
+	// IMX Remote Proc; tx buffer 32KiB
+	m7_vdev0vring0: vdev0vring0@74ff0000 {
 		reg = <0 0x74ff0000 0 0x8000>;
 		no-map;
 	};
 
-	m7_vdevbuffer: vdevbuffer@74ef0000 {
-		compatible = "shared-dma-pool";
-		reg = <0 0x74ef0000 0 0x100000>;
+	// IMX Remote Proc; rx buffer 32KiB
+	m7_vdev0vring1: vdev0vring1@74ff8000 {
+		reg = <0 0x74ff8000 0 0x8000>;
 		no-map;
 	};
 
+	// M7 Resource table
 	m7_rsc_table: rsc-table@74eef000 {
-		reg = <0 0x74eef000 0 0x1000>;
+		reg = <0 0x74eef000 0 0x1000>;	// <-- MUST MATCH THE LOCATION WHERE M7 CODE COPIES THE RESOURCES
 		no-map;
 	};
 
+	// M7 TCM instruction memory
+    // Linux/Cortex-A physically can't access this area of memory
 	m7_itcm: m7-itcm@0x7e0000 {
 		reg = <0 0x7e0000 0 0x20000>;
 		no-map;
 	};
 
+	// M7 TCM data memory
+    // Linux/Cortex-A physically can't access this area of memory
 	m7_dtcm: m7-dtcm@0x800000 {
 		reg = <0 0x800000 0 0x20000>;
 		no-map;
@@ -49,14 +51,15 @@
 / {
 	imx8mp-cm7 {
 		compatible = "fsl,imx8mp-cm7";
-		rsc-da = <0x74ff8000>;
+		rsc-da = <0x74ff0000>;		// <-- IT MUST POINT TO THE BASE OF THE FIRST VDEV0 RING AND
+									//     MUST MATCH WITH VDEV0_VRING_BASE IN M7 CODE
 		clocks = <&clk IMX8MP_CLK_M7_DIV>;
 		clock-names = "core";
 		mbox-names = "tx", "rx", "rxdb";
 		mboxes = <&mu 0 1
 			  &mu 1 1
 			  &mu 3 1>;
-		memory-region = <&m7_vdevbuffer>, <&m7_vdev0vring0>, <&m7_vdev0vring1>, <&m7_rsc_table>, <&m7_itcm>, <&m7_dtcm>;
+		memory-region = <&m7_reserved>, <&m7_vdev0vring0>, <&m7_vdev0vring1>, <&m7_rsc_table>, <&m7_itcm>, <&m7_dtcm>;
 		status = "okay";
 		fsl,startup-delay-ms = <500>;
 		fsl,auto-boot;
