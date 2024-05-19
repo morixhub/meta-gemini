@@ -6,5 +6,6 @@ RDEPENDS:${PN}:append = " \
     qtserialbus \
     qtwebengine \
     qtwebsockets \
-    qtwebview"
+    qtwebview \
+    qt5compat"
 
