@@ -1,0 +1,27 @@
+diff --git a/drivers/rpmsg/imx_rpmsg_tty.c b/drivers/rpmsg/imx_rpmsg_tty.c
+index 6114c686c388..fbd3dfe34301 100644
+--- a/drivers/rpmsg/imx_rpmsg_tty.c
++++ b/drivers/rpmsg/imx_rpmsg_tty.c
+@@ -15,7 +15,7 @@
+ 
+ /* this needs to be less then (RPMSG_BUF_SIZE - sizeof(struct rpmsg_hdr)) */
+ #define RPMSG_MAX_SIZE		256
+-#define MSG		"hello world!"
++/* #define MSG		"hello world!" */
+ 
+ /*
+  * struct rpmsgtty_port - Wrapper struct for imx rpmsg tty port.
+@@ -176,11 +176,12 @@ static int rpmsg_tty_probe(struct rpmsg_device *rpdev)
+ 	 * send a message to our remote processor, and tell remote
+ 	 * processor about this channel
+ 	 */
++	/*
+ 	ret = rpmsg_send(rpdev->ept, MSG, strlen(MSG));
+ 	if (ret) {
+ 		dev_err(&rpdev->dev, "rpmsg_send failed: %d\n", ret);
+ 		goto error;
+-	}
++	} */
+ 
+ 	return 0;
+ 
