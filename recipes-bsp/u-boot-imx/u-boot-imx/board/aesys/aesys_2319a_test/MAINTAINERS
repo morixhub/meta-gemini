@@ -1,0 +1,6 @@
+AESYS 2319A TEST board
+M:	Morix Dev <morix.dev@gmail.com>
+S:	Maintained
+F:	board/aesys/aesys_2319a_test/
+F:	include/configs/aesys_2319a_test.h
+F:	configs/aesys_2319a_test_defconfig

@@ -10,9 +10,15 @@ COPYSOURCE := "${THISDIR}/${PN}"
 do_after_patch() {
 	cp "${COPYSOURCE}/aesys_2319a.dts" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/aesys_2319a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_bootloader_pubkeys.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/configs/aesys_2319a_defconfig" "${WORKDIR}/git/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2319a.h" "${WORKDIR}/git/include/configs/"
+
+	cp "${COPYSOURCE}/aesys_2319a_test.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2319a_test-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2319a_test_defconfig" "${WORKDIR}/git/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2319a_test.h" "${WORKDIR}/git/include/configs/"
+
+	cp "${COPYSOURCE}/aesys_bootloader_pubkeys.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp -rf "${COPYSOURCE}/board/aesys" "${WORKDIR}/git/board/"
 
 	# Create symlink to freescale common assets
