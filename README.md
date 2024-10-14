@@ -2,14 +2,16 @@
 
 This repositories is a bitbake meta-layer for gemini platform.
 
-Please checkout the proper branche, depending on Yocto and NXP i.MX release, based on the following table:
+While checking things out, please verify that everything is according to the following versioning table:
 
 
 | layer branch | Yocto release | NXP i.MX release manifest | Notes |
 | :----------: | :-----------: | :-----------------------: | :---- |
+| 2024.1       | scarthgap     | 6.6.36-2.1.0              | |
 | master       | mickledore    | legacy                    | |
-| 2024.1       | 6.6.36-2.1.0  | scarthgap                 | |
 
+
+Instructions contained in this README should always be aligned with the most recent branch (the first in the table); however please verify: you've been warned!
 
 
 ## Setup environment
@@ -42,21 +44,16 @@ Please checkout the proper branche, depending on Yocto and NXP i.MX release, bas
 - `bitbake-layers add-layer meta-gemini`
 
 ### Yocto environment setup
-- `DISTRO=fsl-imx-wayland MACHINE=aesys-2319a source imx-setup-release.sh -b build-wayland`
+- `DISTRO=fsl-imx-wayland MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build`
 - Add following lines to `conf/local.conf`:
-  - `BB_NUMBER_THREADS = "15"`
-  - `PARALLEL_MAKE = "-j 15"`
-  - `CORE_IMAGE_EXTRA_INSTALL += "chromium-ozone-wayland"`
-  - `IMAGE_INSTALL:append = "qtwebengine qtwebsockets qtmqtt qtmultimedia qtserialport qtserialbus qtwebview"`
   - `BBMASK += "/meta-browser/meta-chromium/recipes-browser/chromium/gn-native_.*\.bb"` (this part is requested for forcing `qtwebengine` to use its own gn-native instead the one coming from chromium; but this settings is not compatible with chromium itself... so firstly compile the image without this line and without `qtwebengine`; then after the image is cooked, add this line and `qtwebengine` and compile the image again)
   
-### Image cooking
-- `bitbake aesys-hwtest-image`
-or
-- `bitbake aesys-qt6-image`
-or
-- `bitbake imx-image-full`
+### Multiconfig setup
+- `cp -rf ../sources/meta-gemini/multiconfig .`
 
+### Image cooking
+Image cooking takes advantage of BitBake's multiconfig features, so command can be placed in the format `mc:<config_name>:<recipe>`, such as:
+- `bitbake mc:aesys-2319a:aesys-qt6-image`
 
 # Useful notes
 ## Chromium settings
