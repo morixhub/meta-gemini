@@ -1,6 +1,14 @@
 # meta-gemini
 
-This repositories is a bitbake meta-layer for gemini platform
+This repositories is a bitbake meta-layer for gemini platform.
+
+Please checkout the proper branche, depending on Yocto and NXP i.MX release, based on the following table:
+
+
+| layer branch | Yocto release | NXP i.MX release manifest | Notes |
+| :----------: | :-----------: | :-----------------------: | :---- |
+| master       | mickledore    | legacy                    | |
+| 2024.1       | 6.6.36-2.1.0  | scarthgap                 | |
 
 
 
@@ -24,12 +32,12 @@ This repositories is a bitbake meta-layer for gemini platform
 ### Yocto preparation
 - `mkdir -p /data/imx-yocto-bsp`
 - `cd /data/imx-yocto-bsp`
-- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-langdale -m imx-6.1.55-2.2.0.xml` (verify latest release here)
+- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-scarthgap -m imx-6.6.36-2.1.0.xml`
 - `repo sync`
 
 ### meta-gemini preparation
 - `cd /data/imx-yocto-bsp`
-- `git clone https://github.com/morixhub/meta-gemini.git`
+- `git clone -b 2024.1 https://github.com/morixhub/meta-gemini.git`
 - `cd /data/imx-yocto-bsp/sources`
 - `bitbake-layers add-layer meta-gemini`
 
