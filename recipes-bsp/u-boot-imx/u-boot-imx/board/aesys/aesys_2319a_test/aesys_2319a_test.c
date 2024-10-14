@@ -23,7 +23,7 @@
 #include <spl.h>
 #include <asm/mach-imx/dma.h>
 #include <power/pmic.h>
-#include "../../freescale/common/tcpc.h"
+#include "../common/tcpc.h"
 #include <usb.h>
 #include <dwc3-uboot.h>
 #include <mmc.h>
@@ -63,6 +63,7 @@ struct efi_fw_image fw_images[] = {
 
 struct efi_capsule_update_info update_info = {
 	.dfu_string = "mmc 2=flash-bin raw 0 0x2000 mmcpart 1",
+	.num_images = ARRAY_SIZE(fw_images),
 	.images = fw_images,
 };
 
@@ -307,9 +308,9 @@ static struct dwc3_device dwc3_device_data = {
 	.power_down_scale = 2,
 };
 
-int usb_gadget_handle_interrupts(int index)
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
 {
-	dwc3_uboot_handle_interrupt(index);
+	dwc3_uboot_handle_interrupt(dev);
 	return 0;
 }
 
@@ -493,7 +494,7 @@ bool is_power_key_pressed(void) {
 
 #ifdef CONFIG_SPL_MMC
 #define UBOOT_RAW_SECTOR_OFFSET 0x40
-unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc)
+unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long raw_sect)
 {
 	u32 boot_dev = spl_boot_device();
 	switch (boot_dev) {

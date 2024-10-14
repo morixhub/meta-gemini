@@ -2,7 +2,8 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 SRC_URI += " file://0001-Fixed-SpiDev.patch"
 SRC_URI += " file://0002-BroadCom-Phy.patch"
-SRC_URI += " file://0003-BroadCom-Phy-Cleanup.patch"
+# Changes to previous patch, obsoleted the following line
+# SRC_URI += " file://0003-BroadCom-Phy-Cleanup.patch"
 SRC_URI += " file://0004-BroadCom-Phy-Avoid-Further-Access-to-DTS.patch"
 SRC_URI += " file://0005-Added-Disen-DRM-Panel.patch"
 SRC_URI += " file://0006-Fixed-Disen-DRM-Panel.patch"

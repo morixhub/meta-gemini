@@ -103,14 +103,14 @@ index acd3a8b1cb14..95ccf174db8b 100644
  					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_SPEED))
 @@ -509,13 +493,11 @@ static int bcm54xx_config_init(struct phy_device *phydev)
  
- 		val = BCM5482_SHD_LEDS1_LED1(mode[0]) |
- 			BCM5482_SHD_LEDS1_LED3(mode[1]);
+ 		val = BCM54XX_SHD_LEDS1_LED1(mode[0]) |
+ 			BCM54XX_SHD_LEDS1_LED3(mode[1]);
 -		printk(KERN_ERR "***** [9] %d\n", val); //!!
- 		bcm_phy_write_shadow(phydev, BCM5482_SHD_LEDS1, val);
+ 		bcm_phy_write_shadow(phydev, BCM54XX_SHD_LEDS1, val);
  
  		val = BCM_LED_MULTICOLOR_IN_PHASE |
- 			BCM5482_SHD_LEDS1_LED1(mcmode[0]) |
- 			BCM5482_SHD_LEDS1_LED3(mcmode[1]);
+ 			BCM54XX_SHD_LEDS1_LED1(mcmode[0]) |
+ 			BCM54XX_SHD_LEDS1_LED3(mcmode[1]);
 -		printk(KERN_ERR "***** [10] %d\n", val); //!!
  		bcm_phy_write_exp(phydev, BCM_EXP_MULTICOLOR, val);
  	}

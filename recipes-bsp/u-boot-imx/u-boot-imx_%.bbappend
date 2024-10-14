@@ -1,6 +1,7 @@
 # Core patches
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
-SRC_URI += " file://0001-Added-PLL-DIV-for-3600MTS.patch"
+# PLL-DIV for 3600MTS have been included in U-Boot mainline, so we can drop the following line
+# SRC_URI += " file://0001-Added-PLL-DIV-for-3600MTS.patch"
 SRC_URI += " file://0002-Added-Board-Target-Kconfig.patch"
 SRC_URI += " file://0003-Added-BroadCom-Phy-Leds-Configuration.patch"
 SRC_URI += " file://0004-FIT-Support-For-BootM.patch"

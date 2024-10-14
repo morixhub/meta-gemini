@@ -1,5 +1,5 @@
 diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
-index 566fcb8de7..ebc2952213 100644
+index 82e3bbef7dd..f34961fe8ba 100644
 --- a/drivers/net/phy/broadcom.c
 +++ b/drivers/net/phy/broadcom.c
 @@ -8,6 +8,7 @@
@@ -10,7 +10,7 @@ index 566fcb8de7..ebc2952213 100644
  
  /* Broadcom BCM54xx -- taken from linux sungem_phy */
  #define MIIM_BCM54xx_AUXCNTL			0x18
-@@ -20,20 +21,68 @@
+@@ -20,15 +21,25 @@
  #define MIIM_BCM54XX_SHD_WRITE			0x8000
  #define MIIM_BCM54XX_SHD_VAL(x)			((x & 0x1f) << 10)
  #define MIIM_BCM54XX_SHD_DATA(x)		((x & 0x3ff) << 0)
@@ -34,9 +34,11 @@ index 566fcb8de7..ebc2952213 100644
 +#define MIIM_BCM54XX_EXP_ER_MULTICOLOR_LED_SELECTOR_IN_PHASE (1 << 8)
 +
  #define MIIM_BCM_AUXCNTL_SHDWSEL_MISC	0x0007
- #define MIIM_BCM_AUXCNTL_ACTL_SMDSP_EN	0x0800
- 
- #define MIIM_BCM_CHANNEL_WIDTH    0x2000
+ #define MIIM_BCM_AUXCNTL_SHDWSEL_MISC_WIRESPEED_EN	0x0010
+ #define MIIM_BCM_AUXCNTL_SHDWSEL_MISC_RGMII_EN		0x0080
+@@ -42,6 +53,45 @@
+ #define BCM54810_SHD_CLK_CTL				0x3
+ #define BCM54810_SHD_CLK_CTL_GTXCLK_EN			BIT(9)
  
 +/*
 + * Broadcom LED source encodings.  These are used in BCM5461, BCM5481,
@@ -76,26 +78,29 @@ index 566fcb8de7..ebc2952213 100644
 +#define BCM_LED_MULTICOLOR_PROGRAM	0xa
 +
 +
- static void bcm_phy_write_misc(struct phy_device *phydev,
- 			       u16 reg, u16 chl, u16 value)
++
+ static int bcm54xx_auxctl_read(struct phy_device *phydev, u16 regnum)
  {
-@@ -62,6 +111,119 @@ static int bcm5461_config(struct phy_device *phydev)
- 	return 0;
- }
- 
-+/* Broadcom BCM5421 e BCM54210E */
-+static int bcm5421_config(struct phy_device *phydev)
-+{
+ 	/* The register must be written to both the Shadow Register Select and
+@@ -143,12 +193,118 @@ static int bcm5461_config(struct phy_device *phydev)
+ static int bcm54210e_config(struct phy_device *phydev)
+ {
+ 	int ret;
 +	int mode[2] = { BCM_LED_SRC_MULTICOLOR1, BCM_LED_SRC_MULTICOLOR1 };
 +	int mcmode[2] = { BCM_LED_MULTICOLOR_LINK_ACT, BCM_LED_MULTICOLOR_LINK_ACT };
 +	const char *func;
 +	const char *mcfunc;
 +	int val;
 +	ofnode node, leds, led;
-+
-+	genphy_config_aneg(phydev);
-+
-+	phy_reset(phydev);
+ 
+ 	ret = bcm54xx_config_clock_delay(phydev);
+ 	if (ret < 0)
+ 		return ret;
+ 
+-	return bcm5461_config(phydev);
++	ret = bcm5461_config(phydev);
++	if (ret < 0)
++		return ret;
 +
 +	/* Get PHY DT node */
 +	node = phy_get_ofnode(phydev);
@@ -194,53 +199,31 @@ index 566fcb8de7..ebc2952213 100644
 +	phy_write(phydev, MDIO_DEVAD_NONE, MIIM_BCM54XX_EXP_DATA, val);
 +
 +	return 0;
-+}
-+
+ }
+ 
  static int bcm54xx_parse_status(struct phy_device *phydev)
- {
- 	unsigned int mii_reg;
-@@ -323,6 +485,27 @@ static int bcm5482_startup(struct phy_device *phydev)
+@@ -400,6 +556,16 @@ static int bcm5482_startup(struct phy_device *phydev)
  	return bcm54xx_parse_status(phydev);
  }
  
-+static struct phy_driver BCM5421_driver = {
++U_BOOT_PHY_DRIVER(bcm5421) = {
 +	.name = "Broadcom BCM5421",
 +	.uid = 0x2060e0,
 +	.mask = 0xfffff0,
 +	.features = PHY_GBIT_FEATURES,
-+	.config = &bcm5421_config,
++	.config = &bcm54210e_config,
 +	.startup = &bcm54xx_startup,
 +	.shutdown = &genphy_shutdown,
 +};
 +
-+static struct phy_driver BCM54210E_driver = {
-+	.name = "Broadcom BCM54210E",
-+	.uid = 0x600d84a0,
-+	.mask = 0xfffff0,
-+	.features = PHY_GBIT_FEATURES,
-+	.config = &bcm5421_config,
-+	.startup = &bcm54xx_startup,
-+	.shutdown = &genphy_shutdown,
-+};
-+
-+
- static struct phy_driver BCM5461S_driver = {
- 	.name = "Broadcom BCM5461S",
- 	.uid = 0x2060c0,
-@@ -365,6 +548,8 @@ static struct phy_driver BCM_CYGNUS_driver = {
- 
- int phy_broadcom_init(void)
- {
-+	phy_register(&BCM5421_driver);
-+	phy_register(&BCM54210E_driver);
- 	phy_register(&BCM5482S_driver);
- 	phy_register(&BCM5464S_driver);
- 	phy_register(&BCM5461S_driver);
+ U_BOOT_PHY_DRIVER(bcm54210e) = {
+ 	.name = "Broadcom BCM54210E",
+ 	.uid = 0x600d84a0,
 diff --git a/include/dt-bindings/leds/common.h b/include/dt-bindings/leds/common.h
-index 3be89a7c20..b8e2661298 100644
+index 9a0d33d027f..13586a492d3 100644
 --- a/include/dt-bindings/leds/common.h
 +++ b/include/dt-bindings/leds/common.h
-@@ -98,4 +98,27 @@
+@@ -103,4 +103,27 @@
  #define LED_FUNCTION_WLAN "wlan"
  #define LED_FUNCTION_WPS "wps"
  

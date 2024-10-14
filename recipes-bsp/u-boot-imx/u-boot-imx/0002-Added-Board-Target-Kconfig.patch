@@ -1,8 +1,21 @@
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index eaf2c5d3df7..f12b6066dc7 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -2380,6 +2380,8 @@ source "board/phytium/durian/Kconfig"
+ source "board/phytium/pomelo/Kconfig"
+ source "board/phytium/pe2201/Kconfig"
+ source "board/xen/xenguest_arm64/Kconfig"
++source "board/aesys/aesys_2319a/Kconfig"
++source "board/aesys/aesys_2319a_test/Kconfig"
+ 
+ source "arch/arm/Kconfig.debug"
+ 
 diff --git a/arch/arm/mach-imx/imx8m/Kconfig b/arch/arm/mach-imx/imx8m/Kconfig
-index b124027910..80f4e3efd4 100644
+index 473cfa8e5e3..64a2541686d 100644
 --- a/arch/arm/mach-imx/imx8m/Kconfig
 +++ b/arch/arm/mach-imx/imx8m/Kconfig
-@@ -318,6 +318,26 @@ config TARGET_IMX8MP_EVK
+@@ -315,6 +315,26 @@ config TARGET_IMX8MP_EVK
  	select ARCH_MISC_INIT
  	select SPL_CRYPTO if SPL
  
@@ -28,16 +41,4 @@ index b124027910..80f4e3efd4 100644
 +
  config TARGET_IMX8MP_VENICE
  	bool "Support Gateworks Venice iMX8M Plus module"
- 	select BINMAN
-diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index c82ca6506b..5b36e6d522 100644
---- a/arch/arm/Kconfig
-+++ b/arch/arm/Kconfig
-@@ -2311,6 +2321,8 @@ source "board/vscom/baltos/Kconfig"
- source "board/phytium/durian/Kconfig"
- source "board/phytium/pomelo/Kconfig"
- source "board/xen/xenguest_arm64/Kconfig"
-+source "board/aesys/aesys_2319a/Kconfig"
-+source "board/aesys/aesys_2319a_test/Kconfig"
- 
- source "arch/arm/Kconfig.debug"
+ 	select IMX8MP
