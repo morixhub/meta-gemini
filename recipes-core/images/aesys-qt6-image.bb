@@ -1,11 +1,18 @@
-SUMMARY = "Aesys image for HW testing (with multimedia)"
+SUMMARY = "Aesys image for production (Qt6+multimedia)"
 
 # Include basic features from the hwtest image
 require aesys-image.bb
 
+# Add overlayfs
+IMAGE_FEATURES += "read-only-rootfs"
+IMAGE_INSTALL += " \
+    aesys-overlayfs \
+"
+
 # Add chromium browser to the image
 IMAGE_INSTALL += " \
-    chromium-ozone-wayland"
+    chromium-ozone-wayland \
+"
 
 # Add additional Qt packages
 IMAGE_INSTALL += " \
@@ -13,19 +20,21 @@ IMAGE_INSTALL += " \
     qtmultimedia \
     qtserialport \
     qtserialbus \
-    qtwebsockets"
+    qtwebsockets \
+"
 
 # Add QtWebEngine
 # IMAGE_INSTALL += " \
 #    qtwebengine \
-#    qtwebview"
+#    qtwebview \
+# "
 
 
 # THE REMAINING PART OF THIS RECIPE IS TAKEN DIRECTLY FROM imx-image-full RECIPE FROM NXP
-# Include features from the IMX multimedia image
+# (sources/meta-imx/meta-imx-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-full.bb)
+
 require recipes-fsl/images/imx-image-multimedia.bb
 
-# Add support to Qt6
 inherit populate_sdk_qt6
 
 CONFLICT_DISTRO_FEATURES = "directfb"
@@ -36,7 +45,9 @@ IMAGE_INSTALL += " \
     packagegroup-qt6-imx \
     tzdata \
     ${IMAGE_INSTALL_OPENCV} \
-    ${IMAGE_INSTALL_PARSEC}"
+    ${IMAGE_INSTALL_PARSEC} \
+    ${IMAGE_INSTALL_PKCS11TOOL} \
+"
 
 IMAGE_INSTALL_OPENCV              = ""
 IMAGE_INSTALL_OPENCV:imxgpu       = "${IMAGE_INSTALL_OPENCV_PKGS}"
@@ -53,3 +64,8 @@ IMAGE_INSTALL_PARSEC = " \
     softhsm \
     os-release \
     ${@bb.utils.contains('MACHINE_FEATURES', 'optee', 'optee-client optee-os', '', d)}"
+
+IMAGE_INSTALL_PKCS11TOOL = ""
+IMAGE_INSTALL_PKCS11TOOL:mx8-nxp-bsp = "opensc pkcs11-provider"
+IMAGE_INSTALL_PKCS11TOOL:mx9-nxp-bsp = "opensc pkcs11-provider"
+

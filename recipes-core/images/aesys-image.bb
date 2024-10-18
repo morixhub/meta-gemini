@@ -1,4 +1,4 @@
-SUMMARY = "Aesys production image"
+SUMMARY = "Aesys base image for production purposes"
 
 inherit core-image
 

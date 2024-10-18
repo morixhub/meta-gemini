@@ -1,4 +1,4 @@
-DESCRIPTION = "Aesys HW base packagegroup"
+DESCRIPTION = "Aesys base packagegroup"
 SUMMARY = "Aesys packagegroup - base"
 
 inherit packagegroup
