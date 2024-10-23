@@ -3,19 +3,13 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 do_log() {
-	echo "SecureFS:" $1 > /dev/kmsg
+	echo "INITRAM:" $1 > /dev/kmsg
 }
 
 do_panic() {
 	do_log "Error detected while securing root filesystem: entering console for debugging... Type ENTER to get the prompt" ;
 	/bin/sh ;
 }
-
-# do_mount_fs() {
-#	grep -q "$1" /proc/filesystems || return
-#	test -d "$2" || mkdir -p "$2"
-#	mount -t "$1" "$1" "$2"
-# }
 
 # Log
 do_log "Starting...";
@@ -27,31 +21,19 @@ mkdir -p /dev
 
 mkdir -p /run
 mkdir -p /secure
-mkdir -p /overlayroot
-mkdir -p /overlay.overlayroot
 
 mkdir -p /rootfs
 
 # Mount aux filesystems
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
-# do_mount_fs sysfs /sys
-# do_mount_fs debugfs /sys/kernel/debug
 mount -t devtmpfs dev /dev
-# do_mount_fs devtmpfs /dev
-# do_mount_fs devpts /dev/pts
-# do_mount_fs tmpfs /dev/shm
 
 # Wait for block device
 if [ ! -b /dev/mmcblk1p1 ] || [ ! -b /dev/mmcblk1p2 ] || [ ! -b /dev/mmcblk1p3 ] || [ ! -b /dev/mmcblk1p4 ]; then
 	do_log "Waiting for block device..." ;
 	sleep 1 ;
 fi
-
-# Mount temporary filesystems
-mount -t tmpfs tmpfs /run
-mount -t tmpfs tmpfs /secure
-mount -t tmpfs tmpfs /overlay.overlayroot
 
 # Mount root file system
 mount -t ext4 -o ro /dev/mmcblk1p2 /rootfs
@@ -68,20 +50,28 @@ do
 	fi
 done
 
-# Mount var/data partitions already in-place to rootfs
-# if [ ! -d /rootfs/var ]; then
-#	do_log "Creating rootfs var directory..." ;
-#	mkdir /rootfs/var ;
-# fi
-
-# if [ ! -d /rootfs/data ]; then
-#	do_log "Creating rootfs data directory..." ;
-#	mkdir /rootfs/data ;
-# fi
-
+# Mount relevant file systems
 mount -t vfat -o ro /dev/mmcblk1p1 /rootfs/boot
 mount -t ext4 -o ro /dev/mmcblk1p3 /rootfs/var
 mount -t ext4 -o ro /dev/mmcblk1p4 /rootfs/data
+
+# Determine if overlayroot is requested
+OVERLAYROOT_ENABLED=1
+if [ -e /rootfs/var/aesys/overlayroot.disabled ]; then
+	OVERLAYROOT_ENABLED=0 ;
+fi
+
+# Mount temporary filesystems
+mount -t tmpfs tmpfs /run
+mount -t tmpfs tmpfs /secure
+
+if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
+
+	mkdir -p /overlayroot
+	mkdir -p /overlay.overlayroot
+
+	mount -t tmpfs tmpfs /overlay.overlayroot ;
+fi
 
 # Make APP signature key available to other applications
 cp /securefs.publickey.pem /secure/securefs.publickey.pem
@@ -104,12 +94,11 @@ CHECK=0
 while [ $CHECK -eq 0 ];
 do
 	if [ ! -e /rootfs/data/securefs.data ] || [ ! -e /rootfs/data/securefs.data.sig ]; then
-		do_log "SecureFS files not available" ;
-
-		if [ -e /rootfs/data/securefs.skip ]; then
+		if [ -e /rootfs/var/aesys/securefs.skip ]; then
 			SKIPVERIFY=1 ;
 			CHECK=1 ;
 		else
+			do_log "SecureFS files not available" ;
 			do_panic ;
 		fi
 	else
@@ -117,7 +106,7 @@ do
 	fi
 done
 
-if [ SKIPVERIFY -eq 0 ]; then
+if [ $SKIPVERIFY -eq 0 ]; then
 
 	# Validate secure FS signature
 	CHECK=0 ;
@@ -158,32 +147,45 @@ else
 fi
 
 # Log
-do_log "Switching root..."
+do_log "Preparing to root switching..."
 
-# Move existing mounts
-# if [ ! -d /rootfs/run ]; then
-#	do_log "Creating rootfs run directory..." ;
-#	mkdir /rootfs/run ;
-#fi
-
-# if [ ! -d /rootfs/secure ]; then
-#	do_log "Creating rootfs secure directory..." ;
-#	mkdir /rootfs/secure ;
-# fi
-
+# Unmount file systems requested no more
 umount /rootfs/boot
 umount /rootfs/var
 umount /rootfs/data
 
+# Move temporary file systems to new root
 mount --move /run /rootfs/run
 mount --move /secure /rootfs/secure
 
-mkdir -p /overlay.overlayroot/upper
-mkdir -p /overlay.overlayroot/work
+# Enforce root overlay, if requested
+if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 
-mount -t overlay -o lowerdir=/rootfs,upperdir=/overlay.overlayroot/upper,workdir=/overlay.overlayroot/work overlay /overlayroot
+	# Log
+	do_log "Enabling overlay on root filesystem..." ;
+
+	# Prepare overlay 
+	mkdir -p /overlay.overlayroot/upper
+	mkdir -p /overlay.overlayroot/work
+
+	# Mount overlay
+	mount -t overlay -o lowerdir=/rootfs,upperdir=/overlay.overlayroot/upper,workdir=/overlay.overlayroot/work overlay /overlayroot
+
+else
+
+	# Log
+	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!" ;
+
+	# Remount root filesystem R/W so that the system is completely "open"
+	mount -o remount,rw /rootfs
+
+fi
 
 # Handover
-do_log "Process completed"
+do_log "Switching root..."
 
-exec switch_root /overlayroot /sbin/init
+if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
+	exec switch_root /overlayroot /sbin/init ;
+else
+	exec switch_root /rootfs /sbin/init ;
+fi
