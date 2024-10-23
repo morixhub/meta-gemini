@@ -24,4 +24,6 @@ NATIVE_SYSTEMD_SUPPORT = "1"
 SYSTEMD_PACKAGES = "${PN}"
 SYSTEMD_SERVICE:${PN} = "resizepart-script.service"
 
+RDEPENDS:${PN} += " parted"
+
 inherit allarch systemd

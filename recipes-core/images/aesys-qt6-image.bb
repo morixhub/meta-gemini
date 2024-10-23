@@ -3,11 +3,8 @@ SUMMARY = "Aesys image for production (Qt6+multimedia)"
 # Include basic features from the hwtest image
 require aesys-image.bb
 
-# Add overlayfs
+# Make system system root read-only
 IMAGE_FEATURES += "read-only-rootfs"
-IMAGE_INSTALL += " \
-    aesys-overlayfs \
-"
 
 # Add chromium browser to the image
 IMAGE_INSTALL += " \
