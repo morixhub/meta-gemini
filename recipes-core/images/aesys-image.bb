@@ -2,6 +2,12 @@ SUMMARY = "Aesys base image for production purposes"
 
 inherit core-image
 
+# Normalize image name
+IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
+
+# Add squashfs type
+IMAGE_FSTYPES += "squashfs"
+
 # Add features
 IMAGE_FEATURES += "ssh-server-openssh splash"
 

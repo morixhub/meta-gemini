@@ -61,7 +61,7 @@
 
 #define AESYSENV \
 	"bootcmd=run bsp_bootcmd\0" \
-	"initrd=initramfs.cpio.gz.u-boot\0" \
+	"initrd=initram.img\0" \
 	"initrd_addr=0x43800000\0" \
 	"loadinitrd=echo Attempting load of initrd...; " \
 		"fatload mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
