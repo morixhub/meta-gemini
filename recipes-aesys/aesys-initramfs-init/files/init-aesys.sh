@@ -19,8 +19,7 @@ mkdir -p /proc
 mkdir -p /sys
 mkdir -p /dev
 
-mkdir -p /run
-mkdir -p /secure
+mkdir -p /initram
 
 mkdir -p /rootfs
 
@@ -42,7 +41,7 @@ mount -t ext4 -o ro /dev/mmcblk1p2 /rootfs
 CHECK=0
 while [ $CHECK -eq 0 ];
 do
-	if [ ! -d /rootfs/boot ] || [ ! -d /rootfs/var ] || [ ! -d /rootfs/data ] || [ ! -d /rootfs/secure ] || [ ! -d /rootfs/run ]; then
+	if [ ! -d /rootfs/boot ] || [ ! -d /rootfs/var ] || [ ! -d /rootfs/data ]; then
 		do_log "Root file-system is not suitable; missing some requested folder" ;
 		do_panic ;
 	else
@@ -55,6 +54,12 @@ mount -t vfat -o ro /dev/mmcblk1p1 /rootfs/boot
 mount -t ext4 -o ro /dev/mmcblk1p3 /rootfs/var
 mount -t ext4 -o ro /dev/mmcblk1p4 /rootfs/data
 
+# Determine if shell is requested
+SHELL_REQUESTED=0
+if [ -e /rootfs/var/aesys/shell.requested ]; then
+	SHELL_REQUESTED=1 ;
+fi
+
 # Determine if overlayroot is requested
 OVERLAYROOT_ENABLED=1
 if [ -e /rootfs/var/aesys/overlayroot.disabled ]; then
@@ -62,25 +67,24 @@ if [ -e /rootfs/var/aesys/overlayroot.disabled ]; then
 fi
 
 # Mount temporary filesystems
-mount -t tmpfs tmpfs /run
-mount -t tmpfs tmpfs /secure
+mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
 
 if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 
 	mkdir -p /overlayroot
-	mkdir -p /overlay.overlayroot
+	mkdir -p /overlay
 
-	mount -t tmpfs tmpfs /overlay.overlayroot ;
+	mount -t tmpfs tmpfs /overlay ;
 fi
 
 # Make APP signature key available to other applications
-cp /securefs.publickey.pem /secure/securefs.publickey.pem
+cp /securefs.publickey.pem /initram/securefs.publickey.pem
 
 # Check public key availability
 CHECK=0
 while [ $CHECK -eq 0 ];
 do
-	if [ ! -e "/secure/securefs.publickey.pem" ]; then
+	if [ ! -e "/initram/securefs.publickey.pem" ]; then
 		do_log "Public key for FS verification not available" ;
 		do_panic ;
 	else
@@ -112,7 +116,7 @@ if [ $SKIPVERIFY -eq 0 ]; then
 	CHECK=0 ;
 	while [ $CHECK -eq 0 ];
 	do
-		openssl dgst -sha256 -keyform PEM -verify /secure/securefs.publickey.pem -signature /rootfs/data/securefs.data.sig /rootfs/data/securefs.data ;
+		openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /rootfs/data/securefs.data.sig /rootfs/data/securefs.data ;
 
 		if [ ! $? -eq 0 ]; then
 			do_log "SecureFS signature verification FAILED!" ;
@@ -154,22 +158,50 @@ umount /rootfs/boot
 umount /rootfs/var
 umount /rootfs/data
 
-# Move temporary file systems to new root
-mount --move /run /rootfs/run
-mount --move /secure /rootfs/secure
-
 # Enforce root overlay, if requested
 if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 
-	# Log
-	do_log "Enabling overlay on root filesystem..." ;
+	CHECK=0 ;
+	while [ $CHECK -eq 0 ];
+	do 
+		# Log
+		do_log "Enabling overlay on root filesystem..." ;
 
-	# Prepare overlay 
-	mkdir -p /overlay.overlayroot/upper
-	mkdir -p /overlay.overlayroot/work
+		# Prepare overlay 
+		mkdir -p /overlay/lower ;
+		mkdir -p /overlay/upper ;
+		mkdir -p /overlay/work ;
 
-	# Mount overlay
-	mount -t overlay -o lowerdir=/rootfs,upperdir=/overlay.overlayroot/upper,workdir=/overlay.overlayroot/work overlay /overlayroot
+		# Move rootfs mount point to overlay lower
+		mount --move /rootfs /overlay/lower
+
+		# Mount overlay
+		mount -t overlay -o lowerdir=/overlay/lower,upperdir=/overlay/upper,workdir=/overlay/work overlay /overlayroot ;
+
+		# Check the mount for being in place
+		OVERLAY_VERIFICATION=`mount | grep "overlay on /overlayroot"` ;
+
+		if [ -z "$OVERLAY_VERIFICATION" ]; then
+
+			# Log
+			do_log "Cannot enforce overlay on root filesystem!" ;
+			do_panic ;
+
+		else
+
+			# Write a file on /initram for having a quick way for verifying at runtime if overlay is in place
+			touch /initram/overlayroot.enforced
+
+			CHECK=1;
+		fi
+	done
+
+	# Move temporary file systems to new root
+	mkdir -p /overlayroot/initram
+	mount --move /initram /overlayroot/initram
+
+	mkdir -p /overlayroot/overlay
+	mount --move /overlay /overlayroot/overlay
 
 else
 
@@ -177,8 +209,20 @@ else
 	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!" ;
 
 	# Remount root filesystem R/W so that the system is completely "open"
-	mount -o remount,rw /rootfs
+	mount -o remount,rw /rootfs ;
 
+	# Move temporary file systems to new root
+	mkdir -p /rootfs/initram
+	mount --move /initram /rootfs/initram
+
+fi
+
+# Go to shell, if requested
+if [ $SHELL_REQUESTED -eq 1 ]; then
+	
+	# Log
+	do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
+	/bin/sh ;
 fi
 
 # Handover

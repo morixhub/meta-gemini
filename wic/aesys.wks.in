@@ -16,7 +16,7 @@
 
 part u-boot --source rawcopy --sourceparams="file=imx-boot" --ondisk mmcblk1 --no-table --align ${IMX_BOOT_SEEK}
 part /boot --source bootimg-partition --ondisk mmcblk1 --fstype=vfat --fsoptions=ro --label aesys-boot --active --align 8192 --fixed-size 64M
-part /ro --source rootfs --ondisk mmcblk1 --fstype=ext4 --fsoptions=ro,nofail --label aesys-root --exclude-path=var/ --align 8192 --fixed-size 6G
+part / --source rootfs --ondisk mmcblk1 --fstype=ext4 --label aesys-root --exclude-path=var/ --align 8192 --fixed-size 6G
 part /var --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/var --ondisk mmcblk1 --fstype=ext4 --label aesys-var --align 8192 --fixed-size 512M
 part /data --ondisk mmcblk1 --fstype=ext4 --label aesys-data --align 8192 --fixed-size 64M --fsoptions="defaults,x-systemd.growfs"
 
