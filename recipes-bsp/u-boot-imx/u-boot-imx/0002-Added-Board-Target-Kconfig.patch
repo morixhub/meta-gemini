@@ -2,12 +2,13 @@ diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
 index eaf2c5d3df7..f12b6066dc7 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -2380,6 +2380,8 @@ source "board/phytium/durian/Kconfig"
+@@ -2380,6 +2380,9 @@ source "board/phytium/durian/Kconfig"
  source "board/phytium/pomelo/Kconfig"
  source "board/phytium/pe2201/Kconfig"
  source "board/xen/xenguest_arm64/Kconfig"
 +source "board/aesys/aesys_2319a/Kconfig"
 +source "board/aesys/aesys_2319a_test/Kconfig"
++source "board/aesys/aesys_2409a/Kconfig"
  
  source "arch/arm/Kconfig.debug"
  
@@ -15,7 +16,7 @@ diff --git a/arch/arm/mach-imx/imx8m/Kconfig b/arch/arm/mach-imx/imx8m/Kconfig
 index 473cfa8e5e3..64a2541686d 100644
 --- a/arch/arm/mach-imx/imx8m/Kconfig
 +++ b/arch/arm/mach-imx/imx8m/Kconfig
-@@ -315,6 +315,26 @@ config TARGET_IMX8MP_EVK
+@@ -315,6 +315,36 @@ config TARGET_IMX8MP_EVK
  	select ARCH_MISC_INIT
  	select SPL_CRYPTO if SPL
  
@@ -31,6 +32,16 @@ index 473cfa8e5e3..64a2541686d 100644
 +
 +config TARGET_AESYS_2319A_TEST
 +        bool "Aesys 2319A TEST"
++        select IMX8MP
++        select SUPPORT_SPL
++        select IMX8M_LPDDR4
++        select FSL_CAAM
++        select FSL_BLOB
++        select ARCH_MISC_INIT
++        select SPL_CRYPTO if SPL
++
++config TARGET_AESYS_2409A_TEST
++        bool "Aesys 2409A TEST"
 +        select IMX8MP
 +        select SUPPORT_SPL
 +        select IMX8M_LPDDR4

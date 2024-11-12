@@ -9,21 +9,30 @@ SRC_URI += " file://0004-FIT-Support-For-BootM.patch"
 # Copy additional stuff to working copy after patching
 COPYSOURCE := "${THISDIR}/${PN}"
 do_after_patch() {
+
+	# COMMON
+	cp "${COPYSOURCE}/aesys_bootloader_pubkeys.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp -rf "${COPYSOURCE}/board/aesys" "${WORKDIR}/git/board/"
+	# Create symlink to freescale common assets
+	ln -f -s "${WORKDIR}/git/board/freescale/common" "${WORKDIR}/git/board/aesys/common"
+
+	# AESYS 2319A
 	cp "${COPYSOURCE}/aesys_2319a.dts" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/aesys_2319a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/configs/aesys_2319a_defconfig" "${WORKDIR}/git/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2319a.h" "${WORKDIR}/git/include/configs/"
 
+	# AESYS 2319A-TEST
 	cp "${COPYSOURCE}/aesys_2319a_test.dts" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/aesys_2319a_test-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/configs/aesys_2319a_test_defconfig" "${WORKDIR}/git/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2319a_test.h" "${WORKDIR}/git/include/configs/"
 
-	cp "${COPYSOURCE}/aesys_bootloader_pubkeys.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp -rf "${COPYSOURCE}/board/aesys" "${WORKDIR}/git/board/"
-
-	# Create symlink to freescale common assets
-	ln -f -s "${WORKDIR}/git/board/freescale/common" "${WORKDIR}/git/board/aesys/common"
+	# AESYS 2409A
+	cp "${COPYSOURCE}/aesys_2409a.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2409a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2409a_defconfig" "${WORKDIR}/git/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2409a.h" "${WORKDIR}/git/include/configs/"
 }
 
 addtask after_patch after do_patch before do_configure

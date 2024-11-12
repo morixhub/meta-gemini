@@ -5,29 +5,35 @@
  */
 
 #include <common.h>
+#include <command.h>
+#include <cpu_func.h>
 #include <hang.h>
+#include <image.h>
 #include <init.h>
 #include <log.h>
 #include <spl.h>
 #include <asm/global_data.h>
-#include <asm/arch/imx8mp_pins.h>
+#include <asm/io.h>
+#include <asm/mach-imx/iomux-v3.h>
+#include <asm/arch/clock.h>
+#include <asm/arch/imx8mn_pins.h>
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/boot_mode.h>
-#include <power/pmic.h>
+#include <asm/arch/ddr.h>
+#include <asm/sections.h>
 
-#include <power/pca9450.h>
-#include <asm/arch/clock.h>
 #include <dm/uclass.h>
 #include <dm/device.h>
 #include <dm/uclass-internal.h>
 #include <dm/device-internal.h>
+#include <power/pmic.h>
+#include <power/pca9450.h>
+#include <power/bd71837.h>
 #include <asm/mach-imx/gpio.h>
-#include <asm/mach-imx/iomux-v3.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <fsl_esdhc_imx.h>
 #include <mmc.h>
-#include <asm/arch/ddr.h>
-#include <asm/sections.h>
+#include <linux/delay.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -62,24 +68,49 @@ void spl_dram_init(void)
 	ddr_init(&dram_timing);
 }
 
-void spl_board_init(void)
+#if CONFIG_IS_ENABLED(DM_PMIC_BD71837)
+int power_init_board(void)
 {
-	arch_misc_init();
+	struct udevice *dev;
+	int ret;
 
-	/*
-	 * Set GIC clock to 500Mhz for OD VDD_SOC. Kernel driver does
-	 * not allow to change it. Should set the clock after PMIC
-	 * setting done. Default is 400Mhz (system_pll1_800m with div = 2)
-	 * set by ROM for ND VDD_SOC
-	 */
-#if defined(CONFIG_IMX8M_LPDDR4) && !defined(CONFIG_IMX8M_VDD_SOC_850MV)
-	clock_enable(CCGR_GIC, 0);
-	clock_set_target_val(GIC_CLK_ROOT, CLK_ROOT_ON | CLK_ROOT_SOURCE_SEL(5));
-	clock_enable(CCGR_GIC, 1);
+	ret = pmic_get("pmic@4b", &dev);
+	if (ret == -ENODEV) {
+		puts("No pmic@4b\n");
+		return 0;
+	}
+	if (ret != 0)
+		return ret;
 
-	puts("Normal Boot\n");
-#endif
+	/* decrease RESET key long push time from the default 10s to 10ms */
+	pmic_reg_write(dev, BD718XX_PWRONCONFIG1, 0x0);
+
+	/* unlock the PMIC regs */
+	pmic_reg_write(dev, BD718XX_REGLOCK, 0x1);
+
+	/* Set VDD_ARM to typical value 0.85v for 1.2Ghz */
+	pmic_reg_write(dev, BD718XX_BUCK2_VOLT_RUN, 0xf);
+
+#ifdef CONFIG_IMX8MN_LOW_DRIVE_MODE
+	/* Set VDD_SOC/VDD_DRAM to typical value 0.8v for low drive mode */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0xa);
+#else
+	/* Set VDD_SOC/VDD_DRAM to typical value 0.85v for nominal mode */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_RUN, 0xf);
+#endif /* CONFIG_IMX8MN_LOW_DRIVE_MODE */
+
+	/* Set VDD_SOC 0.75v for low-v suspend */
+	pmic_reg_write(dev, BD718XX_BUCK1_VOLT_SUSP, 0x5);
+
+	/* increase NVCC_DRAM_1V2 to 1.2v for DDR4 */
+	pmic_reg_write(dev, BD718XX_4TH_NODVS_BUCK_VOLT, 0x28);
+
+	/* lock the PMIC regs */
+	pmic_reg_write(dev, BD718XX_REGLOCK, 0x11);
+
+	return 0;
 }
+#endif
 
 #if CONFIG_IS_ENABLED(DM_PMIC_PCA9450)
 int power_init_board(void)
@@ -89,48 +120,52 @@ int power_init_board(void)
 
 	ret = pmic_get("pmic@25", &dev);
 	if (ret == -ENODEV) {
-		puts("No pmic@25\n");
+		puts("No pca9450@25\n");
 		return 0;
 	}
-	if (ret < 0)
+	if (ret != 0)
 		return ret;
 
 	/* BUCKxOUT_DVS0/1 control BUCK123 output */
 	pmic_reg_write(dev, PCA9450_BUCK123_DVS, 0x29);
 
-#ifdef CONFIG_IMX8M_LPDDR4
-	/*
-	 * Increase VDD_SOC to typical value 0.95V before first
-	 * DRAM access, set DVS1 to 0.85V for suspend.
-	 * Enable DVS control through PMIC_STBY_REQ and
-	 * set B1_ENMODE=1 (ON by PMIC_ON_REQ=H)
-	 */
-	if (CONFIG_IS_ENABLED(IMX8M_VDD_SOC_850MV))
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
-	else
-		pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
+#ifdef CONFIG_IMX8MN_LOW_DRIVE_MODE
+	/* Set VDD_SOC/VDD_DRAM to 0.8v for low drive mode */
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x10);
+#elif defined(CONFIG_TARGET_IMX8MN_DDR3_EVK)
+	/* Set VDD_SOC to 0.85v for DDR3L at 1600MTS */
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x14);
 
-	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0x14);
-	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
+	/* Disable the BUCK2 */
+	pmic_reg_write(dev, PCA9450_BUCK2CTRL, 0x48);
 
-	/*
-	 * Kernel uses OD/OD freq for SOC.
-	 * To avoid timing risk from SOC to ARM,increase VDD_ARM to OD
-	 * voltage 0.95V.
-	 */
-
-	pmic_reg_write(dev, PCA9450_BUCK2OUT_DVS0, 0x1C);
-#elif defined(CONFIG_IMX8M_DDR4)
-	/* DDR4 runs at 3200MTS, uses default ND 0.85v for VDD_SOC and VDD_ARM */
-	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
-
-	/* Set NVCC_DRAM to 1.2v for DDR4 */
-	pmic_reg_write(dev, PCA9450_BUCK6OUT, 0x18);
+	/* Set NVCC_DRAM to 1.35v */
+	pmic_reg_write(dev, PCA9450_BUCK6OUT, 0x1E);
+#else
+	/* increase VDD_SOC/VDD_DRAM to typical value 0.95V before first DRAM access */
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS0, 0x1C);
 #endif
+	/* Set DVS1 to 0.75v for low-v suspend */
+	/* Enable DVS control through PMIC_STBY_REQ and set B1_ENMODE=1 (ON by PMIC_ON_REQ=H) */
+	pmic_reg_write(dev, PCA9450_BUCK1OUT_DVS1, 0xC);
+	pmic_reg_write(dev, PCA9450_BUCK1CTRL, 0x59);
+
+	/* set VDD_SNVS_0V8 from default 0.85V */
+	pmic_reg_write(dev, PCA9450_LDO2CTRL, 0xC0);
+
+	/* enable LDO4 to 1.2v */
+	pmic_reg_write(dev, PCA9450_LDO4CTRL, 0x44);
 
 	return 0;
 }
 #endif
+
+void spl_board_init(void)
+{
+	arch_misc_init();
+
+	puts("Normal Boot\n");
+}
 
 #ifdef CONFIG_SPL_LOAD_FIT
 int board_fit_config_name_match(const char *name)
@@ -181,3 +216,18 @@ void board_init_f(ulong dummy)
 
 	board_init_r(NULL, 0);
 }
+
+#ifdef CONFIG_SPL_MMC
+#define UBOOT_RAW_SECTOR_OFFSET 0x40
+unsigned long spl_mmc_get_uboot_raw_sector(struct mmc *mmc, unsigned long raw_sect)
+{
+	u32 boot_dev = spl_boot_device();
+	switch (boot_dev) {
+		case BOOT_DEVICE_MMC1:
+			return CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR;
+		case BOOT_DEVICE_MMC2:
+			return CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR - UBOOT_RAW_SECTOR_OFFSET;
+	}
+	return CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR;
+}
+#endif

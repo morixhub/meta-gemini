@@ -1,6 +1,6 @@
-AESYS 2319A board
+AESYS 2409A board
 M:	Morix Dev <morix.dev@gmail.com>
 S:	Maintained
-F:	board/aesys/aesys_2319a/
-F:	include/configs/aesys_2319a.h
-F:	configs/aesys_2319a_defconfig
+F:	board/aesys/aesys_2409a/
+F:	include/configs/aesys_2409a.h
+F:	configs/aesys_2409a_defconfig
