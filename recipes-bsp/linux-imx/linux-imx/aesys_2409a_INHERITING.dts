@@ -28,35 +28,6 @@
 		};
 	};
 
-	/* //!! DA RIMUOVERE
-	reg_dsi_backlight: regulator-panel {
-		compatible = "regulator-fixed";
-		regulator-name = "panel";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		enable-active-high;
-	};
-
-	dsi_backlight: dsi_backlight@1 {
-		compatible = "pwm-backlight";
-		pwms = <&pwm1 0 100000 0>;
-		power-supply = <&reg_dsi_backlight>;
-		status = "okay";
-
-		brightness-levels = < 0  1  2  3  4  5  6  7  8  9
-				     10 11 12 13 14 15 16 17 18 19
-				     20 21 22 23 24 25 26 27 28 29
-				     30 31 32 33 34 35 36 37 38 39
-				     40 41 42 43 44 45 46 47 48 49
-				     50 51 52 53 54 55 56 57 58 59
-				     60 61 62 63 64 65 66 67 68 69
-				     70 71 72 73 74 75 76 77 78 79
-				     80 81 82 83 84 85 86 87 88 89
-				     90 91 92 93 94 95 96 97 98 99
-				    100>;
-		default-brightness-level = <80>;
-	}; */
-
 	ir-receiver {
 		status = "disabled";
 	};
@@ -96,12 +67,6 @@
 
 &A53_3 {
 	cpu-supply = <&buck2>;
-};
-
-&pwm1 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pwm1>;
-	status = "okay";
 };
 
 &i2c1 {
@@ -341,17 +306,11 @@
 &mipi_dsi {
 	status = "okay";
 
+	/delete-node/ port@1;
+
 	panel@0 {
 		compatible = "disen,ds070boe30t";
 		reg = <0>;
-		reset-gpios = <&gpio4 26 GPIO_ACTIVE_HIGH>;	//!! da rimuovere
-		power-gpios = <&gpio1 8 GPIO_ACTIVE_HIGH>; //!! da rimuovere
-		updn-gpios = <&gpio4 14 GPIO_ACTIVE_HIGH>; //!! da rimuovere
-		shlr-gpios = <&gpio4 13 GPIO_ACTIVE_HIGH>; //!! da rimuovere
-		pinctrl-0 = <&pinctrl_mipi_dsi>;
-		pinctrl-names = "default";
-		vcc-lcd-supply = <&reg_panel>; //!! da rimuovere
-		backlight = <&dsi_backlight>; //!! da rimuovere
 		status = "okay";
 	};
 };
@@ -400,18 +359,13 @@
 };
 
 &usbotg1 {
+	/delete-prop/ disable-over-current;
+	/delete-node/ port;
+
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
-	dr_mode = "otg";
-	hnp-disable;
-	srp-disable;
-	adp-disable;
-	usb-role-switch;
 	role-switch-default-mode = "peripheral";
 	over-current-active-low;
-	samsung,picophy-pre-emp-curr-control = <3>;
-	samsung,picophy-dc-vol-level-adjust = <7>;
-	status = "okay";
 };
 
 &usdhc1 {
@@ -497,12 +451,6 @@
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usdhc3_reset &pinctrl_pin_gpios>;
-
-	pinctrl_pwm1: pwm1grp {
-		fsl,pins = <
-			MX8MP_IOMUXC_SPDIF_EXT_CLK__PWM1_OUT	0x00000106
-		>;
-	};
 
 	pinctrl_eeprom: eepromgrp {
 		fsl,pins = <
