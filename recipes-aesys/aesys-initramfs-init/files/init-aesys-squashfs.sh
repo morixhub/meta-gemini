@@ -37,10 +37,11 @@ if [ ! -b /dev/mmcblk1p1 ] || [ ! -b /dev/mmcblk1p2 ] || [ ! -b /dev/mmcblk1p3 ]
 	sleep 1 ;
 fi
 
-# Mount relevant file systems (everything can be read-only, except persist for obvious reasons)
+# Mount relevant file systems
+# ATTENTION: /data partition is marked for growing
 mount -t vfat -o ro /dev/mmcblk1p1 /boot
-mount -t ext4 -o ro /dev/mmcblk1p3 /data
 mount -t ext4 -o rw /dev/mmcblk1p2 /persist
+mount -t ext4 -o rw,x-systemd.growfs /dev/mmcblk1p3 /data
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram

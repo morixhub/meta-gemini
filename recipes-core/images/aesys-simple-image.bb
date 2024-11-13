@@ -11,4 +11,9 @@ customize_root() {
     touch ${IMAGE_ROOTFS}/var/aesys/securefs.skip
 }
 
+# Add default IP address to simple images
+IMAGE_INSTALL += " \
+    aesys-default-eth0-ip \
+"
+
 IMAGE_PREPROCESS_COMMAND += "customize_root;"
