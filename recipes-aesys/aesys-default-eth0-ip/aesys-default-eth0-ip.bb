@@ -8,9 +8,12 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 SRC_URI = "file://20-wired.network \
            "
 
-FILES:${PN} += " ${systemd_unitdir}/network/20-wired.network "
+FILES:${PN} += " \
+        ${sysconfdir}/systemd/network/20-wired.network \
+"
 
 do_install() {
-        install -m 0644 ${WORKDIR}/20-wired.network ${D}/${systemd_unitdir}/network/20-wired.network
+        install -d ${D}${sysconfdir}/systemd/network
+        install -m 0644 ${WORKDIR}/20-wired.network ${D}${sysconfdir}/systemd/network/20-wired.network
 }
 
