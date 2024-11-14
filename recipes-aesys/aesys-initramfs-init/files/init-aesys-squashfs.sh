@@ -24,6 +24,7 @@ mkdir -p /initram
 mkdir -p /rootfs
 mkdir -p /boot
 mkdir -p /persist
+mkdir -p /var
 mkdir -p /data
 
 # Mount aux filesystems
@@ -40,7 +41,8 @@ fi
 # Mount relevant file systems
 mount -t vfat -o ro /dev/mmcblk1p1 /boot
 mount -t ext4 -o rw /dev/mmcblk1p2 /persist
-mount -t ext4 -o rw /dev/mmcblk1p3 /data
+mount -t ext4 -o rw /dev/mmcblk1p3 /var
+mount -t ext4 -o rw /dev/mmcblk1p4 /data
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
@@ -75,6 +77,9 @@ mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/upper,wor
 # Move boot and data mount points over persist overlay
 mkdir -p /overlay-persist-merge/boot
 mount --move /boot /overlay-persist-merge/boot
+
+mkdir -p /overlay-persist-merge/var
+mount --move /var /overlay-persist-merge/var
 
 mkdir -p /overlay-persist-merge/data
 mount --move /data /overlay-persist-merge/data
@@ -197,6 +202,7 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 
 	# Move mounted file-system over overlay
 	mount --move /overlay-persist-merge/boot /overlay-ram-merge/boot
+	mount --move /overlay-persist-merge/var /overlay-ram-merge/var
 	mount --move /overlay-persist-merge/data /overlay-ram-merge/data
 
 	# Move temporary file systems to new root
