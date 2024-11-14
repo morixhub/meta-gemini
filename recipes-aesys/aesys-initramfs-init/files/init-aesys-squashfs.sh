@@ -24,7 +24,7 @@ mkdir -p /initram
 mkdir -p /rootfs
 mkdir -p /boot
 mkdir -p /persist
-mkdir -p /var
+mkdir -p /persist-var
 mkdir -p /data
 
 # Mount aux filesystems
@@ -41,15 +41,19 @@ fi
 # Mount relevant file systems
 mount -t vfat -o ro /dev/mmcblk1p1 /boot
 mount -t ext4 -o rw /dev/mmcblk1p2 /persist
-mount -t ext4 -o rw /dev/mmcblk1p3 /var
+mount -t ext4 -o rw /dev/mmcblk1p3 /persist-var
 mount -t ext4 -o rw /dev/mmcblk1p4 /data
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
 
-# Ensure persist filesystem has requested folders
+# Ensure persist filesystem has folders requested for overlay
 mkdir -p /persist/upper
 mkdir -p /persist/work
+
+# Ensure persit-var filesystem has folders requested for overlay
+mkdir -p /persist-var/upper
+mkdir -p /persist-var/work
 
 # Mount root file system from squash
 mount -t squashfs -o ro /boot/rootfs.squashfs /rootfs
@@ -62,24 +66,31 @@ mount -t tmpfs tmpfs /overlay
 # Prepare folders for overlaying
 mkdir -p /overlay/rootfs
 mkdir -p /overlay/persist
+mkdir -p /overlay/persist-var
 mkdir -p /overlay/ram
 
 mkdir -p /overlay-persist-merge
+mkdir -p /overlay-persist-var-merge
 mkdir -p /overlay-ram-merge
 
 # Move rootfs mount point to overlay lower
 mount --move /rootfs /overlay/rootfs
 mount --move /persist /overlay/persist
+mount --move /persist-var /overlay/persist-var
 
 # Mount overlay on persist
 mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/upper,workdir=/overlay/persist/work overlay /overlay-persist-merge ;
 
+# Mount overlay on persist-var
+mount -t overlay -o lowerdir=/overlay/rootfs/var,upperdir=/overlay/persist-var/upper,workdir=/overlay/persist-var/work overlay /overlay-persist-var-merge ;
+
+# Move persisted var overlay to persist overlay
+mkdir -p /overlay-persist-merge/var
+mount --move /overlay-persist-var-merge /overlay-persist-merge/var
+
 # Move boot and data mount points over persist overlay
 mkdir -p /overlay-persist-merge/boot
 mount --move /boot /overlay-persist-merge/boot
-
-mkdir -p /overlay-persist-merge/var
-mount --move /var /overlay-persist-merge/var
 
 mkdir -p /overlay-persist-merge/data
 mount --move /data /overlay-persist-merge/data
