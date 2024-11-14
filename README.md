@@ -44,7 +44,7 @@ Instructions contained in this README should always be aligned with the most rec
 - `bitbake-layers add-layer meta-gemini`
 
 ### Yocto environment setup
-- `DISTRO=fsl-imx-wayland MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build`
+- `DISTRO=aesys-distro MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build`
 - Add following lines to `conf/local.conf`:
   - `BBMASK += "/meta-browser/meta-chromium/recipes-browser/chromium/gn-native_.*\.bb"` (this part is requested for forcing `qtwebengine` to use its own gn-native instead the one coming from chromium; but this settings is not compatible with chromium itself... so firstly compile the image without this line and without `qtwebengine`; then after the image is cooked, add this line and `qtwebengine` and compile the image again)
   
