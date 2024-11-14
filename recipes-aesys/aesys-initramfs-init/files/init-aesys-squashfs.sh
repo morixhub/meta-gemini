@@ -67,11 +67,9 @@ mount -t tmpfs tmpfs /overlay
 mkdir -p /overlay/rootfs
 mkdir -p /overlay/persist
 mkdir -p /overlay/persist-var
-mkdir -p /overlay/ram
 
 mkdir -p /overlay-persist-merge
 mkdir -p /overlay-persist-var-merge
-mkdir -p /overlay-ram-merge
 
 # Move rootfs mount point to overlay lower
 mount --move /rootfs /overlay/rootfs
@@ -186,7 +184,11 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		# Log
 		do_log "Enabling overlay on root filesystem..." ;
 
-		# Prepare overlay 
+		# Prepare folders for overlaying
+		mkdir -p /overlay-ram-merge
+
+		# Prepare overlay
+		mkdir -p /overlay/ram 
 		mkdir -p /overlay/ram/upper ;
 		mkdir -p /overlay/ram/work ;
 
@@ -211,6 +213,9 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		fi
 	done
 
+	# Make initram readonly
+	mount -o remount,ro /initram
+
 	# Move mounted file-system over overlay
 	mount --move /overlay-persist-merge/boot /overlay-ram-merge/boot
 	mount --move /overlay-persist-merge/var /overlay-ram-merge/var
@@ -232,6 +237,9 @@ else
 
 	# Log
 	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!"
+
+	# Make initram readonly
+	mount -o remount,ro /initram
 
 	# Move temporary file systems to new root
 	mkdir -p /overlay-persist-merge/initram
