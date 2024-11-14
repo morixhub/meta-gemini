@@ -5,8 +5,8 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 PR = "r1"
 
 SRC_URI =  " \
-    file://resizepart-script.sh \
-    file://resizepart-script.service \
+    file://aesys-firstinit.sh \
+    file://aesys-firstinit.service \
 "
 
 do_compile () {
@@ -14,15 +14,15 @@ do_compile () {
 
 do_install () {
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/resizepart-script.sh ${D}/${sbindir}
+    install -m 0755 ${WORKDIR}/aesys-firstinit.sh ${D}/${sbindir}
 
     install -d ${D}${systemd_unitdir}/system/
-    install -m 0644 ${WORKDIR}/resizepart-script.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${WORKDIR}/aesys-firstinit.service ${D}${systemd_unitdir}/system
 }
 
 NATIVE_SYSTEMD_SUPPORT = "1"
 SYSTEMD_PACKAGES = "${PN}"
-SYSTEMD_SERVICE:${PN} = "resizepart-script.service"
+SYSTEMD_SERVICE:${PN} = "aesys-firstinit.service"
 
 RDEPENDS:${PN} += " parted"
 

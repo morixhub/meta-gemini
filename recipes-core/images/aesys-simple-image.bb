@@ -4,7 +4,7 @@ SUMMARY = "Aesys image (simple)"
 require aesys-image.bb
 
 # Manage root customization
-customize_root() {
+aesys_simple_image_customize_root() {
 
     # Disable securefs check on simple images
     mkdir -p ${IMAGE_ROOTFS}/var/aesys
@@ -16,4 +16,4 @@ IMAGE_INSTALL += " \
     aesys-default-eth0-ip \
 "
 
-IMAGE_PREPROCESS_COMMAND += "customize_root;"
+IMAGE_PREPROCESS_COMMAND += "aesys_simple_image_customize_root;"

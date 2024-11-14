@@ -14,12 +14,23 @@ IMAGE_FEATURES += "ssh-server-openssh splash"
 # Add packages
 IMAGE_INSTALL:append = " aesys-packagegroup-base"
 
-# Create mount dirs
-create_mount_dirs() {
+# Add aesys packages
+IMAGE_INSTALL:append = " aesys-firstinit"
+
+# Root FS customization
+aesys_image_customize_root() {
+
+    # Create mount dirs
     mkdir -p ${IMAGE_ROOTFS}/boot
     mkdir -p ${IMAGE_ROOTFS}/var
     mkdir -p ${IMAGE_ROOTFS}/data
+
+    # Mark the system for requiring first initialization
+    mkdir -p ${IMAGE_ROOTFS}/var/aesys
+    touch ${IMAGE_ROOTFS}/var/aesys/firstinit.pending
 }
 
-IMAGE_PREPROCESS_COMMAND += "create_mount_dirs;"
+IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "
+
+
 

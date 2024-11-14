@@ -12,7 +12,7 @@ do_panic() {
 }
 
 # Log
-do_log "Starting...";
+do_log "Starting..."
 
 # Prepare directories
 mkdir -p /proc
@@ -38,10 +38,9 @@ if [ ! -b /dev/mmcblk1p1 ] || [ ! -b /dev/mmcblk1p2 ] || [ ! -b /dev/mmcblk1p3 ]
 fi
 
 # Mount relevant file systems
-# ATTENTION: /data partition is marked for growing
 mount -t vfat -o ro /dev/mmcblk1p1 /boot
 mount -t ext4 -o rw /dev/mmcblk1p2 /persist
-mount -t ext4 -o rw,x-systemd.growfs /dev/mmcblk1p3 /data
+mount -t ext4 -o rw /dev/mmcblk1p3 /data
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
@@ -56,15 +55,15 @@ mount -t squashfs -o ro /boot/rootfs.squashfs /rootfs
 # Create a temporary mount on /overlay
 # (so that it can act as a real mount point and can be moved around)
 mkdir -p /overlay
-mount -t tmpfs tmpfs /overlay ;
+mount -t tmpfs tmpfs /overlay
 
 # Prepare folders for overlaying
-mkdir -p /overlay/rootfs ;
-mkdir -p /overlay/persist ;
-mkdir -p /overlay/ram ;
+mkdir -p /overlay/rootfs
+mkdir -p /overlay/persist
+mkdir -p /overlay/ram
 
-mkdir -p /overlay-persist-merge ;
-mkdir -p /overlay-ram-merge ;
+mkdir -p /overlay-persist-merge
+mkdir -p /overlay-ram-merge
 
 # Move rootfs mount point to overlay lower
 mount --move /rootfs /overlay/rootfs
@@ -87,8 +86,11 @@ if [ -e /overlay-persist-merge/var/aesys/shell.requested ]; then
 fi
 
 # Determine if overlayroot is requested
+# Overlay can be explicitly disabled by file /var/aesys/overlayroot.disabled or
+# silently implied by the first initialization procedure still pending
+# (file /var/aesys/firstinit.pending still there)
 OVERLAYROOT_ENABLED=1
-if [ -e /overlay-persist-merge/var/aesys/overlayroot.disabled ]; then
+if [ -e /overlay-persist-merge/var/aesys/overlayroot.disabled ] || [ -e /overlay-persist-merge/var/aesys/firstinit.pending ]; then
 	OVERLAYROOT_ENABLED=0 ;
 fi
 
@@ -187,9 +189,9 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		else
 
 			# Write a file on /initram for having a quick way for verifying at runtime if overlay is in place
-			touch /initram/overlayroot.enforced
+			touch /initram/overlayroot.enforced ;
 
-			CHECK=1;
+			CHECK=1 ;
 		fi
 	done
 
@@ -212,7 +214,7 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 else
 
 	# Log
-	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!" ;
+	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!"
 
 	# Move temporary file systems to new root
 	mkdir -p /overlay-persist-merge/initram

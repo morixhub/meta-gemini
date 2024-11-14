@@ -1,0 +1,11 @@
+[Unit]
+Description=Aesys first boot initialization procedure
+ConditionPathExists=/var/aesys/firstinit.pending
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -c 'sleep 5 ; /sbin/aesys-firstinit.sh'
+
+[Install]
+WantedBy=default.target
