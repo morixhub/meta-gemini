@@ -9,12 +9,14 @@ SRC_URI =  " \
     file://aesys-firstinit.service \
 "
 
-do_compile () {
-}
+FILES:${PN} += " \
+    ${sbindir}/aesys-firstinit.sh \
+    ${systemd_unitdir}/system/aesys-firstinit.service \
+"
 
 do_install () {
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/aesys-firstinit.sh ${D}/${sbindir}
+    install -m 0755 ${WORKDIR}/aesys-firstinit.sh ${D}${sbindir}
 
     install -d ${D}${systemd_unitdir}/system/
     install -m 0644 ${WORKDIR}/aesys-firstinit.service ${D}${systemd_unitdir}/system
