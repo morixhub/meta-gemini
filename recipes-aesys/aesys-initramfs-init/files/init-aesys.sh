@@ -12,7 +12,7 @@ do_panic() {
 }
 
 # Log
-do_log "Starting...";
+do_log "Starting..."
 
 # Prepare directories
 mkdir -p /proc
@@ -22,6 +22,9 @@ mkdir -p /dev
 mkdir -p /initram
 
 mkdir -p /rootfs
+mkdir -p /boot
+mkdir -p /persist
+mkdir -p /data
 
 # Mount aux filesystems
 mount -t proc proc /proc
@@ -29,76 +32,92 @@ mount -t sysfs sysfs /sys
 mount -t devtmpfs dev /dev
 
 # Wait for block device
-if [ ! -b /dev/mmcblk1p1 ] || [ ! -b /dev/mmcblk1p2 ] || [ ! -b /dev/mmcblk1p3 ] || [ ! -b /dev/mmcblk1p4 ]; then
+if [ ! -b /dev/mmcblk1p1 ] || [ ! -b /dev/mmcblk1p2 ] || [ ! -b /dev/mmcblk1p3 ]; then
 	do_log "Waiting for block device..." ;
 	sleep 1 ;
 fi
 
-# Mount root file system
-mount -t ext4 -o ro /dev/mmcblk1p2 /rootfs
-
-# Check rootfs suitability
-CHECK=0
-while [ $CHECK -eq 0 ];
-do
-	if [ ! -d /rootfs/boot ] || [ ! -d /rootfs/var ] || [ ! -d /rootfs/data ]; then
-		do_log "Root file-system is not suitable; missing some requested folder" ;
-		do_panic ;
-	else
-		CHECK=1 ;
-	fi
-done
-
 # Mount relevant file systems
-mount -t vfat -o ro /dev/mmcblk1p1 /rootfs/boot
-mount -t ext4 -o ro /dev/mmcblk1p3 /rootfs/var
-mount -t ext4 -o ro /dev/mmcblk1p4 /rootfs/data
+mount -t vfat -o ro /dev/mmcblk1p1 /boot
+mount -t ext4 -o rw /dev/mmcblk1p2 /persist
+mount -t ext4 -o rw /dev/mmcblk1p3 /data
+
+# Mount initram filesystems
+mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
+
+# Ensure persist filesystem has folders requested for overlay
+mkdir -p /persist/root
+mkdir -p /persist/root/upper
+mkdir -p /persist/root/work
+
+mkdir -p /persist/var
+mkdir -p /persist/var/upper
+mkdir -p /persist/var/work
+
+# Mount root file system from squash
+mount -t squashfs -o ro /boot/rootfs.squashfs /rootfs
+
+# Create a temporary mount on /overlay
+# (so that it can act as a real mount point and can be moved around)
+mkdir -p /overlay
+mount -t tmpfs tmpfs /overlay
+
+# Prepare folders for overlaying
+mkdir -p /overlay/rootfs
+mkdir -p /overlay/persist
+
+mkdir -p /overlay-persist-root-merge
+mkdir -p /overlay-persist-var-merge
+
+# Move rootfs mount point to overlay lower
+mount --move /rootfs /overlay/rootfs
+mount --move /persist /overlay/persist
+
+# Mount overlay on persist (root)
+mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/root/upper,workdir=/overlay/persist/root/work overlay /overlay-persist-root-merge ;
+
+# Mount overlay on persist (var)
+mount -t overlay -o lowerdir=/overlay/rootfs/var,upperdir=/overlay/persist/var/upper,workdir=/overlay/persist/var/work overlay /overlay-persist-var-merge ;
+
+# Move persisted var overlay to persist overlay
+mkdir -p /overlay-persist-root-merge/var
+mount --move /overlay-persist-var-merge /overlay-persist-root-merge/var
+
+# Move boot and data mount points over persist overlay
+mkdir -p /overlay-root-merge/boot
+mount --move /boot /overlay-persist-root-merge/boot
+
+mkdir -p /overlay-persist-root-merge/data
+mount --move /data /overlay-persist-root-merge/data
 
 # Determine if shell is requested
 SHELL_REQUESTED=0
-if [ -e /rootfs/var/aesys/shell.requested ]; then
+if [ -e /overlay-persist-root-merge/var/aesys/shell.requested ]; then
 	SHELL_REQUESTED=1 ;
 fi
 
 # Determine if overlayroot is requested
+# Overlay can be explicitly disabled by file /var/aesys/overlayroot.disabled or
+# silently implied by the first initialization procedure still pending
+# (file /var/aesys/firstinit.pending still there)
 OVERLAYROOT_ENABLED=1
-if [ -e /rootfs/var/aesys/overlayroot.disabled ]; then
+if [ -e /overlay-persist-root-merge/var/aesys/overlayroot.disabled ] || [ -e /overlay-persist-root-merge/var/aesys/firstinit.pending ]; then
 	OVERLAYROOT_ENABLED=0 ;
 fi
 
-# Mount temporary filesystems
-mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
-
-if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
-
-	mkdir -p /overlayroot
-	mkdir -p /overlay
-
-	mount -t tmpfs tmpfs /overlay ;
-fi
-
 # Make APP signature key available to other applications
-cp /securefs.publickey.pem /initram/securefs.publickey.pem
-
-# Check public key availability
-CHECK=0
-while [ $CHECK -eq 0 ];
-do
-	if [ ! -e "/initram/securefs.publickey.pem" ]; then
-		do_log "Public key for FS verification not available" ;
-		do_panic ;
-	else
-		CHECK=1 ;
-	fi
-done
+# (do it anyway, even if the SecureFS is going to be skipped by request afterward)
+if [ -e /securefs.publickey.pem ]; then
+	cp /securefs.publickey.pem /initram/securefs.publickey.pem ;
+fi
 
 # Check secure FS required files
 SKIPVERIFY=0
 CHECK=0
 while [ $CHECK -eq 0 ];
 do
-	if [ ! -e /rootfs/data/securefs.data ] || [ ! -e /rootfs/data/securefs.data.sig ]; then
-		if [ -e /rootfs/var/aesys/securefs.skip ]; then
+	if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/data/securefs.data ] || [ ! -e /overlay-persist-root-merge/data/securefs.data.sig ]; then
+		if [ -e /overlay-persist-root-merge/var/aesys/securefs.skip ]; then
 			SKIPVERIFY=1 ;
 			CHECK=1 ;
 		else
@@ -116,7 +135,7 @@ if [ $SKIPVERIFY -eq 0 ]; then
 	CHECK=0 ;
 	while [ $CHECK -eq 0 ];
 	do
-		openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /rootfs/data/securefs.data.sig /rootfs/data/securefs.data ;
+		openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /overlay-persist-root-merge/data/securefs.data.sig /overlay-persist-root-merge/data/securefs.data ;
 
 		if [ ! $? -eq 0 ]; then
 			do_log "SecureFS signature verification FAILED!" ;
@@ -130,7 +149,7 @@ if [ $SKIPVERIFY -eq 0 ]; then
 	CHECK=0 ;
 	while [ $CHECK -eq 0 ];
 	do
-		cat /rootfs/data/securefs.data | chroot /rootfs sha256sum -c -s ;
+		cat /overlay-persist-root-merge/data/securefs.data | chroot /overlay-persist-root-merge sha256sum -c -s ;
 
 		if [ ! $? -eq 0 ]; then
 			do_log "SecureFS files validation FAILED!" ;
@@ -153,11 +172,6 @@ fi
 # Log
 do_log "Preparing to root switching..."
 
-# Unmount file systems requested no more
-umount /rootfs/boot
-umount /rootfs/var
-umount /rootfs/data
-
 # Enforce root overlay, if requested
 if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 
@@ -167,19 +181,19 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		# Log
 		do_log "Enabling overlay on root filesystem..." ;
 
-		# Prepare overlay 
-		mkdir -p /overlay/lower ;
-		mkdir -p /overlay/upper ;
-		mkdir -p /overlay/work ;
+		# Prepare folders for overlaying
+		mkdir -p /overlay-ram-merge
 
-		# Move rootfs mount point to overlay lower
-		mount --move /rootfs /overlay/lower
+		# Prepare overlay
+		mkdir -p /overlay/ram 
+		mkdir -p /overlay/ram/upper ;
+		mkdir -p /overlay/ram/work ;
 
 		# Mount overlay
-		mount -t overlay -o lowerdir=/overlay/lower,upperdir=/overlay/upper,workdir=/overlay/work overlay /overlayroot ;
+		mount -t overlay -o lowerdir=/overlay-persist-root-merge,upperdir=/overlay/ram/upper,workdir=/overlay/ram/work overlay /overlay-ram-merge ;
 
 		# Check the mount for being in place
-		OVERLAY_VERIFICATION=`mount | grep "overlay on /overlayroot"` ;
+		OVERLAY_VERIFICATION=`mount | grep "overlay on /overlay-ram-merge"` ;
 
 		if [ -z "$OVERLAY_VERIFICATION" ]; then
 
@@ -190,31 +204,47 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		else
 
 			# Write a file on /initram for having a quick way for verifying at runtime if overlay is in place
-			touch /initram/overlayroot.enforced
+			touch /initram/overlayroot.enforced ;
 
-			CHECK=1;
+			CHECK=1 ;
 		fi
 	done
 
-	# Move temporary file systems to new root
-	mkdir -p /overlayroot/initram
-	mount --move /initram /overlayroot/initram
+	# Make initram readonly
+	mount -o remount,ro /initram
 
-	mkdir -p /overlayroot/overlay
-	mount --move /overlay /overlayroot/overlay
+	# Move mounted file-system over overlay
+	mount --move /overlay-persist-root-merge/boot /overlay-ram-merge/boot
+	mount --move /overlay-persist-root-merge/var /overlay-ram-merge/var
+	mount --move /overlay-persist-root-merge/data /overlay-ram-merge/data
+
+	# Move temporary file systems to new root
+	mkdir -p /overlay-ram-merge/initram
+	mount --move /initram /overlay-ram-merge/initram
+
+	# Move /overlay to /overlay-ram-merge (to make it visible when /overlay-ram-merge will become the new root)
+	mkdir -p /overlay-ram-merge/overlay
+	mount --move /overlay /overlay-ram-merge/overlay
+
+	# Move /overlay-persist-root-merge to /overlay-ram-merge/overlay/persist-root-merge (to make is visible when /overlay-ram-merge will become the new root)
+	mkdir -p /overlay-ram-merge/overlay/persisted-root
+	mount --mount /overlay-persist-root-merge /overlay-ram-merge/overlay/persisted-root
 
 else
 
 	# Log
-	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!" ;
+	do_log "Overlay on root filesystem DISABLED! Root filesystem is R/W!"
 
-	# Remount root filesystem R/W so that the system is completely "open"
-	mount -o remount,rw /rootfs ;
+	# Make initram readonly
+	mount -o remount,ro /initram
 
 	# Move temporary file systems to new root
-	mkdir -p /rootfs/initram
-	mount --move /initram /rootfs/initram
+	mkdir -p /overlay-persist-root-merge/initram
+	mount --move /initram /overlay-persist-root-merge/initram
 
+	# Move /overlay to /overlay-persist-root-merge (to make it visible when /overlay-persist-root-merge will become the new root)
+	mkdir -p /overlay-persist-root-merge/overlay
+	mount --move /overlay /overlay-persist-root-merge/overlay
 fi
 
 # Go to shell, if requested
@@ -229,7 +259,7 @@ fi
 do_log "Switching root..."
 
 if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
-	exec switch_root /overlayroot /sbin/init ;
+	exec switch_root /overlay-ram-merge /sbin/init ;
 else
-	exec switch_root /rootfs /sbin/init ;
+	exec switch_root /overlay-persist-root-merge /sbin/init ;
 fi
