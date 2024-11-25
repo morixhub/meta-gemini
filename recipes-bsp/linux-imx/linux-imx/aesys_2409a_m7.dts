@@ -46,11 +46,11 @@
 
 
 / {
-	imx8mp-cm7 {
+	imx8mn-cm7 {
 		compatible = "fsl,imx8mn-cm7";
 		rsc-da = <0x74ff0000>;		// <-- IT MUST POINT TO THE BASE OF THE FIRST VDEV0 RING AND
 									//     MUST MATCH WITH VDEV0_VRING_BASE IN M7 CODE
-		clocks = <&clk IMX8MP_CLK_M7_DIV>;
+		clocks = <&clk IMX8MN_CLK_M7_CORE>;
 		clock-names = "core";
 		mbox-names = "tx", "rx", "rxdb";
 		mboxes = <&mu 0 1
