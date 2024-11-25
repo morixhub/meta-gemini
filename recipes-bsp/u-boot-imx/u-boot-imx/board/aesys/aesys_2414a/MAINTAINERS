@@ -1,0 +1,6 @@
+AESYS 2414A board
+M:	Morix Dev <morix.dev@gmail.com>
+S:	Maintained
+F:	board/aesys/aesys_2414a/
+F:	include/configs/aesys_2414a.h
+F:	configs/aesys_2414a_defconfig
