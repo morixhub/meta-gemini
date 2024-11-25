@@ -235,9 +235,9 @@
 		num-addresses = <1>;
 	};
 
-	rtc@6f {
+	rtc@51 {
 		compatible = "nxp,pcf85063a";
-		reg = <0x6f>;
+		reg = <0x51>;
 
 		clock {
 			compatible = "fixed-clock";
