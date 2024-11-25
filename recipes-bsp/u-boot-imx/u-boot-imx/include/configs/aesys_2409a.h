@@ -204,9 +204,9 @@
 #define CFG_SYS_INIT_RAM_SIZE        0x200000
 
 #define CFG_SYS_SDRAM_BASE           0x40000000
-#define PHYS_SDRAM                      0x40000000
+#define PHYS_SDRAM                   0x40000000
 
-#define PHYS_SDRAM_SIZE			0x80000000	/* 2 GB */
+#define PHYS_SDRAM_SIZE				0x80000000	/* 2 GB */
 
 #define CFG_SYS_NAND_BASE           0x20000000
 
