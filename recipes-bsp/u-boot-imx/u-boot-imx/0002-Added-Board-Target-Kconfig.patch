@@ -30,8 +30,8 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
 +
-+config TARGET_AESYS_2409A_TEST
-+        bool "Aesys 2409A TEST"
++config TARGET_AESYS_2409A
++        bool "Aesys 2409A"
 +        select IMX8MN
 +        select SUPPORT_SPL
 +        select IMX8M_LPDDR4
@@ -40,8 +40,8 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
 +
-+config TARGET_AESYS_2414A_TEST
-+        bool "Aesys 2414A TEST"
++config TARGET_AESYS_2414A
++        bool "Aesys 2414A"
 +        select IMX8MP
 +        select SUPPORT_SPL
 +        select IMX8M_LPDDR4
