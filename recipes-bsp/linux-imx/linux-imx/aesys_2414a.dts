@@ -87,40 +87,36 @@
 		regulator-always-on;
 	};
 
-	/**
-	bt_sco_codec: bt_sco_codec {
-		#sound-dai-cells = <1>;
-		compatible = "linux,bt-sco";
-	};
-	*/
-
-	/**
-	sound-bt-sco {
-		compatible = "simple-audio-card";
-		simple-audio-card,name = "bt-sco-audio";
-		simple-audio-card,format = "dsp_a";
-		simple-audio-card,bitclock-inversion;
-		simple-audio-card,frame-master = <&btcpu>;
-		simple-audio-card,bitclock-master = <&btcpu>;
-
-		btcpu: simple-audio-card,cpu {
-			sound-dai = <&sai2>;
-			dai-tdm-slot-num = <2>;
-			dai-tdm-slot-width = <16>;
-		};
-
-		simple-audio-card,codec {
-			sound-dai = <&bt_sco_codec 1>;
-		};
-	};
-	*/
-
-	sound-wm8524 {
-        compatible = "wlf,wm8524";
+	wm8524: audio-codec {
+		#sound-dai-cells = <0>;
+		compatible = "wlf,wm8524";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_sound_wm8524>;
-        wlf,mute-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
-    };
+		wlf,mute-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
+
+	sound-wm8524 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "wm8524-audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,frame-master = <&cpudai>;
+		simple-audio-card,bitclock-master = <&cpudai>;
+		simple-audio-card,widgets =
+			"Line", "Left Line Out Jack",
+			"Line", "Right Line Out Jack";
+		simple-audio-card,routing =
+			"Left Line Out Jack", "LINEVOUTL",
+			"Right Line Out Jack", "LINEVOUTR";
+
+		cpudai: simple-audio-card,cpu {
+			sound-dai = <&sai1>;
+		};
+
+		link_codec: simple-audio-card,codec {
+			sound-dai = <&wm8524>;
+			clocks = <&clk IMX8MP_CLK_SAI1>;
+		};
+	};
 
 	sound-xcvr {
 		compatible = "fsl,imx-audio-card";
@@ -152,19 +148,6 @@
 				    100>;
 		default-brightness-level = <80>;
 	};
-
-	/**
-	** PROBABILMENTE DA RIMUOVERE
-	lvds0_panel {
-		compatible = "jdi,tx26d202vm0bwa";
-		backlight = <&lvds_backlight>;
-	
-		port {
-			panel_lvds_in: endpoint {
-				remote-endpoint = <&lvds_out>;
-			};
-		};
-	}; */
 };
 
 &A53_0 {
@@ -284,7 +267,6 @@
 
 &i2c1 {
 	clock-frequency = <400000>;
-	// /**
 	pinctrl-names = "default", "gpio";
 	pinctrl-0 = <&pinctrl_i2c1>;
 	pinctrl-1 = <&pinctrl_i2c1_gpio>;
@@ -448,7 +430,7 @@
 };
 
 &i2c5 {
-	clock-frequency = <100000>; /* Lower clock speed for external bus. */
+	clock-frequency = <100000>;
 	pinctrl-names = "default", "gpio";
  	pinctrl-0 = <&pinctrl_i2c5>;
  	pinctrl-1 = <&pinctrl_i2c5_gpio>;
@@ -468,8 +450,8 @@
 &lcdif3 {
 	status = "okay";
 
-	thres-low  = <1 2>;             //** (FIFO * 1 / 2)
-	thres-high = <3 4>;             //** (FIFO * 3 / 4)
+	thres-low  = <1 2>;
+	thres-high = <3 4>;
 };
 
 &mipi_dsi {
@@ -514,7 +496,7 @@
 	status = "okay";
 };
 
-&uart1 { /** BT */
+&uart1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1>;
 	assigned-clocks = <&clk IMX8MP_CLK_UART1>;
@@ -524,7 +506,6 @@
 };
 
 &uart2 {
-	/* console */
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart2>;
 	status = "okay";
@@ -549,14 +530,6 @@
 };
 
 &usb3_phy0 {
-	/**
-	fsl,phy-tx-vref-tune = <0xe>;
-	fsl,phy-tx-preemp-amp-tune = <3>;
-	fsl,phy-tx-vboost-level = <5>;
-	fsl,phy-comp-dis-tune = <7>;
-	fsl,pcs-tx-deemph-3p5db = <0x21>;
-	fsl,phy-pcs-tx-swing-full = <0x7f>;
-	*/
 	status = "okay";
 };
 
@@ -579,10 +552,6 @@
 };
 
 &usb3_phy1 {
-	/**
-	fsl,phy-tx-preemp-amp-tune = <3>;
-	fsl,phy-tx-vref-tune = <0xb>;
-	*/
 	status = "okay";
 };
 
@@ -650,15 +619,15 @@
 
 	pinctrl_usb_dwc3_0: usb_dwc3_0_pins {	
 		fsl,pins = <
-			MX8MN_IOMUXC_GPIO1_IO13_USB1_OC			0x00000084
-			MX8MN_IOMUXC_GPIO1_IO12_USB1_PWR		0x00000084
+			MX8MP_IOMUXC_GPIO1_IO13___USB1_OC			0x00000084
+			MX8MP_IOMUXC_GPIO1_IO12___USB1_PWR		0x00000084
 		>;
 	};
 
 	pinctrl_usb_dwc3_1: usb_dwc3_1_pins {	
 		fsl,pins = <
-			MX8MN_IOMUXC_GPIO1_IO15_USB_OC			0x00000084
-			MX8MN_IOMUXC_GPIO1_IO14_USB2_PWR		0x00000084
+			MX8MP_IOMUXC_GPIO1_IO15__USB_OC			0x00000084
+			MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x00000084
 		>;
 	};
 
@@ -742,10 +711,10 @@
 
 			MX8MP_IOMUXC_HDMI_HPD__GPIO3_IO29		0x00000006	// UART3_SEL
 
-			MX8MN_IOMUXC_UART2_TXD__GPIO5_IO25       0x00000016	/* WDOG_EN */
-			MX8MN_IOMUXC_UART1_RXD__GPIO5_IO22       0x00000016	/* WDOG_WDI */
-			MX8MN_IOMUXC_UART2_RXD__GPIO5_IO24       0x00000016	/* WDOG_SET0 */
-			MX8MN_IOMUXC_UART1_TXD__GPIO5_IO23       0x00000016	/* WDOG_SET1 */
+			MX8MP_IOMUXC_UART2_TXD__GPIO5_IO25       0x00000016	// WDOG_EN
+			MX8MP_IOMUXC_UART1_RXD__GPIO5_IO22       0x00000016	// WDOG_WDI
+			MX8MP_IOMUXC_UART2_RXD__GPIO5_IO24       0x00000016	// WDOG_SET0
+			MX8MP_IOMUXC_UART1_TXD__GPIO5_IO23       0x00000016	// WDOG_SET1
 		>;
 	};
 
