@@ -233,9 +233,9 @@
 		num-addresses = <1>;
 	};
 
-	rtc@6f {
+	rtc@51 {
 		compatible = "nxp,pcf85063a";
-		reg = <0x6f>;
+		reg = <0x51>;
 
 		clock {
 			compatible = "fixed-clock";
@@ -378,8 +378,8 @@
 			MX8MN_IOMUXC_ENET_TX_CTL_ENET1_RGMII_TX_CTL	0x1f
 			MX8MN_IOMUXC_ENET_RXC_ENET1_RX_ER	0x91
 			MX8MN_IOMUXC_ENET_TD2_ENET1_TX_CLK	0x1f
-			MX8MN_IOMUXC_GPIO1_IO10_GPIO1_IO10	0x19
-			MX8MN_IOMUXC_GPIO1_IO09_GPIO1_IO9	0x16
+			MX8MN_IOMUXC_GPIO1_IO10_GPIO1_IO10	0x19 /* ETH_nINT */
+			MX8MN_IOMUXC_GPIO1_IO09_GPIO1_IO9	0x16 /* ETH_nRESET */
 		>;
 	};
 
@@ -524,7 +524,7 @@
 
 	pinctrl_usdhc3_reset: usdhc3resetgrp {
 		fsl,pins = <
-			MX8MN_IOMUXC_GPIO1_IO11_GPIO1_IO11			0x16
+			MX8MN_IOMUXC_GPIO1_IO11_GPIO1_IO11			0x16	/* eMMC RESET */
 		>;
 	};
 
