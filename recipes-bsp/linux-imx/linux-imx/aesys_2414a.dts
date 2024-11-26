@@ -109,17 +109,6 @@
 		};
 	};
 	
-	sound-xcvr {
-		compatible = "fsl,imx-audio-card";
-		model = "imx-audio-xcvr";
-		pri-dai-link {
-			link-name = "XCVR PCM";
-			cpu {
-				sound-dai = <&xcvr>;
-			};
-		};
-	};
-	
 	dsi_backlight: dsi_backlight@1 {
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 100000 0>;
@@ -164,10 +153,6 @@
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1>;
-	status = "okay";
-};
-
-&aud2htx {
 	status = "okay";
 };
 
@@ -438,13 +423,6 @@
 	status = "okay";
 };
 
-&lcdif3 {
-	status = "okay";
-	
-	thres-low  = <1 2>;
-	thres-high = <3 4>;
-};
-
 &mipi_dsi {
 	status = "okay";
 	
@@ -475,11 +453,6 @@
 };
 
 &snvs_pwrkey {
-	status = "okay";
-};
-
-&xcvr {
-	#sound-dai-cells = <0>;
 	status = "okay";
 };
 
@@ -664,14 +637,6 @@
 	
 	pinctrl_pin_gpios: pin_gpios {
 		fsl,pins = <
-		MX8MP_IOMUXC_GPIO1_IO00__GPIO1_IO00		0x00000106
-		MX8MP_IOMUXC_GPIO1_IO06__GPIO1_IO06		0x00000106
-		MX8MP_IOMUXC_SAI1_RXD1__GPIO4_IO03		0x00000106
-		MX8MP_IOMUXC_SAI1_RXD2__GPIO4_IO04		0x00000106
-		MX8MP_IOMUXC_SAI1_RXD3__GPIO4_IO05		0x00000106
-		MX8MP_IOMUXC_SAI1_TXD3__GPIO4_IO15		0x00000106
-		MX8MP_IOMUXC_SAI1_TXD7__GPIO4_IO19		0x00000106
-		
 		MX8MP_IOMUXC_NAND_ALE__GPIO3_IO00		0x00000006		// EXT_BOARD_HW_REV1
 		MX8MP_IOMUXC_NAND_CE0_B__GPIO3_IO01		0x00000006		// EXT_BOARD_HW_REV2
 		MX8MP_IOMUXC_NAND_DQS__GPIO3_IO14		0x00000006		// EXT_BOARD_HW_REV3
