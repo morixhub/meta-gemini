@@ -380,14 +380,14 @@
 	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 	
-	eeprom@50 {
+	eeprom: eeprom@50 {
 		compatible = "st,24c08";
 		reg = <0x50>;
 		pagesize = <16>;
 		num-addresses = <1>;
 	};
 	
-	light-sensor@44 {
+	als: light-sensor@44 {
 		compatible = "ti,opt3001";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_light_sensor>;
@@ -396,7 +396,7 @@
 		interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
 	};
 	
-	rtc@51 {
+	rtc_i2c: rtc@51 {
 		compatible = "nxp,pcf85063a";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_rtc>;
