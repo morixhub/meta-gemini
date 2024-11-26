@@ -111,17 +111,6 @@
 		};
 	};
 	
-	sound-xcvr {
-		compatible = "fsl,imx-audio-card";
-		model = "imx-audio-xcvr";
-		pri-dai-link {
-			link-name = "XCVR PCM";
-			cpu {
-				sound-dai = <&xcvr>;
-			};
-		};
-	};
-	
 	dsi_backlight: dsi_backlight@1 {
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 100000 0>;
@@ -159,17 +148,9 @@
 	cpu-supply = <&buck2>;
 };
 
-&dsp {
-	status = "okay";
-};
-
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1>;
-	status = "okay";
-};
-
-&aud2htx {
 	status = "okay";
 };
 
@@ -436,17 +417,6 @@
 	status = "okay";
 };
 
-&lcdif2 {
-	status = "okay";
-};
-
-&lcdif3 {
-	status = "okay";
-	
-	thres-low  = <1 2>;
-	thres-high = <3 4>;
-};
-
 &mipi_dsi {
 	status = "okay";
 	
@@ -477,11 +447,6 @@
 };
 
 &snvs_pwrkey {
-	status = "okay";
-};
-
-&xcvr {
-	#sound-dai-cells = <0>;
 	status = "okay";
 };
 
@@ -1078,28 +1043,6 @@
 
 &gpu_reserved {
 	reg = <0x0 0x78000000 0 0x08000000>;
-};
-
-&dsp_reserved {
-	reg = <0 0x77000000 0 0x1000000>;
-	no-map;
-};
-
-&dsp_reserved_heap {
-	reg = <0 0x76110000 0 0xef0000>;
-	no-map;
-};
-
-&dsp_vdev0vring0 {
-	reg = <0 0x76108000 0 0x8000>;
-};
-
-&dsp_vdev0vring1 {
-	reg = <0 0x76100000 0 0x8000>;
-};
-
-&dsp_vdev0buffer {
-	reg = <0 0x76000000 0 0x100000>;
 };
 
 &mix_gpu_ml {
