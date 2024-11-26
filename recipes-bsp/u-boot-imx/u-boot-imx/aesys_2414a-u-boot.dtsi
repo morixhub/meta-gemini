@@ -94,15 +94,15 @@
 	bootph-pre-ram;
 };
 
-pinctrl_usdhc1_100mhz {
+&pinctrl_usdhc1_100mhz {
 	bootph-pre-ram;
 };
 
-pinctrl_usdhc1_200mhz {
+&pinctrl_usdhc1_200mhz {
 	bootph-pre-ram;
 };
 
-pinctrl_usdhc1_gpio {
+&pinctrl_usdhc1_gpio {
 	bootph-pre-ram;
 };
 
@@ -122,15 +122,15 @@ pinctrl_usdhc1_gpio {
 	bootph-pre-ram;
 };
 
-pinctrl_usdhc2_100mhz {
+&pinctrl_usdhc2_100mhz {
 	bootph-pre-ram;
 };
 
-pinctrl_usdhc2_200mhz {
+&pinctrl_usdhc2_200mhz {
 	bootph-pre-ram;
 };
 
-pinctrl_usdhc2_gpio {
+&pinctrl_usdhc2_gpio {
 	bootph-pre-ram;
 };
 
@@ -154,11 +154,11 @@ pinctrl_usdhc2_gpio {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c1 {
+&pinctrl_i2c1 {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c1_gpio {
+&pinctrl_i2c1_gpio {
 	bootph-pre-ram;
 };
 
@@ -166,11 +166,11 @@ pinctrl_i2c1_gpio {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c2 {
+&pinctrl_i2c2 {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c2_gpio {
+&pinctrl_i2c2_gpio {
 	bootph-pre-ram;
 };
 
@@ -178,11 +178,11 @@ pinctrl_i2c2_gpio {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c3 {
+&pinctrl_i2c3 {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c3_gpio {
+&pinctrl_i2c3_gpio {
 	bootph-pre-ram;
 };
 
@@ -190,11 +190,11 @@ pinctrl_i2c3_gpio {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c5 {
+&pinctrl_i2c5 {
 	bootph-pre-ram;
 };
 
-pinctrl_i2c5_gpio {
+&pinctrl_i2c5_gpio {
 	bootph-pre-ram;
 };
 
