@@ -355,11 +355,11 @@
 	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 	
-	eeprom: eeprom@50 {
+	eeprom: eeprom@54 {
 		compatible = "st,24c08";
-		reg = <0x50>;
+		reg = <0x54>;
 		pagesize = <16>;
-		num-addresses = <3>;
+		num-addresses = <4>;
 	};
 	
 	als: light-sensor@44 {
@@ -492,11 +492,12 @@
 	status = "okay";
 };
 
-&usb3_phy0 {
+&usb3_0 {
+	fsl,over-current-active-low;
 	status = "okay";
 };
 
-&usb3_0 {
+&usb3_phy0 {
 	status = "okay";
 };
 
@@ -514,11 +515,12 @@
 	status = "okay";
 };
 
-&usb3_phy1 {
+&usb3_1 {
+	fsl,over-current-active-low;
 	status = "okay";
 };
 
-&usb3_1 {
+&usb3_phy1 {
 	status = "okay";
 };
 
