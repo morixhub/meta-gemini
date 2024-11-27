@@ -15,6 +15,8 @@
 	aliases {
 		rtc0 = &rtc_i2c;
 		rtc1 = &snvs_rtc;
+		eth0 = &eqos;
+		eth1 = &fec;
 	};
 	
 	chosen {
@@ -59,12 +61,9 @@
 	
 	reg_usb_vbus: regulator-vbus {
 		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_usb2_vbus>;
 		regulator-name = "USB_VBUS";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
-		gpio = <&gpio1 14 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 		regulator-always-on;
 	};
@@ -358,7 +357,7 @@
 		compatible = "st,24c08";
 		reg = <0x50>;
 		pagesize = <16>;
-		num-addresses = <1>;
+		num-addresses = <3>;
 	};
 	
 	als: light-sensor@44 {
@@ -842,12 +841,6 @@
 		MX8MP_IOMUXC_ECSPI2_SCLK__UART4_DCE_RX		0x00000140
 		MX8MP_IOMUXC_ECSPI2_SS0__UART4_DCE_RTS		0x00000140
 		MX8MP_IOMUXC_ECSPI2_MISO__UART4_DCE_CTS		0x00000140
-		>;
-	};
-	
-	pinctrl_usb2_vbus: usb2grp {
-		fsl,pins = <
-		MX8MP_IOMUXC_GPIO1_IO14__GPIO1_IO14		0x00000010
 		>;
 	};
 	
