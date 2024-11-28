@@ -496,7 +496,7 @@
 };
 
 &usb3_0 {
-	fsl,over-current-active-low;
+	/* //!! fsl,over-current-active-low; */ 
 	fsl,power-active-low;
 	status = "okay";
 };
@@ -520,7 +520,7 @@
 };
 
 &usb3_1 {
-	fsl,over-current-active-low;
+	/* //!! fsl,over-current-active-low; */
 	fsl,power-active-low;
 	status = "okay";
 };
