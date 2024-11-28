@@ -15,8 +15,8 @@
 	aliases {
 		rtc0 = &rtc_i2c;
 		rtc1 = &snvs_rtc;
-		eth0 = &eqos;
-		eth1 = &fec;
+		ethernet0 = &eqos;
+		ethernet1 = &fec;
 	};
 	
 	chosen {
@@ -70,20 +70,18 @@
 	
 	reg_usdhc1_vmmc: regulator-usdhc1 {
 		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_reg_usdhc1_vmmc>;
-		regulator-name = "VSD_3V3";
+		regulator-name = "VSD1_3V3";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
-		gpio = <&gpio2 7 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
+		regulator-always-on;
 	};
 
 	reg_usdhc2_vmmc: regulator-usdhc2 {
 		compatible = "regulator-fixed";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_reg_usdhc2_vmmc>;
-		regulator-name = "VSD_3V3";
+		regulator-name = "VSD2_3V3";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
@@ -539,8 +537,6 @@
 	status = "okay";
 };
 
-
-
 &usdhc1 {
 	assigned-clocks = <&clk IMX8MP_CLK_USDHC1>;
 	assigned-clock-rates = <400000000>;
@@ -682,6 +678,7 @@
 		MX8MP_IOMUXC_UART1_TXD__GPIO5_IO23       0x00000016		// WDOG_SET1
 
 		MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06       0x00000006   	// AUDIO_nMUTE_CTRL
+		MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		 0x00000006		// USB_HUB_SOFT_RESET
 		MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08       0x00000006   	// LTE_nPWR_ON
 		MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09       0x00000006   	// WIFI_BLE_nRESET
 		>;
@@ -812,12 +809,6 @@
 	pinctrl_pmic: pmicgrp {
 		fsl,pins = <
 		MX8MP_IOMUXC_GPIO1_IO03__GPIO1_IO03	0x000001C0
-		>;
-	};
-	
-	pinctrl_reg_usdhc1_vmmc: regusdhc1vmmcgrp {
-		fsl,pins = <
-		MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		0x00000006
 		>;
 	};
 
