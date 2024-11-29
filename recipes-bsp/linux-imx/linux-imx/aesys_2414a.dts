@@ -14,8 +14,8 @@
 	aliases {
 		rtc0 = &rtc_i2c;
 		rtc1 = &snvs_rtc;
-		eth0 = &eqos;
-		eth1 = &fec;
+		ethernet0 = &eqos;
+		ethernet1 = &fec;
 	};
 	
 	chosen {
@@ -502,7 +502,7 @@
 };
 
 &usb3_0 {
-	/* //!! fsl,over-current-active-low; */ 
+	fsl,over-current-active-low;
 	fsl,power-active-low;
 	status = "okay";
 };
@@ -526,7 +526,7 @@
 };
 
 &usb3_1 {
-	/* //!! fsl,over-current-active-low; */
+	fsl,over-current-active-low;
 	fsl,power-active-low;
 	status = "okay";
 };
@@ -594,15 +594,17 @@
 	
 	pinctrl_usb_dwc3_0: usb_dwc3_0_pins {
 		fsl,pins = <
-		/* //!! MX8MP_IOMUXC_GPIO1_IO13__USB1_OC			0x00000084 */
+		MX8MP_IOMUXC_GPIO1_IO13__USB1_OC			0x00000084
 		MX8MP_IOMUXC_GPIO1_IO12__USB1_PWR		0x00000084
+		MX8MP_IOMUXC_GPIO1_IO10__USB1_ID		0x00000084
 		>;
 	};
 	
 	pinctrl_usb_dwc3_1: usb_dwc3_1_pins {
 		fsl,pins = <
-		/* //!!! MX8MP_IOMUXC_GPIO1_IO15__USB2_OC			0x00000084 */
+		MX8MP_IOMUXC_GPIO1_IO15__USB2_OC			0x00000084
 		MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x00000084
+		MX8MP_IOMUXC_GPIO1_IO11__USB2_ID		0x00000084
 		>;
 	};
 	
