@@ -522,6 +522,7 @@
 &usb3_1 {
 	fsl,over-current-active-low;
 	fsl,power-active-low;
+	fsl,permanently-attached;
 	status = "okay";
 };
 
