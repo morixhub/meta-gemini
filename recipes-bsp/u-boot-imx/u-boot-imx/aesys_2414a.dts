@@ -89,6 +89,7 @@
 	};
 	
 	wm8524: audio-codec {
+		#sound-dai-cells = <0>;
 		compatible = "wlf,wm8524";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_sound_wm8524>;
