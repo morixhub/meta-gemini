@@ -101,11 +101,11 @@
 		simple-audio-card,frame-master = <&cpudai>;
 		simple-audio-card,bitclock-master = <&cpudai>;
 		simple-audio-card,widgets =
-		"Line", "Left Line Out Jack",
-		"Line", "Right Line Out Jack";
+			"Line", "Left Line Out Jack",
+			"Line", "Right Line Out Jack";
 		simple-audio-card,routing =
-		"Left Line Out Jack", "LINEVOUTL",
-		"Right Line Out Jack", "LINEVOUTR";
+			"Left Line Out Jack", "LINEVOUTL",
+			"Right Line Out Jack", "LINEVOUTR";
 		
 		cpudai: simple-audio-card,cpu {
 			sound-dai = <&sai1>;
@@ -427,9 +427,11 @@
 	status = "okay";
 };
 
+/* //!!
 &lcdif2 {
 	status = "okay";
 };
+*/
 
 &mipi_dsi {
 	status = "okay";
@@ -1031,14 +1033,13 @@
 	status = "okay";
 };
 
+/* //!!
 &resmem {
 	linux,cma {
 		size = <0 0x10000000>;
 		/delete-property/ alloc-ranges;
 	};
 };
-
-
 
 &dsp_reserved {
 	reg = <0 0x77000000 0 0x1000000>;
@@ -1061,6 +1062,7 @@
 &dsp_vdev0buffer {
 	reg = <0 0x76000000 0 0x100000>;
 };
+*/
 
 /*
 &gpu_reserved {

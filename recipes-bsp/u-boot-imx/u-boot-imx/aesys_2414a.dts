@@ -103,11 +103,11 @@
 		simple-audio-card,frame-master = <&cpudai>;
 		simple-audio-card,bitclock-master = <&cpudai>;
 		simple-audio-card,widgets =
-		"Line", "Left Line Out Jack",
-		"Line", "Right Line Out Jack";
+			"Line", "Left Line Out Jack",
+			"Line", "Right Line Out Jack";
 		simple-audio-card,routing =
-		"Left Line Out Jack", "LINEVOUTL",
-		"Right Line Out Jack", "LINEVOUTR";
+			"Left Line Out Jack", "LINEVOUTL",
+			"Right Line Out Jack", "LINEVOUTR";
 		
 		cpudai: simple-audio-card,cpu {
 			sound-dai = <&sai1>;
@@ -1027,12 +1027,14 @@
 	status = "okay";
 };
 
+/* //!!
 &resmem {
 	linux,cma {
 		size = <0 0x10000000>;
 		/delete-property/ alloc-ranges;
 	};
 };
+*/
 
 /*
 &gpu_reserved {
