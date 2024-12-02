@@ -113,9 +113,9 @@
 			sound-dai = <&sai1>;
 		};
 		
-		link_codec: simple-audio-card,codec {
+		simple-audio-card,codec {
 			sound-dai = <&wm8524>;
-			clocks = <&clk IMX8MP_CLK_SAI1>;
+			clocks = <&clk IMX8MP_CLK_SAI1_ROOT>;
 		};
 	};
 	
@@ -997,53 +997,5 @@
 	};
 };
 
-&vpu_g1 {
-	status = "okay";
-};
 
-&vpu_g2 {
-	status = "okay";
-};
-
-&vpu_vc8000e {
-	status = "okay";
-};
-
-&vpu_v4l2 {
-	status = "okay";
-};
-
-/*
-&gpu_3d {
-	status = "okay";
-};
-
-&gpu_2d {
-	status = "okay";
-};
-*/
-
-&ml_vipsi {
-	status = "okay";
-};
-
-/* //!!
-&resmem {
-	linux,cma {
-		size = <0 0x10000000>;
-		/delete-property/ alloc-ranges;
-	};
-};
-*/
-
-/*
-&gpu_reserved {
-	reg = <0x0 0x78000000 0 0x08000000>;
-};
-*/
-
-&mix_gpu_ml {
-	/* reg = <0x0 0x40000000 0x0 0x40000000>, <0x0 0x40000000 0x0 0x08000000>; */
-	status = "okay";
-};
 
