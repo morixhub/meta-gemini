@@ -111,6 +111,8 @@
 		
 		cpudai: simple-audio-card,cpu {
 			sound-dai = <&sai1>;
+			dai-tdm-slot-num = <2>;
+			dai-tdm-slot-width = <32>;
 		};
 		
 		simple-audio-card,codec {
@@ -444,12 +446,11 @@
 };
 
 &sai1 {
-	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sai1>;
 	assigned-clocks = <&clk IMX8MP_CLK_SAI1>;
 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL1_OUT>;
-	assigned-clock-rates = <12288000>;
+	assigned-clock-rates = <24576000>;
 	fsl,sai-mclk-direction-output;
 	status = "okay";
 };
