@@ -4,7 +4,7 @@
 # SPDX-License-Identifier:      GPL-2.0+
 #
 
-obj-y += aesys_2319a.o
+obj-y += aesys_2409a.o
 
 ifdef CONFIG_SPL_BUILD
 obj-y += spl.o
