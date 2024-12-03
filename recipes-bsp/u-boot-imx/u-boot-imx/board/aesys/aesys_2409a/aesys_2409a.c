@@ -21,8 +21,12 @@
 #include <asm/io.h>
 #include "../common/tcpc.h"
 #include <usb.h>
+#include <asm/arch-imx8m/imx-regs.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#define UFCR 0x0090
+#define UFCR_DCEDTE    (1<<6)  /* DTE mode select */
 
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
 #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
@@ -86,6 +90,12 @@ struct efi_capsule_update_info update_info = {
 
 #endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
+static void setup_dtemode_uart(void)
+{
+	/* Set UART2 DTE mode */
+	setbits_le32((u32 *)(UART2_BASE_ADDR + UFCR), UFCR_DCEDTE);
+}
+
 int board_early_init_f(void)
 {
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
@@ -94,6 +104,7 @@ int board_early_init_f(void)
 
 	set_wdog_reset(wdog);
 
+	setup_dtemode_uart();
 	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
 
 	init_uart_clk(1);
