@@ -30,6 +30,14 @@
 		reg = <0x0 0x40000000 0 0x80000000>;
 	};
 
+	reg_panel: regulator-panel {
+		compatible = "regulator-fixed";
+		regulator-name = "panel";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		enable-active-high;
+	};
+
 	reg_usdhc2_vmmc: regulator-usdhc2 {
 		compatible = "regulator-fixed";
 		pinctrl-names = "default";
@@ -277,6 +285,7 @@
 	panel@0 {
 		compatible = "disen,ds070boe30t";
 		reg = <0>;
+		vcc-lcd-supply = <&reg_panel>;
 		status = "okay";
 	};
 };
@@ -305,6 +314,7 @@
 	status = "okay";
 };
 
+/* //!!
 &uart4 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart4>;
@@ -312,7 +322,7 @@
 	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_80M>;
 	uart-has-rtscts;
 	status = "okay";
-};
+}; */
 
 &usbotg1 {
 	dr_mode = "otg";

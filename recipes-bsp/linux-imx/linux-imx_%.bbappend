@@ -12,6 +12,8 @@ SRC_URI += " file://0008-Improved-EnableDisable-Disen-Panel.patch"
 SRC_URI += " file://0009-Added-SHLR-UPDN-Disen-Panel.patch"
 SRC_URI += " file://0010-Fixed-SHLR-UPDN-Disen-Panel.patch"
 SRC_URI += " file://0011-Fixed-RPMSG-IMX-driver.patch"
+SRC_URI += " file://0012-Reset-And-Power-GPIOs-Now-Optional-For-Disen-Panel.patch"
+SRC_URI += " file://0013-Fixed-Optional-UpDn-ShLr-For-Disen-Panel.patch"
 SRC_URI += " file://Aesys-Kernel-Config-Fragment.cfg"
 
 # Manage kernel configuration fragments
