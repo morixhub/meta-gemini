@@ -51,6 +51,6 @@ index 5fba85b52240..39e861e2b0ed 100644
  	ctx->gpios.shlr = devm_gpiod_get_optional(&dsi->dev, "shlr", GPIOD_OUT_HIGH);
 -	if (IS_ERR(ctx->gpios.shlr))
 +	if (IS_ERR(ctx->gpios.shlr) || (ctx->gpios.shlr == NULL))
- 		dev_warn(&dsi->dev, "Couldn't get shlr GPIO: function won't be availablel\n");
+ 		dev_warn(&dsi->dev, "Couldn't get shlr GPIO: function won't be available\n");
  	else
  		device_create_file(&dsi->dev, &dev_attr_shlr);
