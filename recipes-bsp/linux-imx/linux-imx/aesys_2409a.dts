@@ -75,6 +75,7 @@
 		pinctrl-0 = <&pinctrl_pmic>;
 		interrupt-parent = <&gpio1>;
 		interrupts = <3 IRQ_TYPE_LEVEL_LOW>;
+		nxp,i2c-lt-enable;
 
 		regulators {
 			buck1: BUCK1 {
@@ -173,7 +174,7 @@
 &fec1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_fec1>;
-	phy-mode = "rgmii-id";
+	phy-mode = "rmii";
 	phy-handle = <&ethphy0>;
 	fsl,magic-packet;
 	status = "okay";
@@ -233,13 +234,13 @@
 	sda-gpios = <&gpio5 17 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 	status = "okay";
 
-	eeprom@50 {
+	eeprom: eeprom@54 {
 		compatible = "st,24c08";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_eeprom>;
 		reg = <0x54>;
 		pagesize = <16>;
-		wp-gpios = <&gpio1 3 16>;
+		wp-gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
 		num-addresses = <4>;
 	};
 
@@ -392,7 +393,7 @@
 			MX8MN_IOMUXC_ENET_RX_CTL_ENET1_RGMII_RX_CTL	0x91
 			MX8MN_IOMUXC_ENET_TX_CTL_ENET1_RGMII_TX_CTL	0x1f
 			MX8MN_IOMUXC_ENET_RXC_ENET1_RX_ER	0x91
-			MX8MN_IOMUXC_ENET_TD2_ENET1_TX_CLK	0x1f
+			MX8MN_IOMUXC_ENET_TD2_ENET1_TX_CLK	0x4000001f
 			MX8MN_IOMUXC_GPIO1_IO10_GPIO1_IO10	0x19 /* ETH_nINT */
 			MX8MN_IOMUXC_GPIO1_IO09_GPIO1_IO9	0x16 /* ETH_nRESET */
 		>;
