@@ -122,8 +122,11 @@ static int setup_fec(void)
 	struct iomuxc_gpr_base_regs *gpr =
 		(struct iomuxc_gpr_base_regs *)IOMUXC_GPR_BASE_ADDR;
 
-	/* Use 125M anatop REF_CLK1 for ENET1, not from external */
-	clrsetbits_le32(&gpr->gpr[1], 0x2000, 0);
+	/* Use 50MHz clock for external */
+	/* BIT13: */
+	/*   0: ENET_TD2 is input (clock from external source) */
+	/*   1: ENET_TD2 is output */
+	clrsetbits_le32(&gpr->gpr[1], IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL, 0);
 
 	return 0;
 }
@@ -134,7 +137,10 @@ int board_phy_config(struct phy_device *phydev)
 		phydev->drv->config(phydev);
 
 #ifndef CONFIG_DM_ETH
+	/* ATTENTION: Following lines are removed because we do not want to manage RGMII mode on this board */
+
 	/* enable rgmii rxc skew and phy mode select to RGMII copper */
+	/* 
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x1f);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x8);
 
@@ -142,6 +148,7 @@ int board_phy_config(struct phy_device *phydev)
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x82ee);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1d, 0x05);
 	phy_write(phydev, MDIO_DEVAD_NONE, 0x1e, 0x100);
+	*/
 #endif
 
 	return 0;
