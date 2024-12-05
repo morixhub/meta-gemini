@@ -274,21 +274,6 @@
 	status = "okay";
 };
 
-&lcdif {
-	status = "okay";
-};
-
-&mipi_dsi {
-	status = "okay";
-
-	panel@0 {
-		compatible = "disen,ds070boe30t";
-		reg = <0>;
-		vcc-lcd-supply = <&reg_panel>;
-		status = "okay";
-	};
-};
-
 &uart1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1>;
