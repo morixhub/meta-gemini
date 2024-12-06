@@ -21,7 +21,7 @@
 		heartbeat {
 			label = "heartbeat";
 			linux,default-trigger = "heartbeat";
-			gpios = <&gpio1 1 GPIO_ACTIVE_HIGH>;
+			gpios = <&gpio1 23 GPIO_ACTIVE_HIGH>;
 		};
 	};
 
