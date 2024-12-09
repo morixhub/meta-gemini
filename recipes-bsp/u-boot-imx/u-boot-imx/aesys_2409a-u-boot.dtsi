@@ -3,6 +3,26 @@
 #include "imx8mn-u-boot.dtsi"
 #include "imx8mn-sec-def.h"
 
+#define AESYS_PDAP_D0_ACCESS 0x00000003 /* D0W|D0R */
+#define AESYS_PDAP_D1_ACCESS 0x0000000C /* D1W|D1R */
+
+
+/* //!!
+/ {
+	mcu_rdc {
+		bootph-pre-ram;
+		compatible = "imx8m,mcu_rdc";
+		start-config = <
+			    RDC_PDAP RDC_PDAP_UART4 AESYS_PDAP_D1_ACCESS 0x0 0x0
+			    0x0      0x0            0x0                  0x0 0x0
+			  >;
+		stop-config = <
+				RDC_PDAP RDC_PDAP_UART4 AESYS_PDAP_D0_ACCESS 0x0 0x0
+			    0x0      0x0            0x0                  0x0 0x0
+			  >;
+	};
+}; */
+
 &reg_usdhc2_vmmc {
 	bootph-pre-ram;
 	u-boot,off-on-delay-us = <20000>;

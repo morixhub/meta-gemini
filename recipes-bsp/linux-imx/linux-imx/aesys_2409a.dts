@@ -251,9 +251,9 @@
 		};
 	};
 
-	adc@48 {
+	adc@4d {
 		compatible = "microchip,mcp3221";
-		reg = <0x48>;
+		reg = <0x4d>;
 	};
 
 	temp@49 {
@@ -296,7 +296,6 @@
 	status = "okay";
 };
 
-/* //!!
 &uart4 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart4>;
@@ -304,7 +303,7 @@
 	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_80M>;
 	uart-has-rtscts;
 	status = "okay";
-}; */
+};
 
 &usbotg1 {
 	dr_mode = "otg";
