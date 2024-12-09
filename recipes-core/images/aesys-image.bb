@@ -28,6 +28,10 @@ aesys_image_customize_root() {
     # Mark the system for requiring first initialization
     mkdir -p ${IMAGE_ROOTFS}/var/aesys
     touch ${IMAGE_ROOTFS}/var/aesys/firstinit.pending
+
+    # Disable securefs check by default
+    mkdir -p ${IMAGE_ROOTFS}/var/aesys
+    touch ${IMAGE_ROOTFS}/var/aesys/securefs.skip
 }
 
 IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "

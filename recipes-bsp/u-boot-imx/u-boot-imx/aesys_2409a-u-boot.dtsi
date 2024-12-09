@@ -7,7 +7,6 @@
 #define AESYS_PDAP_D1_ACCESS 0x0000000C /* D1W|D1R */
 
 
-/* //!!
 / {
 	mcu_rdc {
 		bootph-pre-ram;
@@ -21,7 +20,7 @@
 			    0x0      0x0            0x0                  0x0 0x0
 			  >;
 	};
-}; */
+};
 
 &reg_usdhc2_vmmc {
 	bootph-pre-ram;
