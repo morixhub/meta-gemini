@@ -213,6 +213,24 @@
 	};
 };
 
+&ecspi1 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	fsl,spi-num-chipselects = <1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi1 &pinctrl_ecspi1_cs>;
+	cs-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>;
+	status = "okay";
+	
+	flash: flash@0 {
+		compatible = "micron,m25p64", "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <40000000>;
+		m25p,fast-read;
+		broken-flash-reset;
+	};
+};
+
 &i2c1 {
 	clock-frequency = <400000>;
 	pinctrl-names = "default", "gpio";
@@ -238,7 +256,7 @@
 		pinctrl-0 = <&pinctrl_eeprom>;
 		reg = <0x54>;
 		pagesize = <16>;
-		wp-gpios = <&gpio3 16 GPIO_ACTIVE_HIGH>;
+		wp-gpios = <&gpio3 16 GPIO_ACTIVE_LOW>;
 		num-addresses = <4>;
 	};
 
@@ -389,6 +407,20 @@
 			MX8MN_IOMUXC_NAND_DATA01_QSPI_A_DATA1	0x84
 			MX8MN_IOMUXC_NAND_DATA02_QSPI_A_DATA2	0x84
 			MX8MN_IOMUXC_NAND_DATA03_QSPI_A_DATA3	0x84
+		>;
+	};
+
+	pinctrl_ecspi1: ecspi1grp {
+		fsl,pins = <
+			MX8MN_IOMUXC_ECSPI1_MISO_ECSPI1_MISO	0x00000182
+			MX8MN_IOMUXC_ECSPI1_MOSI_ECSPI1_MOSI	0x00000082
+			MX8MN_IOMUXC_ECSPI1_SCLK_ECSPI1_SCLK	0x00000082
+		>;
+	};
+	
+	pinctrl_ecspi1_cs: ecspi1cs {
+		fsl,pins = <
+			MX8MN_IOMUXC_ECSPI1_SS0_ECSPI1_SS0	0x00000002
 		>;
 	};
 
