@@ -218,8 +218,8 @@
 	#size-cells = <0>;
 	fsl,spi-num-chipselects = <1>;
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_ecspi1 &pinctrl_ecspi1_cs>;
-	cs-gpios = <&gpio5 9 GPIO_ACTIVE_HIGH>;
+	pinctrl-0 = <&pinctrl_ecspi1>;
+	cs-gpios = <0>;
 	status = "okay";
 	
 	spidev1_0: spi@0 {
@@ -413,12 +413,7 @@
 			MX8MN_IOMUXC_ECSPI1_MISO_ECSPI1_MISO	0x00000182
 			MX8MN_IOMUXC_ECSPI1_MOSI_ECSPI1_MOSI	0x00000082
 			MX8MN_IOMUXC_ECSPI1_SCLK_ECSPI1_SCLK	0x00000082
-		>;
-	};
-	
-	pinctrl_ecspi1_cs: ecspi1cs {
-		fsl,pins = <
-			MX8MN_IOMUXC_ECSPI1_SS0_ECSPI1_SS0	0x00000002
+			MX8MN_IOMUXC_ECSPI1_SS0_ECSPI1_SS0		0x00000002
 		>;
 	};
 
