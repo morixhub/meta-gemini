@@ -219,10 +219,24 @@
 	fsl,spi-num-chipselects = <1>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi1>;
-	cs-gpios = <0>;
 	status = "okay";
 	
-	spidev1_0: spi@0 {
+	spidev1_0: spi1@0 {
+		compatible = "linux,spidev";
+		reg = <0>;
+		spi-max-frequency = <40000000>;
+	};
+};
+
+&ecspi3 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	fsl,spi-num-chipselects = <1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ecspi3>;
+	status = "okay";
+	
+	spidev3_0: spi3@0 {
 		compatible = "linux,spidev";
 		reg = <0>;
 		spi-max-frequency = <40000000>;
@@ -414,6 +428,15 @@
 			MX8MN_IOMUXC_ECSPI1_MOSI_ECSPI1_MOSI	0x00000082
 			MX8MN_IOMUXC_ECSPI1_SCLK_ECSPI1_SCLK	0x00000082
 			MX8MN_IOMUXC_ECSPI1_SS0_ECSPI1_SS0		0x00000002
+		>;
+	};
+
+	pinctrl_ecspi3: ecspi3grp {
+		fsl,pins = <
+			MX8MN_IOMUXC_UART2_RXD_ECSPI3_MISO		0x00000182
+			MX8MN_IOMUXC_UART1_TXD_ECSPI3_MOSI		0x00000082
+			MX8MN_IOMUXC_UART1_RXD_ECSPI3_SCLK		0x00000082
+			MX8MN_IOMUXC_UART2_TXD_ECSPI3_SS0		0x00000002
 		>;
 	};
 
