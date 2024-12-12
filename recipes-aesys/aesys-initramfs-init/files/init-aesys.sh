@@ -31,16 +31,20 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs dev /dev
 
+# Locate boot device
+# (it is necessary because the boot device changes booting from uSD or eMMC)
+BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..$//'`
+
 # Wait for block device
-if [ ! -b /dev/mmcblk1p1 ] || [ ! -b /dev/mmcblk1p2 ] || [ ! -b /dev/mmcblk1p3 ]; then
+if [ ! -b ${BOOT_DEVICE}p1 ] || [ ! -b ${BOOT_DEVICE}p2 ] || [ ! -b ${BOOT_DEVICE}p3 ]; then
 	do_log "Waiting for block device..." ;
 	sleep 1 ;
 fi
 
 # Mount relevant file systems
-mount -t vfat -o ro /dev/mmcblk1p1 /boot
-mount -t ext4 -o rw /dev/mmcblk1p2 /persist
-mount -t ext4 -o rw /dev/mmcblk1p3 /data
+mount -t vfat -o ro ${BOOT_DEVICE}p1 /boot
+mount -t ext4 -o rw ${BOOT_DEVICE}p2 /persist
+mount -t ext4 -o rw ${BOOT_DEVICE}p3 /data
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
