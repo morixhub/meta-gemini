@@ -6,6 +6,10 @@ do_log() {
 }
 
 # PERFORM FIRST INITILIZATION
+# 0) Locate boot device
+# (it is necessary because the boot device changes booting from uSD or eMMC)
+BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..$//'`
+
 # 1) SHOW SPLASH
 do_log "Performing first system initialization..."
 
@@ -21,7 +25,7 @@ if [ -z $PARTNUMBER ]; then
 else
     # Resize partition
     do_log "Resizing partition #$PARTNUMBER..." ;
-    printf 'yes\n100%%' | parted /dev/mmcblk1 resizepart $PARTNUMBER ---pretend-input-tty ;
+    printf 'yes\n100%%' | parted ${BOOT_DEVICE} resizepart $PARTNUMBER ---pretend-input-tty ;
 
     
     # Resize file system
