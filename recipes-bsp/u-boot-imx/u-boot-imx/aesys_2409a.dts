@@ -10,6 +10,11 @@
     model = "AESYS 2409A";
 	compatible = "fsl,imx8mn-evk", "fsl,imx8mn";
 
+	aliases {
+		rtc0 = &i2c_rtc;
+		rtc1 = &snvs_rtc;
+	};
+
 	chosen {
 		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
 		stdout-path = &uart2;
@@ -264,17 +269,17 @@
 	sda-gpios = <&gpio5 17 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 	status = "okay";
 
-	eeprom: eeprom@54 {
-		compatible = "st,24c08";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_eeprom>;
-		reg = <0x54>;
-		pagesize = <16>;
-		wp-gpios = <&gpio3 16 GPIO_ACTIVE_LOW>;
-		num-addresses = <4>;
+	i2c_adc: adc@4d {
+		compatible = "microchip,mcp3221";
+		reg = <0x4d>;
 	};
 
-	rtc@51 {
+	i2c_temp: temp@49 {
+		compatible = "ti,tmp1075";
+		reg = <0x49>;
+	};
+
+	i2c_rtc: rtc@51 {
 		compatible = "nxp,pcf85063a";
 		reg = <0x51>;
 
@@ -285,14 +290,14 @@
 		};
 	};
 
-	adc@4d {
-		compatible = "microchip,mcp3221";
-		reg = <0x4d>;
-	};
-
-	temp@49 {
-		compatible = "ti,tmp1075";
-		reg = <0x49>;
+	i2c_eeprom: eeprom@54 {
+		compatible = "st,24c08";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_eeprom>;
+		reg = <0x54>;
+		pagesize = <16>;
+		wp-gpios = <&gpio3 16 GPIO_ACTIVE_LOW>;
+		num-addresses = <4>;
 	};
 };
 
