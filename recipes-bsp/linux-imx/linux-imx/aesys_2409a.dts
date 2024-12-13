@@ -267,14 +267,14 @@
 	sda-gpios = <&gpio5 17 (GPIO_ACTIVE_HIGH | GPIO_OPEN_DRAIN)>;
 	status = "okay";
 
-	i2c_temp: temp@49 {
-		compatible = "ti,tmp1075";
-		reg = <0x49>;
-	};
-
-	i2c_adc: adc@4d {
-		compatible = "microchip,mcp3221";
-		reg = <0x4d>;
+	i2c_eeprom: eeprom@54 {
+		compatible = "st,24c08";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_eeprom>;
+		reg = <0x54>;
+		pagesize = <16>;
+		wp-gpios = <&gpio3 16 GPIO_ACTIVE_LOW>;
+		num-addresses = <4>;
 	};
 
 	i2c_rtc: rtc@51 {
@@ -288,14 +288,14 @@
 		};
 	};
 
-	i2c_eeprom: eeprom@54 {
-		compatible = "st,24c08";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_eeprom>;
-		reg = <0x54>;
-		pagesize = <16>;
-		wp-gpios = <&gpio3 16 GPIO_ACTIVE_LOW>;
-		num-addresses = <4>;
+	i2c_adc: adc@4d {
+		compatible = "microchip,mcp3221";
+		reg = <0x4d>;
+	};
+	
+	i2c_temp: temp@49 {
+		compatible = "ti,tmp1075";
+		reg = <0x49>;
 	};
 };
 
