@@ -128,6 +128,10 @@ int power_init_board(void)
 	pmic_reg_write(dev, PCA9450_BUCK6OUT, 0x18);
 #endif
 
+	/* Force I2C Level Translator to be active */
+	pmic_reg_write(dev, PCA9450_CONFIG2, 0x03);
+	puts("Forced pca9450 i2c-lt@25\n");
+
 	return 0;
 }
 #endif

@@ -156,6 +156,10 @@ int power_init_board(void)
 	/* enable LDO4 to 1.2v */
 	pmic_reg_write(dev, PCA9450_LDO4CTRL, 0x44);
 
+	/* Force I2C Level Translator to be active */
+	pmic_reg_write(dev, PCA9450_CONFIG2, 0x03);
+	puts("Forced pca9450 i2c-lt@25\n");
+
 	return 0;
 }
 #endif
