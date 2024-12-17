@@ -1,0 +1,119 @@
+diff --git a/drivers/rtc/rtc-pcf85063.c b/drivers/rtc/rtc-pcf85063.c
+index fdbc07f14036..cdb56cdb4305 100644
+--- a/drivers/rtc/rtc-pcf85063.c
++++ b/drivers/rtc/rtc-pcf85063.c
+@@ -418,9 +418,8 @@ static int pcf85063_clkout_set_rate(struct clk_hw *hw, unsigned long rate,
+ 	return -EINVAL;
+ }
+ 
+-static int pcf85063_clkout_control(struct clk_hw *hw, bool enable)
++static int pcf85063_clkout_control_pcf(struct pcf85063 *pcf85063, bool enable)
+ {
+-	struct pcf85063 *pcf85063 = clkout_hw_to_pcf85063(hw);
+ 	unsigned int buf;
+ 	int ret;
+ 
+@@ -445,6 +444,11 @@ static int pcf85063_clkout_control(struct clk_hw *hw, bool enable)
+ 					PCF85063_REG_CLKO_F_MASK, buf);
+ }
+ 
++static int pcf85063_clkout_control(struct clk_hw *hw, bool enable)
++{
++	return(pcf85063_clkout_control_pcf(clkout_hw_to_pcf85063(hw), enable));
++}
++
+ static int pcf85063_clkout_prepare(struct clk_hw *hw)
+ {
+ 	return pcf85063_clkout_control(hw, 1);
+@@ -455,9 +459,8 @@ static void pcf85063_clkout_unprepare(struct clk_hw *hw)
+ 	pcf85063_clkout_control(hw, 0);
+ }
+ 
+-static int pcf85063_clkout_is_prepared(struct clk_hw *hw)
++static int pcf85063_clkout_is_prepared_pcf(struct pcf85063 *pcf85063)
+ {
+-	struct pcf85063 *pcf85063 = clkout_hw_to_pcf85063(hw);
+ 	unsigned int buf;
+ 	int ret = regmap_read(pcf85063->regmap, PCF85063_REG_CTRL2, &buf);
+ 
+@@ -467,6 +470,11 @@ static int pcf85063_clkout_is_prepared(struct clk_hw *hw)
+ 	return (buf & PCF85063_REG_CLKO_F_MASK) != PCF85063_REG_CLKO_F_OFF;
+ }
+ 
++static int pcf85063_clkout_is_prepared(struct clk_hw *hw)
++{
++	return(pcf85063_clkout_is_prepared_pcf(clkout_hw_to_pcf85063(hw)));
++}
++
+ static const struct clk_ops pcf85063_clkout_ops = {
+ 	.prepare = pcf85063_clkout_prepare,
+ 	.unprepare = pcf85063_clkout_unprepare,
+@@ -491,6 +499,10 @@ static struct clk *pcf85063_clkout_register_clk(struct pcf85063 *pcf85063)
+ 		 * registered automatically when being referenced.
+ 		 */
+ 		of_node_put(fixed_clock);
++
++		/* Determine initial status of clkout */
++		pcf85063_clkout_control_pcf(pcf85063, !of_property_read_bool(fixed_clock, "disabled-at-start"));
++
+ 		return NULL;
+ 	}
+ 
+@@ -637,6 +649,57 @@ static int pcf85063_probe(struct i2c_client *client)
+ 	return devm_rtc_register_device(pcf85063->rtc);
+ }
+ 
++static ssize_t read_fixed_clock_disable(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct pcf85063 *pcf85063 = dev_get_drvdata(dev);
++
++	if(!pcf85063)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++#ifdef CONFIG_COMMON_CLK
++	if(pcf85063->clkout_hw.init)
++	{
++		dev_err(dev, "<%s> not a fixed clock: cannot read fixed clock status\n", __func__);
++		return -EINVAL;
++	}
++#endif
++
++	/* Set data */
++	return scnprintf(buf, PAGE_SIZE, "%d\n", (!pcf85063_clkout_is_prepared_pcf(pcf85063) ? 1 : 0));
++}
++
++static ssize_t write_fixed_clock_disable(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++	struct pcf85063 *pcf85063 = dev_get_drvdata(dev);
++
++	if(!pcf85063)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++#ifdef CONFIG_COMMON_CLK
++	if(pcf85063->clkout_hw.init)
++	{
++		dev_err(dev, "<%s> not a fixed clock: cannot set fixed clock status\n", __func__);
++		return -EINVAL;
++	}
++#endif
++
++	/* Enforce status */
++	pcf85063_clkout_control_pcf(pcf85063, !(count > 0 && buf[0] == '1'));
++
++	/* Dump info */
++	dev_info(dev, "<%s> fixed_clock_disable set to %d\n", __func__, pcf85063_clkout_is_prepared_pcf(pcf85063));
++
++	return count;
++}
++
++static DEVICE_ATTR(fixed_clock_disable, 0644, read_fixed_clock_disable, write_fixed_clock_disable);
++
+ static const struct i2c_device_id pcf85063_ids[] = {
+ 	{ "pca85073a", .driver_data = (kernel_ulong_t)&config_pcf85063a },
+ 	{ "pcf85063", .driver_data = (kernel_ulong_t)&config_pcf85063 },

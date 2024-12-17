@@ -1,0 +1,151 @@
+diff --git a/drivers/rtc/rtc-pcf85063.c b/drivers/rtc/rtc-pcf85063.c
+index cdb56cdb4305..a42aba28d456 100644
+--- a/drivers/rtc/rtc-pcf85063.c
++++ b/drivers/rtc/rtc-pcf85063.c
+@@ -561,6 +561,67 @@ static const struct pcf85063_config config_rv8263 = {
+ 	.force_cap_7000 = 1,
+ };
+ 
++static ssize_t read_fixed_clock_disable(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct pcf85063 *pcf85063 = dev_get_drvdata(dev);
++
++	if(!pcf85063)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++#ifdef CONFIG_COMMON_CLK
++	if(pcf85063->clkout_hw.init)
++	{
++		dev_err(dev, "<%s> not a fixed clock: cannot read fixed clock status\n", __func__);
++		return -EINVAL;
++	}
++#endif
++
++	/* Set data */
++	return scnprintf(buf, PAGE_SIZE, "%d\n", (!pcf85063_clkout_is_prepared_pcf(pcf85063) ? 1 : 0));
++}
++
++static ssize_t write_fixed_clock_disable(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++{
++	struct pcf85063 *pcf85063 = dev_get_drvdata(dev);
++
++	if(!pcf85063)
++	{
++		dev_err(dev, "<%s> can't get driver data\n", __func__);
++		return -EINVAL;
++	}
++
++#ifdef CONFIG_COMMON_CLK
++	if(pcf85063->clkout_hw.init)
++	{
++		dev_err(dev, "<%s> not a fixed clock: cannot set fixed clock status\n", __func__);
++		return -EINVAL;
++	}
++#endif
++
++	/* Enforce status */
++	pcf85063_clkout_control_pcf(pcf85063, !(count > 0 && buf[0] == '1'));
++
++	/* Dump info */
++	dev_info(dev, "<%s> fixed_clock_disable set to %d\n", __func__, pcf85063_clkout_is_prepared_pcf(pcf85063));
++
++	return count;
++}
++
++static DEVICE_ATTR(fixed_clock_disable, 0644, read_fixed_clock_disable, write_fixed_clock_disable);
++
++static int pcf85063_sysfs_register(struct device *dev)
++{
++	return device_create_file(dev, &dev_attr_fixed_clock_disable);
++}
++
++static void pcf85063_sysfs_unregister(struct device *dev)
++{
++	device_remove_file(dev, &dev_attr_fixed_clock_disable);
++}
++
+ static int pcf85063_probe(struct i2c_client *client)
+ {
+ 	struct pcf85063 *pcf85063;
+@@ -646,60 +707,24 @@ static int pcf85063_probe(struct i2c_client *client)
+ 	pcf85063_clkout_register_clk(pcf85063);
+ #endif
+ 
+-	return devm_rtc_register_device(pcf85063->rtc);
+-}
+-
+-static ssize_t read_fixed_clock_disable(struct device *dev, struct device_attribute *attr, char *buf)
+-{
+-	struct pcf85063 *pcf85063 = dev_get_drvdata(dev);
+-
+-	if(!pcf85063)
+-	{
+-		dev_err(dev, "<%s> can't get driver data\n", __func__);
+-		return -EINVAL;
+-	}
++	err = devm_rtc_register_device(pcf85063->rtc);
++	if (err)
++		return err;
+ 
+-#ifdef CONFIG_COMMON_CLK
+-	if(pcf85063->clkout_hw.init)
+-	{
+-		dev_err(dev, "<%s> not a fixed clock: cannot read fixed clock status\n", __func__);
+-		return -EINVAL;
++	err = pcf85063_sysfs_register(&client->dev);
++	if (err) {
++		dev_err(&client->dev, "Unable to create sysfs entries for rtc pcf85063\n");
++		return(err);
+ 	}
+-#endif
+ 
+-	/* Set data */
+-	return scnprintf(buf, PAGE_SIZE, "%d\n", (!pcf85063_clkout_is_prepared_pcf(pcf85063) ? 1 : 0));
++	return(0);
+ }
+ 
+-static ssize_t write_fixed_clock_disable(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
++static void pcf85063_remove(struct i2c_client *client)
+ {
+-	struct pcf85063 *pcf85063 = dev_get_drvdata(dev);
+-
+-	if(!pcf85063)
+-	{
+-		dev_err(dev, "<%s> can't get driver data\n", __func__);
+-		return -EINVAL;
+-	}
+-
+-#ifdef CONFIG_COMMON_CLK
+-	if(pcf85063->clkout_hw.init)
+-	{
+-		dev_err(dev, "<%s> not a fixed clock: cannot set fixed clock status\n", __func__);
+-		return -EINVAL;
+-	}
+-#endif
+-
+-	/* Enforce status */
+-	pcf85063_clkout_control_pcf(pcf85063, !(count > 0 && buf[0] == '1'));
+-
+-	/* Dump info */
+-	dev_info(dev, "<%s> fixed_clock_disable set to %d\n", __func__, pcf85063_clkout_is_prepared_pcf(pcf85063));
+-
+-	return count;
++	pcf85063_sysfs_unregister(&client->dev);
+ }
+ 
+-static DEVICE_ATTR(fixed_clock_disable, 0644, read_fixed_clock_disable, write_fixed_clock_disable);
+-
+ static const struct i2c_device_id pcf85063_ids[] = {
+ 	{ "pca85073a", .driver_data = (kernel_ulong_t)&config_pcf85063a },
+ 	{ "pcf85063", .driver_data = (kernel_ulong_t)&config_pcf85063 },
+@@ -728,6 +753,7 @@ static struct i2c_driver pcf85063_driver = {
+ 		.of_match_table = of_match_ptr(pcf85063_of_match),
+ 	},
+ 	.probe		= pcf85063_probe,
++	.remove		= pcf85063_remove,
+ 	.id_table	= pcf85063_ids,
+ };
+ 
