@@ -55,16 +55,10 @@
 		enable-active-high;
 	};
 
-	usb-b-connector {
+	usb_id: usb-b-connector {
 		compatible = "usb-b-connector";
 		label = "micro-USB";
 		type = "micro";
-
-		port {
-			con_usbotg_hs_ep: endpoint {
-				remote-endpoint = <&usbotg_hs_ep>;
-			};
-		};
 	};
 };
 
@@ -212,6 +206,7 @@
 	};
 };
 
+/* //!!
 &flexspi {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexspi>;
@@ -223,21 +218,17 @@
 		spi-max-frequency = <40000000>;
 		spi-tx-bus-width = <4>;
 		spi-rx-bus-width = <4>;
-		#address-cells = <1>;
-		#size-cells = <1>;
 	};
 
-	/* //!!
-	fpga: fpga@0 {
-		reg = <0>;
-		compatible = "jedec,spi-nor";
-		spi-max-frequency = <80000000>;
-		spi-tx-bus-width = <4>;
-		spi-rx-bus-width = <4>;
-		#address-cells = <1>;
-		#size-cells = <1>;
-	}; */
+	// fpga: fpga@0 {
+	//	reg = <0>;
+	//	compatible = "jedec,spi-nor";
+	//	spi-max-frequency = <80000000>;
+	//	spi-tx-bus-width = <4>;
+	//	spi-rx-bus-width = <4>;
+	// };
 };
+*/
 
 &ecspi1 {
 	#address-cells = <1>;
@@ -370,21 +361,12 @@
 	dr_mode = "otg";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
-	hnp-disable;
-	srp-disable;
-	adp-disable;
-	usb-role-switch;
 	power-active-high;
 	over-current-active-low;
 	samsung,picophy-pre-emp-curr-control = <3>;
 	samsung,picophy-dc-vol-level-adjust = <7>;
+	extcon = <0>, <&usb_id>;
 	status = "okay";
-
-	port {
-		usbotg_hs_ep: endpoint {
-			remote-endpoint = <&con_usbotg_hs_ep>;
-		};
-	};
 };
 
 &usdhc2 {

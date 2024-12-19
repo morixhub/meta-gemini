@@ -18,6 +18,10 @@ SRC_URI += " file://0014-Added-Fixed-Clock-Disable-For-RTC-pcf85063.patch"
 SRC_URI += " file://0015-Fixed-RTC-pcf85063-For-SysFS-Entries.patch"
 SRC_URI += " file://Aesys-Kernel-Config-Fragment.cfg"
 
+# Remove the commit ID string from kernel version
+SCMVERSION="n"
+LINUX_VERSION_EXTENSION="-gemini-2024.1"
+
 # Manage kernel configuration fragments
 DELTA_KERNEL_DEFCONFIG:append = "Aesys-Kernel-Config-Fragment.cfg"
 
