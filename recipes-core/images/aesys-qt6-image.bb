@@ -21,7 +21,7 @@ IMAGE_INSTALL += " \
 IMAGE_INSTALL += " \
     qtwebengine \
     qtwebview \
- "
+"
 
 
 # THE REMAINING PART OF THIS RECIPE IS TAKEN DIRECTLY FROM imx-image-full RECIPE FROM NXP
