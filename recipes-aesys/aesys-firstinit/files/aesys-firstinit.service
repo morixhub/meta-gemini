@@ -4,8 +4,9 @@ ConditionPathExists=/var/aesys/firstinit.pending
 After=multi-user.target
 
 [Service]
-Type=simple
-ExecStart=/bin/sh -c 'sleep 5 ; /sbin/aesys-firstinit.sh'
+Type=oneshot
+ExecStartPre=/bin/sleep 5
+ExecStart=/sbin/aesys-firstinit.sh
 
 [Install]
 WantedBy=default.target

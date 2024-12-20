@@ -1,0 +1,11 @@
+[Unit]
+Description=Aesys management of system startup/shutdown
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/aesys-startup.sh
+ExecStop=/sbin/aesys-shutdown.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

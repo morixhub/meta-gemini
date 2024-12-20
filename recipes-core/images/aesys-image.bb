@@ -15,7 +15,7 @@ IMAGE_FEATURES += "ssh-server-openssh splash"
 IMAGE_INSTALL:append = " aesys-packagegroup-base"
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-firstinit aesys-launch-at-start "
+IMAGE_INSTALL:append = " aesys-firstinit aesys-startup-shutdown "
 
 # Root FS customization
 aesys_image_customize_root() {
