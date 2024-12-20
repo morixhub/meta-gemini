@@ -56,6 +56,12 @@
 		off-on-delay-us = <12000>;
 		enable-active-high;
 	};
+
+	usb_id: usb-b-connector {
+		compatible = "usb-b-connector";
+		label = "micro-USB";
+		type = "micro";
+	};
 };
 
 &A53_0 {
@@ -202,21 +208,29 @@
 	};
 };
 
+/* //!!
 &flexspi {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_flexspi>;
 	status = "okay";
 
-	fpga: fpga@0 {
+	spidevflex_0: spidevflex@0 {
 		reg = <0>;
-		compatible = "jedec,spi-nor";
-		spi-max-frequency = <80000000>;
+		compatible = "linux,spidev";
+		spi-max-frequency = <40000000>;
 		spi-tx-bus-width = <4>;
 		spi-rx-bus-width = <4>;
-		#address-cells = <1>;
-		#size-cells = <1>;
 	};
+
+	// fpga: fpga@0 {
+	//	reg = <0>;
+	//	compatible = "jedec,spi-nor";
+	//	spi-max-frequency = <80000000>;
+	//	spi-tx-bus-width = <4>;
+	//	spi-rx-bus-width = <4>;
+	// };
 };
+*/
 
 &ecspi1 {
 	#address-cells = <1>;
@@ -226,7 +240,7 @@
 	pinctrl-0 = <&pinctrl_ecspi1>;
 	cs-gpios = <&gpio5 9 GPIO_ACTIVE_LOW>;
 	status = "okay";
-	
+
 	spidev1_0: spi1@0 {
 		compatible = "linux,spidev";
 		reg = <0>;
@@ -287,6 +301,7 @@
 			compatible = "fixed-clock";
 			#clock-cells = <0>;
 			clock-frequency = <32768>;
+			disabled-at-start;
 		};
 	};
 
@@ -348,14 +363,11 @@
 	dr_mode = "otg";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usbotg>;
-	hnp-disable;
-	srp-disable;
-	adp-disable;
-	usb-role-switch;
-	role-switch-default-mode = "peripheral";
+	power-active-high;
 	over-current-active-low;
 	samsung,picophy-pre-emp-curr-control = <3>;
 	samsung,picophy-dc-vol-level-adjust = <7>;
+	extcon = <0>, <&usb_id>;
 	status = "okay";
 };
 
