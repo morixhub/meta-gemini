@@ -23,6 +23,11 @@ IMAGE_INSTALL += " \
     qtwebview \
 "
 
+# Add default IP address
+IMAGE_INSTALL += " \
+    aesys-default-eth0-ip \
+"
+
 
 # THE REMAINING PART OF THIS RECIPE IS TAKEN DIRECTLY FROM imx-image-full RECIPE FROM NXP
 # (sources/meta-imx/meta-imx-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-full.bb)
