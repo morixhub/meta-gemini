@@ -1,12 +1,7 @@
 SUMMARY = "Aesys image for production (Qt6+multimedia)"
 
-# Include basic features from the hwtest image
+# Include basic features from the base image
 require aesys-image.bb
-
-# Add chromium browser to the image
-IMAGE_INSTALL += " \
-    chromium-ozone-wayland \
-"
 
 # Add additional Qt packages
 IMAGE_INSTALL += " \
