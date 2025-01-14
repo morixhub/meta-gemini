@@ -75,6 +75,11 @@ FILES:${PN} += "\
     ${sysconfdir}/snmp/udp_any_22161/snmpd.conf \
 "
 
+# Custom package configuration (enable non-standard crypto support)
+PACKAGECONFIG[blumenthal] = "--enable-blumenthal-aes, --disable-blumenthal-aes"
+PACKAGECONFIG:append = " blumenthal"
+
+
 do_install:append(){
     
     # Prepare  folders
