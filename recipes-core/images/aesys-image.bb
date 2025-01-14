@@ -1,6 +1,13 @@
 SUMMARY = "Aesys base image for production purposes"
 
 inherit core-image
+inherit extrausers
+
+# Set root's password and related access control
+# (encrypted password obtained with command "openssl passwd -1 ae1221")
+IMAGE_FEATURES:remove = "debug-tweaks"
+IAMGE_FEATUREs:append = "allow-root-login"
+EXTRA_USERS_PARAMS += "usermod -p '\$1\$FMup4eG7\$5kGXZnwbAA/kNnkqhHLaA1' root;" 
 
 # Normalize image name
 IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
