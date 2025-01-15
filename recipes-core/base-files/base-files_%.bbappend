@@ -9,4 +9,7 @@ SRC_URI += " \
 
 do_install:append(){
    install -m 0644 ${WORKDIR}/fstab ${D}${sysconfdir}/
+
+   # Adjust rsyslog.conf for OS hardenind purposes
+   sed -i -e "s|^umask 022|umask 027|" ${D}${sysconfdir}/profile
 }

@@ -7,4 +7,4 @@ inherit packagegroup
 RDEPENDS:${PN} = "ethtool i2c-tools iperf3 util-linux minicom nano devmem2 libgpiod-tools spidev-test nmap tcpdump"
 
 # Request by OS harderning scripts
-RDEPENDS:${PN} = "dialog iproute2"
+RDEPENDS:${PN} = "dialog iproute2-ss tcp-wrappers rsyslog cronie"
