@@ -21,7 +21,6 @@ do_install:append(){
     echo "net.ipv4.conf.default.log_martians = 1" >> ${D}${sysconfdir}/sysctl.conf
     echo "net.ipv4.icmp_echo_ignore_broadcasts = 1" >> ${D}${sysconfdir}/sysctl.conf
     echo "net.ipv4.icmp_ignore_bogus_error_responses = 1" >> ${D}${sysconfdir}/sysctl.conf
-    echo "net.ipv4.tcp_syncookies = 1" >> ${D}${sysconfdir}/sysctl.conf
     echo "net.ipv6.conf.all.accept_ra = 1" >> ${D}${sysconfdir}/sysctl.conf
     echo "net.ipv6.conf.default.accept_ra = 1" >> ${D}${sysconfdir}/sysctl.conf
 }
