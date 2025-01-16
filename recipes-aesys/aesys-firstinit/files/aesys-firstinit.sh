@@ -68,53 +68,7 @@ if [ -d '/etc/vnc/keys' ]; then
     cd "${PREVDIR}" ;
 fi
 
-# 4) Adjust files/directory permissions for OS hardening purposes
-chown root:root /etc/shadow
-chmod 640 /etc/shadow
-
-chown root:root /etc/gshadow
-chmod 640 /etc/gshadow
-
-chown root:root /etc/passwd-
-chmod 600 /etc/passwd-
-
-chown root:root /etc/shadow-
-chmod 640 /etc/shadow-
-
-if [ -d /home/weston ]; then
-    chmod 750 /home/weston
-fi
-
-if [ -d /etc/cron.hourly ]; then
-    chown root:root /etc/cron.hourly
-    chmod 700 /etc/cron.hourly
-fi
-
-if [ -d /etc/cron.daily ]; then
-    chown root:root /etc/cron.daily
-    chmod 700 /etc/cron.daily
-fi
-
-if [ -d /etc/cron.weekly ]; then
-    chown root:root /etc/cron.weekly
-    chmod 700 /etc/cron.weekly
-fi
-
-if [ -d /etc/cron.monthly ]; then
-    chown root:root /etc/cron.monthly
-    chmod 700 /etc/cron.monthly
-fi
-
-if [ -d /etc/cron.d ]; then
-    chown root:root /etc/cron.d
-    chmod 700 /etc/cron.d
-fi
-
-rm /etc/cron.deny
-rm /etc/at.deny ;
-
-
-# 5) DISABLE FIRST INITIALIZATION
+# 4) DISABLE FIRST INITIALIZATION
 # Remove trigger file
 if [ -e '/var/aesys/firstinit.pending' ]; then
 
@@ -123,8 +77,8 @@ if [ -e '/var/aesys/firstinit.pending' ]; then
     do_log "First initialization trigger file removed" ;
 fi
 
-# 6) SHOW FINAL
+# 5) SHOW FINAL
 do_log "First initialization completed" ;
 
-# 7) COMMAND REBOOT
+# 6) COMMAND REBOOT
 systemctl reboot
