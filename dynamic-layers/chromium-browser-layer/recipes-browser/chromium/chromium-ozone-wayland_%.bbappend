@@ -9,3 +9,8 @@ SRC_URI:remove:imx-nxp-bsp = " \
 SRC_URI:append:imx-nxp-bsp = " \
     file://0001-Disable-dri-for-imx-gpu.patch \
 "
+
+# Add extra patches
+SRC_URI:append:imx-nxp-bsp = " \
+    file://0002-Fix-Wayland-Additional-Seats.patch \
+"
