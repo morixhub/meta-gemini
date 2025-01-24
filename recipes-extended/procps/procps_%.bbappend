@@ -1,5 +1,8 @@
 do_install:append(){
 
+    # Raised the limitation on maximum receive window (requested by UDisplay images)
+    sed -i -e 's|^net.core.rmem_max=.*|net.core.rmem_max=16777216|' ${D}${sysconfdir}/sysctl.conf
+
     # Customization for OS hardening
     echo "fs.suid_dumpable = 0" >> ${D}${sysconfdir}/sysctl.conf
     echo "kernel.randomize_va_space = 2" >> ${D}${sysconfdir}/sysctl.conf
