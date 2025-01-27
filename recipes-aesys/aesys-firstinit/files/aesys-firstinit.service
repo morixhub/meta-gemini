@@ -1,12 +1,14 @@
 [Unit]
 Description=Aesys first boot initialization procedure
+DefaultDependencies=no
+Conflicts=shutdown.target
+Before=shutdown.target
+After=local-fs.target first-boot-complete.target
 ConditionPathExists=/var/aesys/firstinit.pending
-After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStartPre=/bin/sleep 5
 ExecStart=/sbin/aesys-firstinit.sh
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
