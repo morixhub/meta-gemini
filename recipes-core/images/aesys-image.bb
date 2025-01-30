@@ -3,29 +3,38 @@ SUMMARY = "Aesys base image for production purposes"
 inherit core-image
 inherit extrausers
 
+# Extend recognized IMAGE_FEATURES valid items
+IMAGE_FEATURES[validitems] += " aesys-development-ip "
+
 # Remove nfs-client (because it implies rpcbind, which we want to get rid of, for OS hardening purposes)
 IMAGE_FEATURES:remove = "nfs-client"
 
 # Set root's password and related access control
 # (encrypted password obtained with command "openssl passwd -1 ae1221")
 IMAGE_FEATURES:remove = "debug-tweaks"
-IMAGE_FEATURES:append = "allow-root-login"
+IMAGE_FEATURES:append = " allow-root-login "
 EXTRA_USERS_PARAMS += "usermod -p '\$1\$FMup4eG7\$5kGXZnwbAA/kNnkqhHLaA1' root;" 
 
 # Normalize image name
 IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
 
 # Add squashfs type
-IMAGE_FSTYPES += "squashfs"
+IMAGE_FSTYPES:append = " squashfs "
 
 # Add features
-IMAGE_FEATURES += "ssh-server-openssh splash"
+IMAGE_FEATURES:append = " ssh-server-openssh splash "
 
 # Add packages
-IMAGE_INSTALL:append = " aesys-packagegroup-base"
+IMAGE_INSTALL:append = " aesys-packagegroup-base "
 
 # Add aesys packages
 IMAGE_INSTALL:append = " aesys-firstinit aesys-startup-shutdown "
+
+# Add rootfs customization
+IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "
+
+# If requested, then inject the default IP address intended for development into the image
+ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-development-ip', " aesys_development_ip; ", "", d)}'
 
 # Root FS customization
 aesys_image_customize_root() {
@@ -107,7 +116,12 @@ aesys_image_customize_root() {
     #######################################################
 }
 
-IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "
+# Managing of development IP address
+aesys_development_ip () {
+    
+    sed -i 's|^fallback fallback_eth0.*|static ip_address=192.168.79.18/24|' ${IMAGE_ROOTFS}${sysconfdir}/dhcpcd.conf
+}
+
 
 
 

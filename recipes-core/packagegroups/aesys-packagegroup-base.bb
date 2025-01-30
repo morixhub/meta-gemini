@@ -3,6 +3,12 @@ SUMMARY = "Aesys packagegroup - base"
 
 inherit packagegroup
 
+# Add DHCP manager
+RDEPENDS:${PN}:append = " dhcpcd "
+
+# Add firewall
+RDEPENDS:${PN}:append = " ufw "
+
 # Add basic utils
 RDEPENDS:${PN}:append = " htop ethtool i2c-tools iperf3 util-linux minicom nano devmem2 libgpiod-tools spidev-test nmap tcpdump evtest memtester rsync zip unzip stress-ng avahi-utils "
 
