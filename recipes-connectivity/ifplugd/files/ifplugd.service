@@ -1,0 +1,19 @@
+[Unit]
+Description=ifplugd
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+Restart=no
+TimeoutSec=5min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=yes
+SuccessExitStatus=5 6
+ExecStart=/sbin/ifplugd.sh start
+ExecStop=/sbin/ifplugd.sh stop
+
+[Install]
+WantedBy=multi-user.target

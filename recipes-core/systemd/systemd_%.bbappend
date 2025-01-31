@@ -1,6 +1,6 @@
 do_configure:append() {
 
-    # Disable systemd-networkd
+    # Disable systemd-networkd (we'd rather use /etc/network/interfaces)
     sed -i -e "s/enable systemd-networkd.service/disable systemd-networkd.service/g" ${S}/presets/90-systemd.preset
     sed -i -e "s/enable systemd-networkd-wait-online.service/disable systemd-networkd-wait-online.service/g" ${S}/presets/90-systemd.preset
 

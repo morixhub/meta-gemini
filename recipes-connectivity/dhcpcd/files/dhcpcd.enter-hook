@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Get rid of the static profile associated with the interface being initialized, if any
+rm -rf "/tmp/static_"$interface >/dev/null 2>&1
+

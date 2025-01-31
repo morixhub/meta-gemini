@@ -1,0 +1,10 @@
+[Unit]
+Description=Run dhcp-recheck every 1 minute
+
+[Timer]
+OnCalendar=*:0/1
+#When missed a cycle, do not reschedule on reboot
+Persistent=False
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# If a static profile is assigned to the interface, then write a proper file
+if [ "$reason" = "STATIC" ]; then
+	if [ ! -z "$profile" ];
+	then
+		echo $profile >> "/tmp/static_"$interface
+	fi
+fi

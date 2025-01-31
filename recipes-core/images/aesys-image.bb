@@ -119,7 +119,7 @@ aesys_image_customize_root() {
 # Managing of development IP address
 aesys_development_ip () {
     
-    sed -i 's|^fallback fallback_eth0.*|static ip_address=192.168.79.18/24|' ${IMAGE_ROOTFS}${sysconfdir}/dhcpcd.conf
+    sed -i 's|^iface eth0 inet dhcp.*|iface eth0 inet static\n\taddress 192.168.79.18\n\tnetmask 255.255.255.0\n|' ${IMAGE_ROOTFS}${sysconfdir}/network/interfaces
 }
 
 
