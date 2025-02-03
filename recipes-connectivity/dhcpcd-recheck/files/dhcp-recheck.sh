@@ -61,7 +61,7 @@ fallback=$(isFallback)
 isDenied=$(isInterfaceDenied)
 isNotCfg=$(isNotConfigured)
 
-if [ "$fallback" -eq "0" ] || [ "$isNotCfg" -eq "0" ] || [ "$isDenied" -eq "1" ];
+if [ "$fallback" -eq "0" ] || [ "$isNotCfg" -eq "1" ] || [ "$isDenied" -eq "1" ];
 then
         echo "Nothing to do on $NIC: fallback is not active, device is not configured or device is denied"
         exit 0;
