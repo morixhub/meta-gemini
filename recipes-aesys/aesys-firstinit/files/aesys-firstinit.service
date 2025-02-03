@@ -3,7 +3,8 @@ Description=Aesys first boot initialization procedure
 DefaultDependencies=no
 Conflicts=shutdown.target
 Before=shutdown.target
-After=local-fs.target first-boot-complete.target
+Wants=basic.target
+After=basic.target
 ConditionPathExists=/var/aesys/firstinit.pending
 
 [Service]

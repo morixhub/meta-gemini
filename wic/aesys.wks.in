@@ -1,15 +1,12 @@
 # The disk layout used is:
-#  - ---------- -------------- -------------- -------------- --------------
-# | | imx-boot |     boot     |    persist   | persist-var  |     data     |
-#  - ---------- -------------- -------------- -------------- --------------
-# ^ ^          ^              ^              ^              ^
-# | |          |              |              |              |
-# 0 |          8             8+256M         8+256+256M     8+256+256+256M  8+256+256+256+64M(grow)
-#   ${IMX_BOOT_SEEK} 32 or 33kiB, see reference manual
+#  - ---------- -------------- -------------- --------------
+# | | imx-boot |     boot     |    persist   |     data     |
+#  - ---------- -------------- -------------- --------------
+# ${IMX_BOOT_SEEK} 32 or 33kiB, see reference manual
 
 part u-boot --source rawcopy --sourceparams="file=imx-boot" --ondisk mmcblk1 --no-table --align ${IMX_BOOT_SEEK}
-part /boot --source bootimg-partition --ondisk mmcblk1 --fstype=vfat --fsoptions=ro --label aesys-boot --active --align 8192
-part /persist --ondisk mmcblk1 --fstype=ext4 --label aesys-persist --align 8192 --fixed-size 256M
-part /data --ondisk mmcblk1 --fstype=ext4 --label aesys-data --align 8192 --fixed-size 64M --fsoptions="defaults,x-systemd.growfs"
+part /boot --source bootimg-partition --ondisk mmcblk1 --fstype=vfat --fsoptions=ro --label aesys-boot --active --align 8192 --overhead-factor 1.5
+part /persist --ondisk mmcblk1 --fstype=ext4 --label aesys-persist --align 8192 --fixed-size 1G
+part /data --ondisk mmcblk1 --fstype=ext4 --label aesys-data --align 8192 --fixed-size 64M
 
 bootloader --ptable msdos
