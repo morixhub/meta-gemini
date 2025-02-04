@@ -53,7 +53,7 @@ Instructions contained in this README should always be aligned with the most rec
 
 ### Image cooking
 Image cooking takes advantage of BitBake's multiconfig features, so command can be placed in the format `mc:<config_name>:<recipe>`, such as:
-- `bitbake mc:aesys-2319a:aesys-qt6-image`
+- `bitbake mc:aesys-2319a:<image-name>`
 
 # Useful notes
 ## Chromium settings
@@ -66,5 +66,5 @@ Image cooking takes advantage of BitBake's multiconfig features, so command can 
 ## Image writing on uSD
 - `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
-## Qt6 toolchain
-- `bitbake meta-toolchain-qt6`
+## Toolchain + SDK
+- `bitbake -c populate_sdk mc:aesys-2319a:<image-name>

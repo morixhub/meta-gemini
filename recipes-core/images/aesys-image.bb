@@ -2,6 +2,7 @@ SUMMARY = "Aesys base image for production purposes"
 
 inherit core-image
 inherit extrausers
+inherit populate_sdk
 
 # Extend recognized IMAGE_FEATURES valid items
 IMAGE_FEATURES[validitems] += " aesys-development-ip "
@@ -24,8 +25,11 @@ IMAGE_FSTYPES:append = " squashfs "
 # Add features
 IMAGE_FEATURES:append = " ssh-server-openssh splash "
 
-# Add packages
+# Add base packages
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
+
+# Add Avahi-related packages
+IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-client avahi-utils "
 
 # Add aesys packages
 IMAGE_INSTALL:append = " aesys-firstinit aesys-startup-shutdown "
