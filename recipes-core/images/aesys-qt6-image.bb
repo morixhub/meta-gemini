@@ -3,6 +3,11 @@ SUMMARY = "Aesys image for production (Qt6+multimedia)"
 # Include basic features from the base image
 require aesys-image.bb
 
+# Add Qt 5.x compatibility packages
+IMAGE_INSTALL += " \
+    qt5compat \
+"
+
 # Add additional Qt packages
 IMAGE_INSTALL += " \
     qtmqtt \

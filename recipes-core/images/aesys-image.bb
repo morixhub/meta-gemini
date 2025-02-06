@@ -28,6 +28,9 @@ IMAGE_FEATURES:append = " ssh-server-openssh splash "
 # Add base packages
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
 
+# Add SQLite-related packages
+IMAGE_INSTALL:append = " sqlite3 "
+
 # Add Avahi-related packages
 IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-client avahi-utils "
 
