@@ -44,7 +44,7 @@ Instructions contained in this README should always be aligned with the most rec
 - `bitbake-layers add-layer meta-gemini`
 
 ### Yocto environment setup
-- `DISTRO=aesys-distro MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build`
+- `DISTRO=fsl-imx-wayland MACHINE=imx8mp-lpddr4-evk source imx-setup-release.sh -b build`
   
 ### Multiconfig setup
 - `cp -rf ../sources/meta-gemini/multiconfig ./conf/`
@@ -67,4 +67,4 @@ Image cooking takes advantage of BitBake's multiconfig features, so command can 
 - `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
 ## Toolchain + SDK
-- `bitbake -c populate_sdk mc:aesys-2319a:<image-name>
+- `bitbake -c populate_sdk mc:aesys-2319a:<image-name>`
