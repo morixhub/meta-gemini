@@ -468,7 +468,7 @@
 	assigned-clocks = <&clk IMX8MP_CLK_UART1>;
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
 	uart-has-rtscts;
-	rs485-rts-active-low
+	rs485-rts-active-low;
 	status = "okay";
 };
 
@@ -484,7 +484,7 @@
 	assigned-clocks = <&clk IMX8MP_CLK_UART3>;
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
 	uart-has-rtscts;
-	rs485-rts-active-low
+	rs485-rts-active-low;
 	status = "okay";
 };
 
@@ -494,7 +494,7 @@
 	assigned-clocks = <&clk IMX8MP_CLK_UART4>;
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
 	uart-has-rtscts;
-	rs485-rts-active-low
+	rs485-rts-active-low;
 	status = "okay";
 };
 

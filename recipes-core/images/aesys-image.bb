@@ -2,7 +2,7 @@ SUMMARY = "Aesys base image for production purposes"
 
 inherit core-image
 inherit extrausers
-inherit populate_sdk
+inherit populate_sdk_base
 
 # Extend recognized IMAGE_FEATURES valid items
 IMAGE_FEATURES[validitems] += " aesys-development-ip "
@@ -18,6 +18,9 @@ EXTRA_USERS_PARAMS += "usermod -p '\$1\$FMup4eG7\$5kGXZnwbAA/kNnkqhHLaA1' root;"
 
 # Normalize image name
 IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
+
+# Remove unused "tar.zst" format
+IMAGE_FSTYPES:remove = "tar.zst"
 
 # Add squashfs type
 IMAGE_FSTYPES:append = " squashfs "
