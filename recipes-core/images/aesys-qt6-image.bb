@@ -34,7 +34,6 @@ CONFLICT_DISTRO_FEATURES = "directfb"
 
 IMAGE_INSTALL += " \
     curl \
-    packagegroup-imx-ml \
     packagegroup-qt6-imx \
     tzdata \
     ${IMAGE_INSTALL_PKCS11TOOL} \
