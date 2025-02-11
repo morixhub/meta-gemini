@@ -24,6 +24,7 @@ mkdir -p /initram
 mkdir -p /rootfs
 mkdir -p /boot
 mkdir -p /persist
+mkdir -p /app
 mkdir -p /data
 
 # Mount aux filesystems
@@ -87,7 +88,14 @@ if [ ! -f /data/persist.bin ]; then
 fi
 
 # Mount the persist file system
-mount -o loop /data/persist.bin /persist
+mount -o loop,rw /data/persist.bin /persist
+
+# Mount the app file system
+APP_MOUNTED=0
+if [ -f /data/app.bin ]; then
+	APP_MOUNTED=1 ;
+	mount -o loop,ro /data/app.bin /app ;
+fi
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
@@ -130,12 +138,17 @@ mount -t overlay -o lowerdir=/overlay/rootfs/var,upperdir=/overlay/persist/var/u
 mkdir -p /overlay-persist-root-merge/var
 mount --move /overlay-persist-var-merge /overlay-persist-root-merge/var
 
-# Move boot and data mount points over persist overlay
+# Move boot, app and data mount points over persist overlay
 mkdir -p /overlay-root-merge/boot
 mount --move /boot /overlay-persist-root-merge/boot
 
 mkdir -p /overlay-persist-root-merge/data
 mount --move /data /overlay-persist-root-merge/data
+
+if [ $APP_MOUNTED -eq 1 ]; then
+	mkdir -p /overlay-persist-root-merge/app ;
+	mount --move /app /overlay-persist-root-merge/app ;
+fi
 
 # Determine if shell is requested
 SHELL_REQUESTED=0
@@ -261,9 +274,13 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 	mount -o remount,ro /initram
 
 	# Move mounted file-system over overlay
-	mount --move /overlay-persist-root-merge/boot /overlay-ram-merge/boot
 	mount --move /overlay-persist-root-merge/var /overlay-ram-merge/var
+	mount --move /overlay-persist-root-merge/boot /overlay-ram-merge/boot
 	mount --move /overlay-persist-root-merge/data /overlay-ram-merge/data
+
+	if [ $APP_MOUNTED -eq 1 ]; then
+		mount --move /overlay-persist-root-merge/app /overlay-ram-merge/app
+	fi
 
 	# Move temporary file systems to new root
 	mkdir -p /overlay-ram-merge/initram
