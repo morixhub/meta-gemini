@@ -16,6 +16,7 @@ SRC_URI += " file://0012-Reset-And-Power-GPIOs-Now-Optional-For-Disen-Panel.patc
 SRC_URI += " file://0013-Fixed-Optional-UpDn-ShLr-For-Disen-Panel.patch"
 SRC_URI += " file://0014-Added-Fixed-Clock-Disable-For-RTC-pcf85063.patch"
 SRC_URI += " file://0015-Fixed-RTC-pcf85063-For-SysFS-Entries.patch"
+SRC_URI += " file://0016-AuFS-Support.patch"
 SRC_URI += " file://Aesys-Kernel-Config-Fragment.cfg"
 
 # Remove the commit ID string from kernel version
