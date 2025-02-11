@@ -36,15 +36,58 @@ mount -t devtmpfs dev /dev
 BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..$//'`
 
 # Wait for block device
-if [ ! -b ${BOOT_DEVICE}p1 ] || [ ! -b ${BOOT_DEVICE}p2 ] || [ ! -b ${BOOT_DEVICE}p3 ]; then
+if [ ! -b ${BOOT_DEVICE}p1 ] || [ ! -b ${BOOT_DEVICE}p2 ]; then
 	do_log "Waiting for block device..." ;
 	sleep 1 ;
 fi
 
 # Mount relevant file systems
-mount -t vfat -o ro ${BOOT_DEVICE}p1 /boot
-mount -t ext4 -o rw ${BOOT_DEVICE}p2 /persist
-mount -t ext4 -o rw ${BOOT_DEVICE}p3 /data
+mount -t ext4 -o ro ${BOOT_DEVICE}p1 /boot
+mount -t ext4 -o rw ${BOOT_DEVICE}p2 /data
+
+# Enlarge data partition, if requested
+PARTNUMBER=`mount | grep -e "^$BOOT_DEVICE" | grep /data | awk '{ print $1 }' | awk '{ print substr($0,length($0),1) }'`
+BOOT_DEVICE_DEVNAME=${BOOT_DEVICE#"/dev/"} ;
+DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+
+if [ ! -z $PARTNUMBER ]; then
+
+	# Assume that /data has still to be resized if its size is less than 256MB
+	if (( DATA_SIZE < 256 * 1024 * 1024 )); then
+
+		# Resize data partition
+		printf 'yes\n100%%' | parted ${BOOT_DEVICE} resizepart $PARTNUMBER ---pretend-input-tty ;
+
+		# Resize file system
+		resize2fs ${BOOT_DEVICE}p${PARTNUMBER} ;
+
+		# Recalculate the size of /data
+		DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+	fi
+fi
+
+# Create persist file in data, if not already there...
+if [ ! -f /data/persist.bin ]; then
+
+	# Determine max size (as the half of the available space on /data)
+	MAX_SIZE=$(( DATA_SIZE / 2 )) ;
+	
+	# Create file
+	dd if=/dev/null of=/data/persist.bin bs=1 seek=$MAX_SIZE ;
+
+	# Loop-load the file
+	LOOP_DEVICE=`losetup -f` ;
+	losetup -f /data/persist.bin ;
+
+	# Create ext4 filesystem
+	mkfs.ext4 $LOOP_DEVICE ;
+
+	# Release the loop
+	losetup -d $LOOP_DEVICE ;
+fi
+
+# Mount the persist file system
+mount -o loop /data/persist.bin /persist
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram

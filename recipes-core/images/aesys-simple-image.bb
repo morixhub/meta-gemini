@@ -5,3 +5,6 @@ require aesys-image.bb
 
 # Add development IP address
 IMAGE_FEATURES:append = " aesys-development-ip "
+
+# Simple images, by default, do not enable root overlay
+IMAGE_FEATURES:append = " aesys-disable-overlayroot "

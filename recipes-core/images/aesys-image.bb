@@ -6,6 +6,7 @@ inherit populate_sdk_base
 
 # Extend recognized IMAGE_FEATURES valid items
 IMAGE_FEATURES[validitems] += " aesys-development-ip "
+IMAGE_FEATURES[validitems] += " aesys-disable-overlayroot "
 
 # Remove nfs-client (because it implies rpcbind, which we want to get rid of, for OS hardening purposes)
 IMAGE_FEATURES:remove = "nfs-client"
@@ -37,6 +38,12 @@ IMAGE_INSTALL:append = " sqlite3 "
 # Add Avahi-related packages
 IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-client avahi-utils "
 
+# Add unionfs-fuse packages
+IMAGE_INSTALL:append = " unionfs-fuse "
+
+# Add aufs utils
+IMAGE_INSTALL:append = " aufs-util "
+
 # Add aesys packages
 IMAGE_INSTALL:append = " aesys-firstinit aesys-startup-shutdown "
 
@@ -45,6 +52,9 @@ IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "
 
 # If requested, then inject the default IP address intended for development into the image
 ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-development-ip', " aesys_development_ip; ", "", d)}'
+
+# If requested, then inject the file for forcing disabled overlay
+ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-disable-overlayroot', " aesys_disable_overlayroot; ", "", d)}'
 
 # Root FS customization
 aesys_image_customize_root() {
@@ -132,6 +142,12 @@ aesys_development_ip () {
     sed -i 's|^iface eth0 inet dhcp.*|iface eth0 inet static\n\taddress 192.168.79.18\n\tnetmask 255.255.255.0\n|' ${IMAGE_ROOTFS}${sysconfdir}/network/interfaces
 }
 
+# Root overlay disabling
+aesys_disable_overlayroot () {
 
+    mkdir -p ${IMAGE_ROOTFS}/var/aesys ;
+    touch ${IMAGE_ROOTFS}/var/aesys/overlayroot.disabled ;
+
+}
 
 

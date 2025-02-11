@@ -66,11 +66,11 @@
 	"initrd=initram.img\0" \
 	"initrd_addr=0x43800000\0" \
 	"loadinitrd=echo Attempting load of initrd...; " \
-		"fatload mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
+		"ext4load mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
 	"fitaddr=0x48000000\0" \
 	"fitimage=fit.img\0" \
 	"loadfit=echo Attempting loading of FIT image...; " \
-		"fatload mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
+		"ext4load mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
 	"fitboot=env set loadaddr ${fitaddr}; " \
 		"bootm ${fitaddr}\0" \
 	"bsp_bootcmd=echo Running BSP bootcmd...; " \
@@ -99,11 +99,11 @@
 			"fi; " \
 		"fi\0" \
 	"loadbootscript=echo Attempting loading bootscript...; " \
-		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
+		"ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
 	"loadimage=echo Attempting loading of image...; " \
-		"fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
+		"ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
  		"if run loadfdt; " \
@@ -148,11 +148,11 @@
 	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
 	"mmcargs=setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot}\0 " \
-	"loadbootscript=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
+	"loadbootscript=ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
-	"loadimage=fatload mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
-	"loadfdt=fatload mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${fdtfile}\0" \
+	"loadimage=ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
+	"loadfdt=ext4load mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${fdtfile}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
 		"run mmcargs; " \
 		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \

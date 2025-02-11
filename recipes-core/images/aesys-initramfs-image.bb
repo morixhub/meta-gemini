@@ -1,6 +1,6 @@
 SUMMARY = "Aesys INITRAMFS image"
 
-PACKAGE_INSTALL = "${VIRTUAL-RUNTIME_base-utils} udev base-passwd openssl openssl-bin busybox aesys-initramfs-init"
+PACKAGE_INSTALL = "${VIRTUAL-RUNTIME_base-utils} util-linux-lsblk udev base-passwd openssl openssl-bin busybox unionfs-fuse e2fsprogs e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-resize2fs parted dosfstools aufs-util aesys-initramfs-init"
 
 # Do not pollute the initrd image with rootfs features
 IMAGE_FEATURES = ""
