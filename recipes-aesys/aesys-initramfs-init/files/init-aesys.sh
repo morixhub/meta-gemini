@@ -46,6 +46,11 @@ fi
 mount -t ext4 -o ro ${BOOT_DEVICE}p1 /boot
 mount -t ext4 -o rw ${BOOT_DEVICE}p2 /data
 
+# Create /data/.sys folder, if not there
+if [ ! -d /data/.sys ]; then
+	mkdir -p /data/.sys
+fi
+
 # Enlarge data partition, if requested
 PARTNUMBER=`mount | grep -e "^$BOOT_DEVICE" | grep /data | awk '{ print $1 }' | awk '{ print substr($0,length($0),1) }'`
 BOOT_DEVICE_DEVNAME=${BOOT_DEVICE#"/dev/"} ;
@@ -54,7 +59,11 @@ DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' 
 if [ ! -z $PARTNUMBER ]; then
 
 	# Assume that /data has still to be resized if its size is less than 256MB
+	# This trigger is also used for determining that we have to be perform the first system initialization
 	if (( DATA_SIZE < 256 * 1024 * 1024 )); then
+
+		# Mark the system for first initialization
+		touch /data/.sys/firstinit.pending
 
 		# Resize data partition
 		printf 'yes\n100%%' | parted ${BOOT_DEVICE} resizepart $PARTNUMBER ---pretend-input-tty ;
@@ -65,11 +74,6 @@ if [ ! -z $PARTNUMBER ]; then
 		# Recalculate the size of /data
 		DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
 	fi
-fi
-
-# Create /data/.sys folder, if not there
-if [ ! -d /data/.sys ]; then
-	mkdir -p /data/.sys
 fi
 
 # Create persist file in data, if not already there...
@@ -93,7 +97,7 @@ if [ ! -f /data/.sys/persist.bin ]; then
 fi
 
 # Mount the persist file system
-mount -o loop,rw,nodiscard /data/.sys/persist.bin /persist
+mount -o loop,rw /data/.sys/persist.bin /persist
 
 # Mount the app file system
 APP_MOUNTED=0
@@ -106,13 +110,8 @@ fi
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
 
 # Ensure persist filesystem has folders requested for overlay
-mkdir -p /persist/root
-mkdir -p /persist/root/upper
-mkdir -p /persist/root/work
-
-mkdir -p /persist/var
-mkdir -p /persist/var/upper
-mkdir -p /persist/var/work
+mkdir -p /persist/upper
+mkdir -p /persist/work
 
 # Mount root file system from squash
 mount -t squashfs -o ro /boot/rootfs.squashfs /rootfs
@@ -125,23 +124,26 @@ mount -t tmpfs tmpfs /overlay
 # Prepare folders for overlaying
 mkdir -p /overlay/rootfs
 mkdir -p /overlay/persist
-
+mkdir -p /overlay-ram-var-merge
 mkdir -p /overlay-persist-root-merge
-mkdir -p /overlay-persist-var-merge
 
 # Move rootfs mount point to overlay lower
 mount --move /rootfs /overlay/rootfs
 mount --move /persist /overlay/persist
 
-# Mount overlay on persist (root)
-mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/root/upper,workdir=/overlay/persist/root/work overlay /overlay-persist-root-merge ;
+# Mount RAM overlay for /var
+mkdir -p /overlay/ram ;
+mkdir -p /overlay/ram/var ;
+mkdir -p /overlay/ram/var/upper ;
+mkdir -p /overlay/ram/var/work ;
+mount -t overlay -o lowerdir=/overlay/rootfs/var,upperdir=/overlay/ram/var/upper,workdir=/overlay/ram/var/work overlay /overlay-ram-var-merge ;
 
-# Mount overlay on persist (var)
-mount -t overlay -o lowerdir=/overlay/rootfs/var,upperdir=/overlay/persist/var/upper,workdir=/overlay/persist/var/work overlay /overlay-persist-var-merge ;
+# Mount overlay on persist (root)
+mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/upper,workdir=/overlay/persist/work overlay /overlay-persist-root-merge ;
 
 # Move persisted var overlay to persist overlay
 mkdir -p /overlay-persist-root-merge/var
-mount --move /overlay-persist-var-merge /overlay-persist-root-merge/var
+mount --move /overlay-ram-var-merge /overlay-persist-root-merge/var
 
 # Move boot, app and data mount points over persist overlay
 mkdir -p /overlay-root-merge/boot
@@ -157,16 +159,16 @@ fi
 
 # Determine if shell is requested
 SHELL_REQUESTED=0
-if [ -e /overlay-persist-root-merge/var/aesys/shell.requested ]; then
+if [ -e /overlay-persist-root-merge/data/.sys/shell.requested ]; then
 	SHELL_REQUESTED=1 ;
 fi
 
 # Determine if overlayroot is requested
-# Overlay can be explicitly disabled by file /var/aesys/overlayroot.disabled or
+# Overlay can be explicitly disabled by file /data/.sys/overlayroot.disabled or
 # silently implied by the first initialization procedure still pending
-# (file /var/aesys/firstinit.pending still there)
+# (file /data/.sys/firstinit.pending still there)
 OVERLAYROOT_ENABLED=1
-if [ -e /overlay-persist-root-merge/var/aesys/overlayroot.disabled ] || [ -e /overlay-persist-root-merge/var/aesys/firstinit.pending ]; then
+if [ -e /overlay-persist-root-merge/data/.sys/overlayroot.disabled ] || [ -e /overlay-persist-root-merge/data/.sys/firstinit.pending ]; then
 	OVERLAYROOT_ENABLED=0 ;
 fi
 
@@ -182,7 +184,7 @@ CHECK=0
 while [ $CHECK -eq 0 ];
 do
 	if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/data/securefs.data ] || [ ! -e /overlay-persist-root-merge/data/securefs.data.sig ]; then
-		if [ -e /overlay-persist-root-merge/var/aesys/securefs.skip ]; then
+		if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ]; then
 			SKIPVERIFY=1 ;
 			CHECK=1 ;
 		else
@@ -250,12 +252,12 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		mkdir -p /overlay-ram-merge
 
 		# Prepare overlay
-		mkdir -p /overlay/ram 
-		mkdir -p /overlay/ram/upper ;
-		mkdir -p /overlay/ram/work ;
+		mkdir -p /overlay/ram/root ; 
+		mkdir -p /overlay/ram/root/upper ;
+		mkdir -p /overlay/ram/root/work ;
 
 		# Mount overlay
-		mount -t overlay -o lowerdir=/overlay-persist-root-merge,upperdir=/overlay/ram/upper,workdir=/overlay/ram/work overlay /overlay-ram-merge ;
+		mount -t overlay -o lowerdir=/overlay-persist-root-merge,upperdir=/overlay/ram/root/upper,workdir=/overlay/ram/root/work overlay /overlay-ram-merge ;
 
 		# Check the mount for being in place
 		OVERLAY_VERIFICATION=`mount | grep "overlay on /overlay-ram-merge"` ;
@@ -299,6 +301,14 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 	mkdir -p /overlay-ram-merge/overlay/persisted-root
 	mount --mount /overlay-persist-root-merge /overlay-ram-merge/overlay/persisted-root
 
+	# Go to chrooted shell, if requested
+	if [ $SHELL_REQUESTED -eq 1 ]; then
+		
+		# Log
+		do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
+		chroot /overlay-ram-merge /bin/sh ;
+	fi
+
 else
 
 	# Log
@@ -314,14 +324,14 @@ else
 	# Move /overlay to /overlay-persist-root-merge (to make it visible when /overlay-persist-root-merge will become the new root)
 	mkdir -p /overlay-persist-root-merge/overlay
 	mount --move /overlay /overlay-persist-root-merge/overlay
-fi
 
-# Go to shell, if requested
-if [ $SHELL_REQUESTED -eq 1 ]; then
-	
-	# Log
-	do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
-	/bin/sh ;
+	# Go to chrooted shell, if requested
+	if [ $SHELL_REQUESTED -eq 1 ]; then
+		
+		# Log
+		do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
+		chroot /overlay-persist-root-merge /bin/sh ;
+	fi
 fi
 
 # Handover

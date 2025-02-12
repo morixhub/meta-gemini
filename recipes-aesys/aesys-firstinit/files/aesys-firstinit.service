@@ -5,7 +5,7 @@ Conflicts=shutdown.target
 Before=shutdown.target
 Wants=basic.target
 After=basic.target
-ConditionPathExists=/var/aesys/firstinit.pending
+ConditionPathExists=/data/.sys/firstinit.pending
 
 [Service]
 Type=oneshot

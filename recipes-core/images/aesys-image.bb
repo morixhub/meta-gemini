@@ -60,17 +60,12 @@ ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys
 aesys_image_customize_root() {
 
     # Create mount dirs
-    mkdir -p ${IMAGE_ROOTFS}/boot
-    mkdir -p ${IMAGE_ROOTFS}/var
-    mkdir -p ${IMAGE_ROOTFS}/data
-
-    # Mark the system for requiring first initialization
-    mkdir -p ${IMAGE_ROOTFS}/var/aesys
-    touch ${IMAGE_ROOTFS}/var/aesys/firstinit.pending
+    mkdir -p ${IMAGE_ROOTFS}/boot ;
+    mkdir -p ${IMAGE_ROOTFS}/data ;
+    mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
 
     # Disable securefs check by default
-    mkdir -p ${IMAGE_ROOTFS}/var/aesys
-    touch ${IMAGE_ROOTFS}/var/aesys/securefs.skip
+    touch ${IMAGE_ROOTFS}/data/.sys/securefs.skip
 
     #######################################################
     # OS HARDENING BEGIN
@@ -145,9 +140,8 @@ aesys_development_ip () {
 # Root overlay disabling
 aesys_disable_overlayroot () {
 
-    mkdir -p ${IMAGE_ROOTFS}/var/aesys ;
-    touch ${IMAGE_ROOTFS}/var/aesys/overlayroot.disabled ;
-
+    mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
+    touch ${IMAGE_ROOTFS}/data/.sys/overlayroot.disabled ;
 }
 
 

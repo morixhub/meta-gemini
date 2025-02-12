@@ -6,10 +6,6 @@ do_log() {
 }
 
 # PERFORM FIRST INITILIZATION
-# 0) Locate boot device
-# (it is necessary because the boot device changes booting from uSD or eMMC)
-BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..$//'`
-
 # 1) SHOW SPLASH
 do_log "Performing first system initialization..."
 
@@ -46,10 +42,10 @@ fi
 
 # 3) DISABLE FIRST INITIALIZATION
 # Remove trigger file
-if [ -e '/var/aesys/firstinit.pending' ]; then
+if [ -e '/data/.sys/firstinit.pending' ]; then
 
     # Remove file
-    rm /var/aesys/firstinit.pending ;
+    rm /data/.sys/firstinit.pending ;
     do_log "First initialization trigger file removed" ;
 fi
 
