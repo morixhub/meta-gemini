@@ -41,8 +41,8 @@ IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-cli
 # Add unionfs-fuse packages
 IMAGE_INSTALL:append = " unionfs-fuse "
 
-# Add aufs utils
-IMAGE_INSTALL:append = " aufs-util "
+# Add AuFS utils, if requested by distribution
+IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 
 # Add aesys packages
 IMAGE_INSTALL:append = " aesys-firstinit aesys-startup-shutdown "

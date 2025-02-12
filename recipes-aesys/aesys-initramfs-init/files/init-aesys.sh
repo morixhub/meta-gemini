@@ -67,18 +67,23 @@ if [ ! -z $PARTNUMBER ]; then
 	fi
 fi
 
+# Create /data/.sys folder, if not there
+if [ ! -d /data/.sys ]; then
+	mkdir -p /data/.sys
+fi
+
 # Create persist file in data, if not already there...
-if [ ! -f /data/persist.bin ]; then
+if [ ! -f /data/.sys/persist.bin ]; then
 
 	# Determine max size (as the half of the available space on /data)
 	MAX_SIZE=$(( DATA_SIZE / 2 )) ;
 	
 	# Create file
-	dd if=/dev/null of=/data/persist.bin bs=1 seek=$MAX_SIZE ;
+	dd if=/dev/null of=/data/.sys/persist.bin bs=1 seek=$MAX_SIZE ;
 
 	# Loop-load the file
 	LOOP_DEVICE=`losetup -f` ;
-	losetup -f /data/persist.bin ;
+	losetup -f /data/.sys/persist.bin ;
 
 	# Create ext4 filesystem
 	mkfs.ext4 $LOOP_DEVICE ;
@@ -88,13 +93,13 @@ if [ ! -f /data/persist.bin ]; then
 fi
 
 # Mount the persist file system
-mount -o loop,rw /data/persist.bin /persist
+mount -o loop,rw,nodiscard /data/.sys/persist.bin /persist
 
 # Mount the app file system
 APP_MOUNTED=0
-if [ -f /data/app.bin ]; then
+if [ -f /data/.sys/app.bin ]; then
 	APP_MOUNTED=1 ;
-	mount -o loop,ro /data/app.bin /app ;
+	mount -o loop,ro /data/.sys/app.bin /app ;
 fi
 
 # Mount initram filesystems

@@ -1,9 +1,8 @@
 # Core patches
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
+SRC_URI += " file://Aesys-Kernel-Config-Fragment.cfg"
 SRC_URI += " file://0001-Fixed-SpiDev.patch"
 SRC_URI += " file://0002-BroadCom-Phy.patch"
-# Changes to previous patch, obsoleted the following line
-# SRC_URI += " file://0003-BroadCom-Phy-Cleanup.patch"
 SRC_URI += " file://0004-BroadCom-Phy-Avoid-Further-Access-to-DTS.patch"
 SRC_URI += " file://0005-Added-Disen-DRM-Panel.patch"
 SRC_URI += " file://0006-Fixed-Disen-DRM-Panel.patch"
@@ -16,8 +15,9 @@ SRC_URI += " file://0012-Reset-And-Power-GPIOs-Now-Optional-For-Disen-Panel.patc
 SRC_URI += " file://0013-Fixed-Optional-UpDn-ShLr-For-Disen-Panel.patch"
 SRC_URI += " file://0014-Added-Fixed-Clock-Disable-For-RTC-pcf85063.patch"
 SRC_URI += " file://0015-Fixed-RTC-pcf85063-For-SysFS-Entries.patch"
-SRC_URI += " file://0016-AuFS-Support.patch"
-SRC_URI += " file://Aesys-Kernel-Config-Fragment.cfg"
+
+# Include AuFS patches, if requested by distribution
+SRC_URI += " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', 'file://0016-AuFS-Support.patch', '', d)}"
 
 # Remove the commit ID string from kernel version
 # ATTENTION: the value of LINUX_VERSION_EXTENSION is not really important here: it is just for
