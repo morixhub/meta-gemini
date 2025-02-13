@@ -3,12 +3,16 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
 do_log() {
-	echo "INITRAM:" $1 > /dev/kmsg
+	printf "INITRAM: %s\n" "$1" > /dev/kmsg ;
 }
 
 do_panic() {
-	do_log "Error detected while securing root filesystem: entering console for debugging... Type ENTER to get the prompt" ;
-	/bin/sh ;
+	do_log "PANIC during INITRAM phase: ENTERING CONSOLE FOR DEBUGGING" ;
+
+	# ash complains about no controlling terminal available, so wipe-out all ash messages
+	# (lines starting with "ash:" dumped on stderr); the command line is tricky because
+	# for piping stderr to grep we have to swap stdout and stderr
+	ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:' ;
 }
 
 # Log
@@ -51,22 +55,51 @@ if [ ! -d /data/.sys ]; then
 	mkdir -p /data/.sys
 fi
 
+# Determine if (early) shell is requested
+EARLY_SHELL_REQUESTED=0
+SHELL_REQUESTED=0
+
+if [ -e /data/.sys/earlyshell.requested ]; then
+	EARLY_SHELL_REQUESTED=1 ;
+fi
+
+if [ -e /data/.sys/shell.requested ]; then
+	SHELL_REQUESTED=1 ;
+fi
+
+# Enter early shell, if requested
+if [ $EARLY_SHELL_REQUESTED -eq 1 ]; then
+	
+	# Log
+	do_log "Going to emergency (early) shell DUE TO REQUEST" ;
+
+	# ash complains about no controlling terminal available, so wipe-out all ash messages
+	# (lines starting with "ash:" dumped on stderr); the command line is tricky because
+	# for piping stderr to grep we have to swap stdout and stderr
+	ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:' ;
+fi
+
 # Enlarge data partition, if requested
+FIRSTINIT=0
 PARTNUMBER=`mount | grep -e "^$BOOT_DEVICE" | grep /data | awk '{ print $1 }' | awk '{ print substr($0,length($0),1) }'`
 BOOT_DEVICE_DEVNAME=${BOOT_DEVICE#"/dev/"} ;
 DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
 
-if [ ! -z $PARTNUMBER ]; then
+if [ ! -z "$PARTNUMBER" ]; then
 
-	# Assume that /data has still to be resized if its size is less than 256MB
-	# This trigger is also used for determining that we have to be perform the first system initialization
-	if (( DATA_SIZE < 256 * 1024 * 1024 )); then
+	# Determine if there is unpartitioned space at the end of the disk
+	EMPTY_SPACE=`parted ${BOOT_DEVICE} print free | grep "\S" | tail -1 | grep -i "free"` ;
 
-		# Mark the system for first initialization
-		touch /data/.sys/firstinit.pending
+	if [ ! -z "$EMPTY_SPACE" ]; then
 
+		# Log
+		do_log "Resizing data partition..." ;
+		
 		# Resize data partition
 		printf 'yes\n100%%' | parted ${BOOT_DEVICE} resizepart $PARTNUMBER ---pretend-input-tty ;
+
+		# Log
+		do_log "Resizing data filesystem..." ;
 
 		# Resize file system
 		resize2fs ${BOOT_DEVICE}p${PARTNUMBER} ;
@@ -79,11 +112,23 @@ fi
 # Create persist file in data, if not already there...
 if [ ! -f /data/.sys/persist.bin ]; then
 
+	# Log
+	do_log "Flagging the system for firstinit..." ;
+
+	# If the persistence layer was not there, then we have to force again a first-initialization
+	touch /data/.sys/firstinit.pending ;
+
+	# Log
+	do_log "Creating storage file for persistence overlay..." ;
+
 	# Determine max size (as the half of the available space on /data)
 	MAX_SIZE=$(( DATA_SIZE / 2 )) ;
 	
 	# Create file
 	dd if=/dev/null of=/data/.sys/persist.bin bs=1 seek=$MAX_SIZE ;
+
+	# Log
+	do_log "Formatting storage file for persistence overlay..." ;
 
 	# Loop-load the file
 	LOOP_DEVICE=`losetup -f` ;
@@ -103,8 +148,19 @@ mount -o loop,rw /data/.sys/persist.bin /persist
 APP_MOUNTED=0
 if [ -f /data/.sys/app.bin ]; then
 	APP_MOUNTED=1 ;
+
+	# Log
+	do_log "Mounting app filesystem..." ;
+
+	# Mount
 	mount -o loop,ro /data/.sys/app.bin /app ;
+else
+	# Log
+	do_log "app filesystem not found" ;
 fi
+
+# Log
+do_log "Mounting filesystems..." ;
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
@@ -131,12 +187,18 @@ mkdir -p /overlay-persist-root-merge
 mount --move /rootfs /overlay/rootfs
 mount --move /persist /overlay/persist
 
+# Log
+do_log "Mounting RAM overlay for /var..." ;
+
 # Mount RAM overlay for /var
 mkdir -p /overlay/ram ;
 mkdir -p /overlay/ram/var ;
 mkdir -p /overlay/ram/var/upper ;
 mkdir -p /overlay/ram/var/work ;
 mount -t overlay -o lowerdir=/overlay/rootfs/var,upperdir=/overlay/ram/var/upper,workdir=/overlay/ram/var/work overlay /overlay-ram-var-merge ;
+
+# Log
+do_log "Mounting persistence overlay for root filesystem..." ;
 
 # Mount overlay on persist (root)
 mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/upper,workdir=/overlay/persist/work overlay /overlay-persist-root-merge ;
@@ -157,12 +219,6 @@ if [ $APP_MOUNTED -eq 1 ]; then
 	mount --move /app /overlay-persist-root-merge/app ;
 fi
 
-# Determine if shell is requested
-SHELL_REQUESTED=0
-if [ -e /overlay-persist-root-merge/data/.sys/shell.requested ]; then
-	SHELL_REQUESTED=1 ;
-fi
-
 # Determine if overlayroot is requested
 # Overlay can be explicitly disabled by file /data/.sys/overlayroot.disabled or
 # silently implied by the first initialization procedure still pending
@@ -177,6 +233,9 @@ fi
 if [ -e /securefs.publickey.pem ]; then
 	cp /securefs.publickey.pem /initram/securefs.publickey.pem ;
 fi
+
+# Log
+do_log "Checking for SecureFS..." ;
 
 # Check secure FS required files
 SKIPVERIFY=0
@@ -232,12 +291,12 @@ if [ $SKIPVERIFY -eq 0 ]; then
 else
 
 	# Log
-	do_log "Filesystem verification was skipped" ;
+	do_log "Filesystem verification was skipped DUE TO REQUEST" ;
 
 fi
 
 # Log
-do_log "Preparing to root switching..."
+do_log "Preparing for root switching..."
 
 # Enforce root overlay, if requested
 if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
@@ -289,6 +348,11 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		mount --move /overlay-persist-root-merge/app /overlay-ram-merge/app
 	fi
 
+	# Move system mounts to new root
+	mount --move /proc /overlay-ram-merge/proc
+	mount --move /sys /overlay-ram-merge/sys
+	mount --move /dev /overlay-ram-merge/dev
+
 	# Move temporary file systems to new root
 	mkdir -p /overlay-ram-merge/initram
 	mount --move /initram /overlay-ram-merge/initram
@@ -306,7 +370,13 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		
 		# Log
 		do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
-		chroot /overlay-ram-merge /bin/sh ;
+
+		# ash complains about no controlling terminal available, so wipe-out all ash messages
+		# (lines starting with "ash:" dumped on stderr); the command line is tricky because
+		# for piping stderr to grep we have to swap stdout and stderr; further we have to
+		# invoke an intermediate shell for doing that, because otherwise redirection will
+		# occur for chroot, and not for ash
+		chroot /overlay-ram-merge sh -c "ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:'" ;
 	fi
 
 else
@@ -316,6 +386,11 @@ else
 
 	# Make initram readonly
 	mount -o remount,ro /initram
+
+	# Move system mounts to new root
+	mount --move /proc /overlay-persist-root-merge/proc
+	mount --move /sys /overlay-persist-root-merge/sys
+	mount --move /dev /overlay-persist-root-merge/dev
 
 	# Move temporary file systems to new root
 	mkdir -p /overlay-persist-root-merge/initram
@@ -330,7 +405,13 @@ else
 		
 		# Log
 		do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
-		chroot /overlay-persist-root-merge /bin/sh ;
+
+		# ash complains about no controlling terminal available, so wipe-out all ash messages
+		# (lines starting with "ash:" dumped on stderr); the command line is tricky because
+		# for piping stderr to grep we have to swap stdout and stderr; further we have to
+		# invoke an intermediate shell for doing that, because otherwise redirection will
+		# occur for chroot, and not for ash
+		chroot /overlay-persist-root-merge sh -c "ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:'" ;
 	fi
 fi
 

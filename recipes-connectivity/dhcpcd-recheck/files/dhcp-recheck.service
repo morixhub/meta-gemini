@@ -4,3 +4,4 @@ Description=Restarts dhcpcd if address is in fallback status but a DHCP server i
 [Service]
 Type=oneshot
 ExecStart=/sbin/dhcp-recheck.sh eth0
+ExecStart=/sbin/dhcp-recheck.sh eth1

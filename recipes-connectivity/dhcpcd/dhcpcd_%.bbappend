@@ -41,6 +41,15 @@ do_configure:append() {
     echo "interface eth0" >> ${S}/src/dhcpcd.conf
     echo "fallback static_eth0" >> ${S}/src/dhcpcd.conf
     echo >> ${S}/src/dhcpcd.conf
+
+    echo "profile static_eth1" >> ${S}/src/dhcpcd.conf
+    echo "static ip_address=192.168.2.1/24" >> ${S}/src/dhcpcd.conf
+    echo "static routers=192.168.2.1" >> ${S}/src/dhcpcd.conf
+    echo >> ${S}/src/dhcpcd.conf
+
+    echo "interface eth1" >> ${S}/src/dhcpcd.conf
+    echo "fallback static_eth1" >> ${S}/src/dhcpcd.conf
+    echo >> ${S}/src/dhcpcd.conf
 }
 
 do_install:append(){

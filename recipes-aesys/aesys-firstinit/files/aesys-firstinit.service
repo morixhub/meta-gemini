@@ -1,10 +1,8 @@
 [Unit]
 Description=Aesys first boot initialization procedure
-DefaultDependencies=no
-Conflicts=shutdown.target
-Before=shutdown.target
-Wants=basic.target
-After=basic.target
+After=multi-user.target sshdgenkeys.service
+
+# Start only if required
 ConditionPathExists=/data/.sys/firstinit.pending
 
 [Service]
@@ -12,4 +10,4 @@ Type=oneshot
 ExecStart=/sbin/aesys-firstinit.sh
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

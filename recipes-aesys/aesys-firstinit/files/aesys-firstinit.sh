@@ -53,4 +53,4 @@ fi
 do_log "First initialization completed" ;
 
 # 5) COMMAND REBOOT
-systemctl reboot
+reboot
