@@ -7,7 +7,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 SRC_URI = " \
     file://init-aesys.sh \
-    file://SW_code_signer.ECC.publickey.pem \
+    file://SW_code_signer.ECC_PKI_AESYS.publickey.pem \
 "
 
 FILES:${PN} += " \
@@ -17,6 +17,6 @@ FILES:${PN} += " \
 
 do_install() {
     install -m 0755 ${WORKDIR}/init-aesys.sh ${D}/init
-    install -m 0444 ${WORKDIR}/SW_code_signer.ECC.publickey.pem ${D}/securefs.publickey.pem
+    install -m 0444 ${WORKDIR}/SW_code_signer.ECC_PKI_AESYS.publickey.pem ${D}/securefs.publickey.pem
 }
 

@@ -4,7 +4,8 @@
 
 #include <dt-bindings/usb/pd.h>
 #include "imx8mn.dtsi"
-#include "aesys_bootloader_pubkeys.dtsi"
+
+#include "aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi"
 
 / {
     model = "AESYS 2409A";

@@ -242,7 +242,7 @@ SKIPVERIFY=0
 CHECK=0
 while [ $CHECK -eq 0 ];
 do
-	if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/data/securefs.data ] || [ ! -e /overlay-persist-root-merge/data/securefs.data.sig ]; then
+	if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/data/.sys/securefs.data ] || [ ! -e /overlay-persist-root-merge/data/.sys/securefs.data.sig ]; then
 		if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ]; then
 			SKIPVERIFY=1 ;
 			CHECK=1 ;
@@ -261,7 +261,7 @@ if [ $SKIPVERIFY -eq 0 ]; then
 	CHECK=0 ;
 	while [ $CHECK -eq 0 ];
 	do
-		openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /overlay-persist-root-merge/data/securefs.data.sig /overlay-persist-root-merge/data/securefs.data ;
+		openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /overlay-persist-root-merge/data/.sys/securefs.data.sig /overlay-persist-root-merge/data/.sys/securefs.data ;
 
 		if [ ! $? -eq 0 ]; then
 			do_log "SecureFS signature verification FAILED!" ;
@@ -275,7 +275,7 @@ if [ $SKIPVERIFY -eq 0 ]; then
 	CHECK=0 ;
 	while [ $CHECK -eq 0 ];
 	do
-		cat /overlay-persist-root-merge/data/securefs.data | chroot /overlay-persist-root-merge sha256sum -c -s ;
+		cat /overlay-persist-root-merge/data/.sys/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
 
 		if [ ! $? -eq 0 ]; then
 			do_log "SecureFS files validation FAILED!" ;

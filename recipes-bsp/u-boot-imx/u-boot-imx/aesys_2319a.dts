@@ -6,7 +6,8 @@
 #include <dt-bindings/usb/pd.h>
 #include <dt-bindings/leds/common.h>
 #include "imx8mp.dtsi"
-#include "aesys_bootloader_pubkeys.dtsi"
+
+#include "aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi"
 
 / {
 	model = "AESYS 2319A";
