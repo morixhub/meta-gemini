@@ -119,7 +119,7 @@
 	
 	dsi_backlight: dsi_backlight@1 {
 		compatible = "pwm-backlight";
-		pwms = <&pwm1 0 100000 0>;
+		pwms = <&pwm1 0 200000 0>;
 		power-supply = <&reg_dsi_backlight>;
 		status = "okay";
 		
@@ -172,12 +172,6 @@
 	spidev2_0: spi@0 {
 		compatible = "linux,spidev";
 		reg = <0>;
-		spi-max-frequency = <500000>;
-	};
-	
-	spidev2_1: spi@1 {
-		compatible = "linux,spidev";
-		reg = <1>;
 		spi-max-frequency = <500000>;
 	};
 };

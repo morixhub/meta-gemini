@@ -112,19 +112,17 @@
 		
 		cpudai: simple-audio-card,cpu {
 			sound-dai = <&sai1>;
-			dai-tdm-slot-num = <2>;
-			dai-tdm-slot-width = <32>;
 		};
 		
 		simple-audio-card,codec {
 			sound-dai = <&wm8524>;
-			clocks = <&clk IMX8MP_CLK_SAI1_ROOT>;
+			clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIOMIX_SAI1_MCLK1>;
 		};
 	};
 	
 	dsi_backlight: dsi_backlight@1 {
 		compatible = "pwm-backlight";
-		pwms = <&pwm1 0 100000 0>;
+		pwms = <&pwm1 0 200000 0>;
 		power-supply = <&reg_dsi_backlight>;
 		status = "okay";
 		
@@ -177,12 +175,6 @@
 	spidev2_0: spi@0 {
 		compatible = "linux,spidev";
 		reg = <0>;
-		spi-max-frequency = <500000>;
-	};
-	
-	spidev2_1: spi@1 {
-		compatible = "linux,spidev";
-		reg = <1>;
 		spi-max-frequency = <500000>;
 	};
 };
@@ -470,7 +462,8 @@
 	pinctrl-0 = <&pinctrl_uart1>;
 	assigned-clocks = <&clk IMX8MP_CLK_UART1>;
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
-	fsl,uart-has-rtscts;
+	uart-has-rtscts;
+	rs485-rts-active-low;
 	status = "okay";
 };
 
@@ -485,7 +478,8 @@
 	pinctrl-0 = <&pinctrl_uart3>;
 	assigned-clocks = <&clk IMX8MP_CLK_UART3>;
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
-	fsl,uart-has-rtscts;
+	uart-has-rtscts;
+	rs485-rts-active-low;
 	status = "okay";
 };
 
@@ -494,7 +488,8 @@
 	pinctrl-0 = <&pinctrl_uart4>;
 	assigned-clocks = <&clk IMX8MP_CLK_UART4>;
 	assigned-clock-parents = <&clk IMX8MP_SYS_PLL1_80M>;
-	fsl,uart-has-rtscts;
+	uart-has-rtscts;
+	rs485-rts-active-low;
 	status = "okay";
 };
 
