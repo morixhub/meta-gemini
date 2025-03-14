@@ -17,6 +17,9 @@ IMAGE_FEATURES:remove = "debug-tweaks"
 IMAGE_FEATURES:append = " allow-root-login "
 EXTRA_USERS_PARAMS += "usermod -p '\$1\$FMup4eG7\$5kGXZnwbAA/kNnkqhHLaA1' root;" 
 
+# Remove development tools from final image
+IMAGE_FEATURES:remove = "tools-sdk"
+
 # Normalize image name
 IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
 
