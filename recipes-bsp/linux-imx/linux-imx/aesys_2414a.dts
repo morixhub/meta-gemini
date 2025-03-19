@@ -136,6 +136,11 @@
 		100>;
 		default-brightness-level = <80>;
 	};
+
+	usb_id: connector {
+		compatible = "linux,extcon-usb-gpio";
+		id-gpio = <&gpio1 10 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &A53_0 {
@@ -501,23 +506,17 @@
 };
 
 &usb_dwc3_0 {
-	dr_mode = "otg";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_usb_dwc3_0>;
-	hnp-disable;
-	srp-disable;
-	adp-disable;
-	usb-role-switch;
-	role-switch-default-mode = "none";
-	snps,dis-u1-entry-quirk;
-	snps,dis-u2-entry-quirk;
+	vbus-supply = <&reg_usb_vbus>;
+	dr_mode = "otg";
+	extcon = <&usb_id>;
 	status = "okay";
 };
 
 &usb3_1 {
 	fsl,over-current-active-low;
 	fsl,power-active-low;
-	fsl,permanently-attached;
 	status = "okay";
 };
 
@@ -586,7 +585,7 @@
 		fsl,pins = <
 		MX8MP_IOMUXC_GPIO1_IO13__USB1_OC			0x00000084
 		MX8MP_IOMUXC_GPIO1_IO12__USB1_PWR		0x00000084
-		MX8MP_IOMUXC_GPIO1_IO10__USB1_ID		0x00000084
+		MX8MP_IOMUXC_GPIO1_IO10__GPIO1_IO10		0x00000084
 		>;
 	};
 	
