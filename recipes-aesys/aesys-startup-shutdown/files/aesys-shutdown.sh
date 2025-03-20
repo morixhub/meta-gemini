@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Kill service ifplugd (that, under some circumstances, can delay the system halt)
+systemctl kill --signal=SIGKILL ifplugd.service
+
 # Launch /app/stop.sh, if any
 if [ -x /app/stop.sh ]; then
     /app/stop.sh &
