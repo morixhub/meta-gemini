@@ -85,27 +85,30 @@ PARTNUMBER=`mount | grep -e "^$BOOT_DEVICE" | grep /data | awk '{ print $1 }' | 
 BOOT_DEVICE_DEVNAME=${BOOT_DEVICE#"/dev/"} ;
 DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
 
-if [ ! -z "$PARTNUMBER" ]; then
+if [ ! -f /data/.sys/datagrow.disabled ]; then
 
-	# Determine if there is unpartitioned space at the end of the disk
-	EMPTY_SPACE=`parted ${BOOT_DEVICE} print free | grep "\S" | tail -1 | grep -i "free"` ;
+	if [ ! -z "$PARTNUMBER" ]; then
 
-	if [ ! -z "$EMPTY_SPACE" ]; then
+		# Determine if there is unpartitioned space at the end of the disk
+		EMPTY_SPACE=`parted ${BOOT_DEVICE} print free | grep "\S" | tail -1 | grep -i "free"` ;
 
-		# Log
-		do_log "Resizing data partition..." ;
-		
-		# Resize data partition
-		printf 'yes\n100%%' | parted ${BOOT_DEVICE} resizepart $PARTNUMBER ---pretend-input-tty ;
+		if [ ! -z "$EMPTY_SPACE" ]; then
 
-		# Log
-		do_log "Resizing data filesystem..." ;
+			# Log
+			do_log "Resizing data partition..." ;
+			
+			# Resize data partition
+			printf 'yes\n100%%' | parted ${BOOT_DEVICE} resizepart $PARTNUMBER ---pretend-input-tty ;
 
-		# Resize file system
-		resize2fs ${BOOT_DEVICE}p${PARTNUMBER} ;
+			# Log
+			do_log "Resizing data filesystem..." ;
 
-		# Recalculate the size of /data
-		DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+			# Resize file system
+			resize2fs ${BOOT_DEVICE}p${PARTNUMBER} ;
+
+			# Recalculate the size of /data
+			DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+		fi
 	fi
 fi
 

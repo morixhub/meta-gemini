@@ -3,6 +3,9 @@ SUMMARY = "Aesys packagegroup - base"
 
 inherit packagegroup
 
+# Add support for U-Boot tools
+RDEPENDS:${PN}:append = " u-boot-fw-utils "
+
 # Add support for /etc/network/interfaces-based networking manager
 RDEPENDS:${PN}:append = " ifupdown init-ifupdown ifplugd "
 
