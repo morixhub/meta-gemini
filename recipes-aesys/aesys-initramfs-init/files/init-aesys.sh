@@ -38,17 +38,36 @@ mount -t devtmpfs dev /dev
 
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
-BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..$//'`
+KERNEL_CMDLINE=`cat /proc/cmdline`
+BOOT_PART=`echo ${KERNEL_CMDLINE} | sed -e 's/^.*root=//' -e 's/ .*$//'`
+BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
+DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_current_half="`
+if [ ! -z "${DB_CMDLINE}" ]; then
+	BOOT_DUAL=`echo $DB_CMDLINE | sed -e 's/^.*db_current_half=//' -e 's/ .*$//'` ;
+	if [ "${BOOT_DUAL}" == "a" ]; then
+		BOOT_PART=${BOOT_DEVICE}p1 ;
+		DATA_PART=${BOOT_DEVICE}p3 ;
+	elif [ "${BOOT_DUAL}" == "b" ]; then
+		BOOT_PART=${BOOT_DEVICE}p2 ;
+		DATA_PART=${BOOT_DEVICE}p3 ;
+	else
+		BOOT_PART=${BOOT_DEVICE}p1 ;
+		DATA_PART=${BOOT_DEVICE}p2 ;
+	fi
+else
+	BOOT_PART=${BOOT_DEVICE}p1 ;
+	DATA_PART=${BOOT_DEVICE}p2 ;
+fi
 
 # Wait for block device
-if [ ! -b ${BOOT_DEVICE}p1 ] || [ ! -b ${BOOT_DEVICE}p2 ]; then
+if [ ! -b ${BOOT_PART} ] || [ ! -b ${DATA_PART} ]; then
 	do_log "Waiting for block device..." ;
 	sleep 1 ;
 fi
 
 # Mount relevant file systems
-mount -t ext4 -o ro ${BOOT_DEVICE}p1 /boot
-mount -t ext4 -o rw ${BOOT_DEVICE}p2 /data
+mount -t ext4 -o ro ${BOOT_PART} /boot
+mount -t ext4 -o rw ${DATA_PART} /data
 
 # Create /data/.sys folder, if not there
 if [ ! -d /data/.sys ]; then
@@ -167,6 +186,9 @@ do_log "Mounting filesystems..." ;
 
 # Mount initram filesystems
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
+
+# Set U-Boot environment to /initram
+echo "${BOOT_DEVICE} 0x700000 0x4000" > /initram/fw_env.config
 
 # Ensure persist filesystem has folders requested for overlay
 mkdir -p /persist/upper

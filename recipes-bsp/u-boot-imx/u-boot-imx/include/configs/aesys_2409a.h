@@ -76,6 +76,7 @@
 	"bsp_bootcmd=echo Running BSP bootcmd...; " \
 		"mmc dev ${mmcdev}; " \
 		"if mmc rescan; " \
+		"run mmcargs; " \
 		"then " \
 			"if run loadbootscript; " \
 			"then " \
@@ -85,7 +86,6 @@
 				"if run loadfit; " \
 				"then " \
 					"echo FIT image loaded successfully... booting...; " \
-					"run mmcargs; " \
 					"run fitboot; " \
 				"else " \
 					"if run loadimage; " \
@@ -105,7 +105,6 @@
 	"loadimage=echo Attempting loading of image...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
  		"if run loadfdt; " \
 		"then " \
 			"if run loadinitrd; " \
@@ -147,14 +146,47 @@
 	"mmcpart=1\0" \
 	"mmcroot=/dev/mmcblk1p2 rootwait rw\0" \
 	"mmcautodetect=yes\0" \
-	"mmcargs=setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot}\0 " \
+	"mmcargs=if ext4ls mmc ${mmcdev}:3 ; then " \
+			"echo DUAL BOOT MODE ; " \
+			"if env exists db_current_half && test ${db_current_half} = b ; then " \
+				"if env exists db_last_half ; then " \
+					"echo Dual booting from half A... ; " \
+					"setenv db_current_half a ; " \
+					"setenv db_last_half a ; " \
+				"else " \
+					"echo Dual booting from half B... ; " \
+					"setenv db_current_half b ; " \
+					"setenv db_last_half b ; " \
+				"fi; " \
+			"else " \
+				"if env exists db_last_half ; then " \
+					"echo Dual booting from half B... ; " \
+					"setenv db_current_half b ; " \
+					"setenv db_last_half b ; " \
+				"else " \
+					"echo Dual booting from half A... ; " \
+					"setenv db_current_half a ; " \
+					"setenv db_last_half a ; " \
+				"fi; " \
+			"fi; " \
+			"saveenv ; " \
+			"if test ${db_last_half} = b ; then " \
+				"setenv mmcpart 2 ;" \
+			"else " \
+				"setenv mmcpart 1 ; " \
+			"fi; " \
+			"setenv dbargs db_current_half=${db_current_half} ; " \
+		"else " \
+			"echo SINGLE BOOT MODE ; " \
+		"fi; " \
+		"setenv mmcroot /dev/mmcblk${mmcdev}p${mmcpart} rootwait rw ; " \
+		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} ${dbargs}\0" \
 	"loadbootscript=ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
 	"bootscript=echo Running bootscript from mmc ...; " \
 		"source\0" \
 	"loadimage=ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
 	"loadfdt=ext4load mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${fdtfile}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
 		"if test ${boot_fit} = yes || test ${boot_fit} = try; then " \
 			"bootm ${loadaddr}; " \
 		"else " \
