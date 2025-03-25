@@ -10,6 +10,7 @@
 #include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>
 #include "imx_env.h"
+#include "gemini_env.h"
 
 #define CFG_SYS_UBOOT_BASE	(QSPI0_AMBA_BASE + CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR * 512)
 
@@ -59,64 +60,6 @@
 	"emmc_dev=2\0"\
 	"sd_dev=1\0"
 
-#define AESYSENV \
-	"bootcmd=run bsp_bootcmd\0" \
-	"initrd=initram.img\0" \
-	"initrd_addr=0x43800000\0" \
-	"loadinitrd=echo Attempting load of initrd...; " \
-		"ext4load mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
-	"fitaddr=0x48000000\0" \
-	"fitimage=fit.img\0" \
-	"loadfit=echo Attempting loading of FIT image...; " \
-		"ext4load mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
-	"fitboot=env set loadaddr ${fitaddr}; " \
-		"bootm ${fitaddr}\0" \
-	"bsp_bootcmd=echo Running BSP bootcmd...; " \
-		"mmc dev ${mmcdev}; " \
-		"if mmc rescan; " \
-		"then " \
-			"if run loadbootscript; " \
-			"then " \
-				"echo bootscript available... running...; " \
-				"run bootscript; " \
-			"else " \
-				"if run loadfit; " \
-				"then " \
-					"echo FIT image loaded successfully... booting...; " \
-					"run mmcargs; " \
-					"run fitboot; " \
-				"else " \
-					"if run loadimage; " \
-					"then " \
-						"echo Image available... continue booting...; " \
-						"run mmcboot; " \
-					"else " \
-						"run netboot; " \
-					"fi; " \
-				"fi; " \
-			"fi; " \
-		"fi\0" \
-	"loadbootscript=echo Attempting loading bootscript...; " \
-		"ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
-	"bootscript=echo Running bootscript from mmc ...; " \
-		"source\0" \
-	"loadimage=echo Attempting loading of image...; " \
-		"ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
-	"mmcboot=echo Booting from mmc ...; " \
-		"run mmcargs; " \
- 		"if run loadfdt; " \
-		"then " \
-			"if run loadinitrd; " \
-			"then " \
-				"echo initrd loaded successfully... booting...; " \
-				"booti ${loadaddr} ${initrd_addr} ${fdt_addr_r}; " \
-			"else " \
-				"echo initrd not available... booting...; " \
-				"booti ${loadaddr} - ${fdt_addr_r}; " \
-			"fi; " \
-		"fi\0" \
-
-
 #ifdef CONFIG_NAND_BOOT
 #define MFG_NAND_PARTITION "mtdparts=gpmi-nand:64m(nandboot),16m(nandfit),32m(nandkernel),16m(nanddtb),8m(nandtee),-(nandrootfs)"
 #endif
@@ -155,7 +98,6 @@
 	"console=ttymxc1,115200\0" \
 	"fdt_addr_r=0x43000000\0"			\
 	"fdt_addr=0x43000000\0"			\
-	"boot_fdt=try\0" \
 	"fdt_high=0xffffffffffffffff\0"		\
 	"boot_fit=no\0" \
 	"fdtfile=" CONFIG_DEFAULT_FDT_FILE "\0" \
@@ -212,7 +154,7 @@
 			   "fi; " \
 		   "fi; " \
 	   "fi;" \
-	AESYSENV
+	GEMINI_ENV
 #endif
 
 /* Link Definitions */

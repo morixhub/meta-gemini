@@ -49,8 +49,15 @@ if [ -e '/data/.sys/firstinit.pending' ]; then
     do_log "First initialization trigger file removed" ;
 fi
 
-# 4) SHOW FINAL
+# 4) FLAG THE BOOT AS SUCCESFULL, IN CASE OF DUAL-BOOT AWARE SYSTEMS
+KERNEL_CMDLINE=`cat /proc/cmdline`
+DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_current_half="`
+if [ ! -z "${DB_CMDLINE}" ]; then
+    fw_setenv db_last_half
+fi
+
+# 5) SHOW FINAL
 do_log "First initialization completed" ;
 
-# 5) COMMAND REBOOT
+# 6) COMMAND REBOOT
 reboot

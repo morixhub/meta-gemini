@@ -44,6 +44,9 @@ IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-cli
 # Add unionfs-fuse packages
 IMAGE_INSTALL:append = " unionfs-fuse "
 
+# Add coreutils
+IMAGE_INSTALL:append = " coreutils "
+
 # Add AuFS utils, if requested by distribution
 IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 

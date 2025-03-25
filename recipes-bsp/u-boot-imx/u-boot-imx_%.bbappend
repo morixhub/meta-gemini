@@ -14,8 +14,9 @@ do_after_patch() {
 	# COMMON
 	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_TEST.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/include/configs/gemini_env.h" "${WORKDIR}/git/include/configs/"
 	cp -rf "${COPYSOURCE}/board/aesys" "${WORKDIR}/git/board/"
-
+	
 	# Create symlink to freescale common assets
 	ln -f -s "${WORKDIR}/git/board/freescale/common" "${WORKDIR}/git/board/aesys/common"
 
