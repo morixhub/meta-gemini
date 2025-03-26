@@ -6,9 +6,9 @@ While checking things out, please verify that everything is according to the fol
 
 
 | layer branch | Yocto release | NXP i.MX release manifest | Notes |
-| :----------: | :-----------: | :-----------------------: | :---- |
-| 2024.1       | scarthgap     | 6.6.36-2.1.0              | |
-| master       | mickledore    | legacy                    | |
+| :----------: | :-----------: | :-----------------------: | :---: |
+| 2024.1       | scarthgap     | 6.6.36-2.1.0              |       |
+| master       | mickledore    | legacy                    |       |
 
 
 Instructions contained in this README should always be aligned with the most recent branch (the first in the table); however please verify: you've been warned!
@@ -49,7 +49,7 @@ Instructions contained in this README should always be aligned with the most rec
 ### Multiconfig setup
 - `cp -rf ../sources/meta-gemini/multiconfig ./conf/`
 - Add the following line to `conf/local.conf`:
-  - `BBMULTICONFIG = "aesys-2319a aesys-2409a aesys-2414a"`
+  - `BBMULTICONFIG = "aesys-2319a aesys-2409a aesys-2415a"`
 
 ### Image cooking
 Image cooking takes advantage of BitBake's multiconfig features, so command can be placed in the format `mc:<config_name>:<recipe>`, such as:

@@ -2,7 +2,7 @@
 
 /dts-v1/;
 
-#include "aesys_2414a.dts"
+#include "aesys_2415a.dts"
 
 &resmem {
 	// M7 RAM

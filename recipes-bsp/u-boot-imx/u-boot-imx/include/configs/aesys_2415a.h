@@ -3,8 +3,8 @@
  * Copyright 2019 NXP
  */
 
-#ifndef __AESYS_2414A_H
-#define __AESYS_2414A_H
+#ifndef __AESYS_2415A_H
+#define __AESYS_2415A_H
 
 #include <linux/sizes.h>
 #include <linux/stringify.h>

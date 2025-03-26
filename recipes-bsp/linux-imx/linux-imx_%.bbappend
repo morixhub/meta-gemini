@@ -34,14 +34,21 @@ DELTA_KERNEL_DEFCONFIG:append = "Aesys-Kernel-Config-Fragment.cfg"
 COPYSOURCE := "${THISDIR}/${PN}"
 
 do_after_patch() {
+
+	# AESYS 2319A
 	cp "${COPYSOURCE}/aesys_2319a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 	cp "${COPYSOURCE}/aesys_2319a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
+	# AESYS 2409A
 	cp "${COPYSOURCE}/aesys_2409a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 	cp "${COPYSOURCE}/aesys_2409a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
-	cp "${COPYSOURCE}/aesys_2414a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
-	cp "${COPYSOURCE}/aesys_2414a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
+	# AESYS 2414A
+	cp "${COPYSOURCE}/aesys_2414a.dtsi" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
+
+	# AESYS 2415A
+	cp "${COPYSOURCE}/aesys_2415a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
+	cp "${COPYSOURCE}/aesys_2415a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 }
 
 addtask after_patch after do_patch before do_configure

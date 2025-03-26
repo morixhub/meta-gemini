@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "aesys_2414a.dtsi"
+
+/ {
+	model = "AESYS 2415A";
+	
+	wm8524: audio-codec {
+		#sound-dai-cells = <0>;
+		compatible = "wlf,wm8524";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_sound_wm8524>;
+		wlf,mute-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
+	
+	sound-wm8524 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "wm8524-audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,frame-master = <&cpudai>;
+		simple-audio-card,bitclock-master = <&cpudai>;
+		simple-audio-card,widgets =
+			"Line", "Left Line Out Jack",
+			"Line", "Right Line Out Jack";
+		simple-audio-card,routing =
+			"Left Line Out Jack", "LINEVOUTL",
+			"Right Line Out Jack", "LINEVOUTR";
+		
+		cpudai: simple-audio-card,cpu {
+			sound-dai = <&sai1>;
+		};
+		
+		simple-audio-card,codec {
+			sound-dai = <&wm8524>;
+			clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIOMIX_SAI1_MCLK1>;
+		};
+	};
+};
+
+&iomuxc {
+	
+	pinctrl_sound_wm8524: sound_wm8524_gpios {
+		fsl,pins = <
+		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
+		>;
+	};
+
+};
+
+
+

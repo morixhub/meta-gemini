@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
-/dts-v1/;
-
 #include <dt-bindings/phy/phy-imx8-pcie.h>
 #include <dt-bindings/usb/pd.h>
 #include <dt-bindings/leds/common.h>
 #include "imx8mp.dtsi"
 
+#include "aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi"
+
 / {
-	model = "AESYS 2414A";
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 	
 	aliases {
@@ -19,6 +18,7 @@
 	};
 	
 	chosen {
+		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
 		stdout-path = &uart2;
 	};
 	
@@ -84,37 +84,6 @@
 		regulator-max-microvolt = <3300000>;
 		gpio = <&gpio2 19 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
-	};
-	
-	wm8524: audio-codec {
-		#sound-dai-cells = <0>;
-		compatible = "wlf,wm8524";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_sound_wm8524>;
-		wlf,mute-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
-	};
-	
-	sound-wm8524 {
-		compatible = "simple-audio-card";
-		simple-audio-card,name = "wm8524-audio";
-		simple-audio-card,format = "i2s";
-		simple-audio-card,frame-master = <&cpudai>;
-		simple-audio-card,bitclock-master = <&cpudai>;
-		simple-audio-card,widgets =
-			"Line", "Left Line Out Jack",
-			"Line", "Right Line Out Jack";
-		simple-audio-card,routing =
-			"Left Line Out Jack", "LINEVOUTL",
-			"Right Line Out Jack", "LINEVOUTR";
-		
-		cpudai: simple-audio-card,cpu {
-			sound-dai = <&sai1>;
-		};
-		
-		simple-audio-card,codec {
-			sound-dai = <&wm8524>;
-			clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIOMIX_SAI1_MCLK1>;
-		};
 	};
 	
 	dsi_backlight: dsi_backlight@1 {
@@ -597,12 +566,6 @@
 		>;
 	};
 	
-	pinctrl_sound_wm8524: sound_wm8524_gpios {
-		fsl,pins = <
-		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
-		>;
-	};
-	
 	pinctrl_light_sensor: light_sensor_gpios {
 		fsl,pins = <
 		MX8MP_IOMUXC_UART3_RXD__GPIO5_IO26		0x00000006		// ALS_nINT
@@ -991,39 +954,5 @@
 	};
 };
 
-&dsp {
-	status = "okay";
-};
 
-&vpu_g1 {
-	status = "okay";
-};
-
-&vpu_g2 {
-	status = "okay";
-};
-
-&vpu_vc8000e {
-	status = "okay";
-};
-
-&vpu_v4l2 {
-	status = "okay";
-};
-
-&gpu_3d {
-	status = "okay";
-};
-
-&gpu_2d {
-	status = "okay";
-};
-
-&ml_vipsi {
-	status = "okay";
-};
-
-&mix_gpu_ml {
-	status = "okay";
-};
 

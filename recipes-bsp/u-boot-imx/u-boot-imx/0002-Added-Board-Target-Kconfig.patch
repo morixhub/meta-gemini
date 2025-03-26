@@ -8,7 +8,7 @@ index eaf2c5d3df7..f12b6066dc7 100644
  source "board/xen/xenguest_arm64/Kconfig"
 +source "board/aesys/aesys_2319a/Kconfig"
 +source "board/aesys/aesys_2409a/Kconfig"
-+source "board/aesys/aesys_2414a/Kconfig"
++source "board/aesys/aesys_2415a/Kconfig"
  
  source "arch/arm/Kconfig.debug"
  
@@ -40,8 +40,8 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
 +
-+config TARGET_AESYS_2414A
-+        bool "Aesys 2414A"
++config TARGET_AESYS_2415A
++        bool "Aesys 2415A"
 +        select IMX8MP
 +        select SUPPORT_SPL
 +        select IMX8M_LPDDR4
