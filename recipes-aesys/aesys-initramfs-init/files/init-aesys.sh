@@ -36,24 +36,40 @@ mount -t proc proc /proc
 mount -t sysfs sysfs /sys
 mount -t devtmpfs dev /dev
 
+# Declare file name
+ROOTFSSQUASHFS=rootfs.squashfs
+APPBIN=app.bin
+
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
 KERNEL_CMDLINE=`cat /proc/cmdline`
 BOOT_PART=`echo ${KERNEL_CMDLINE} | sed -e 's/^.*root=//' -e 's/ .*$//'`
 BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
-DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_current_half="`
-if [ ! -z "${DB_CMDLINE}" ]; then
-	BOOT_DUAL=`echo $DB_CMDLINE | sed -e 's/^.*db_current_half=//' -e 's/ .*$//'` ;
-	if [ "${BOOT_DUAL}" == "a" ]; then
-		BOOT_PART=${BOOT_DEVICE}p1 ;
-		DATA_PART=${BOOT_DEVICE}p3 ;
-	elif [ "${BOOT_DUAL}" == "b" ]; then
-		BOOT_PART=${BOOT_DEVICE}p2 ;
-		DATA_PART=${BOOT_DEVICE}p3 ;
+DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_current_half="`
+DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="`
+DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}"
+DB_APPBIN="${APPBIN}"
+if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
+	DB_HALF=`echo $DB_CMDLINE_CURRENTHALF | sed -e 's/^.*db_current_half=//' -e 's/ .*$//'` ;
+	DB_MODE=`echo $DB_CMDLINE_MODE | sed -e 's/^.*db_mode=//' -e 's/ .*$//'` ;
+	if [ "${DB_MODE}" == "partitions" ]; then
+		if [ "${DB_HALF}" == "a" ]; then
+			BOOT_PART=${BOOT_DEVICE}p1 ;
+			DATA_PART=${BOOT_DEVICE}p3 ;
+		elif [ "${DB_HALF}" == "b" ]; then
+			BOOT_PART=${BOOT_DEVICE}p2 ;
+			DATA_PART=${BOOT_DEVICE}p3 ;
+		else
+			BOOT_PART=${BOOT_DEVICE}p1 ;
+			DATA_PART=${BOOT_DEVICE}p2 ;
+		fi
 	else
 		BOOT_PART=${BOOT_DEVICE}p1 ;
 		DATA_PART=${BOOT_DEVICE}p2 ;
+
+		DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}.${DB_HALF}" ;
 	fi
+	DB_APPBIN="${APPBIN}.${DB_HALF}" ;
 else
 	BOOT_PART=${BOOT_DEVICE}p1 ;
 	DATA_PART=${BOOT_DEVICE}p2 ;
@@ -168,14 +184,22 @@ mount -o loop,rw /data/.sys/persist.bin /persist
 
 # Mount the app file system
 APP_MOUNTED=0
-if [ -f /data/.sys/app.bin ]; then
+if [ -f /data/.sys/${DB_APPBIN} ]; then
+	APP_MOUNTED=1 ;
+
+	# Log
+	do_log "Mounting (dual-boot) app filesystem..." ;
+
+	# Mount
+	mount -o loop,ro /data/.sys/${DB_APPBIN} /app ;
+elif [ -f /data/.sys/${APPBIN} ]; then
 	APP_MOUNTED=1 ;
 
 	# Log
 	do_log "Mounting app filesystem..." ;
 
 	# Mount
-	mount -o loop,ro /data/.sys/app.bin /app ;
+	mount -o loop,ro /data/.sys/${APPBIN} /app ;
 else
 	# Log
 	do_log "app filesystem not found" ;
@@ -195,7 +219,7 @@ mkdir -p /persist/upper
 mkdir -p /persist/work
 
 # Mount root file system from squash
-mount -t squashfs -o ro /boot/rootfs.squashfs /rootfs
+mount -t squashfs -o ro /boot/${DB_ROOTFSSQUASHFS} /rootfs
 
 # Create a temporary mount on /overlay
 # (so that it can act as a real mount point and can be moved around)
