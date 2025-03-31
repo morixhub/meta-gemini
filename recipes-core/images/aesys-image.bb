@@ -32,8 +32,9 @@ IMAGE_FSTYPES:append = " squashfs "
 # Add features
 IMAGE_FEATURES:append = " ssh-server-openssh splash "
 
-# Add base packages
+# Add base packages (some packages cannot be included in aesys-packagegroup-base due to different architecture specialization)
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
+IMAGE_INSTALL:append = " glibc-utils "
 
 # Add SQLite-related packages
 IMAGE_INSTALL:append = " sqlite3 "
