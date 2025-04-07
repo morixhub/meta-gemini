@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 
+/dts-v1/;
+
 #include <dt-bindings/phy/phy-imx8-pcie.h>
 #include <dt-bindings/usb/pd.h>
 #include <dt-bindings/leds/common.h>
@@ -9,6 +11,8 @@
 
 / {
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
+
+	model = "AESYS 2414-BASED BOARD";
 	
 	aliases {
 		rtc0 = &rtc_i2c;

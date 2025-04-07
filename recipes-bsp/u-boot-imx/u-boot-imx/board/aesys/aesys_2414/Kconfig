@@ -1,0 +1,15 @@
+if TARGET_AESYS_2414
+
+config SYS_BOARD
+	default "aesys_2414"
+
+config SYS_VENDOR
+	default "aesys"
+
+config SYS_CONFIG_NAME
+	default "aesys_2414"
+
+config IMX_CONFIG
+	default "board/aesys/aesys_2414/aesys_2414-lpddr4.cfg"
+
+endif

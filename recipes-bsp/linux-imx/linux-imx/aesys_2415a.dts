@@ -2,7 +2,7 @@
 
 /dts-v1/;
 
-#include "aesys_2414a.dtsi"
+#include "aesys_2414.dtsi"
 
 / {
 	model = "AESYS 2415A";
