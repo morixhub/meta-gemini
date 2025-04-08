@@ -5,6 +5,8 @@
 #include <dt-bindings/leds/common.h>
 #include "imx8mp.dtsi"
 
+#include "aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi"
+
 / {
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 	
@@ -16,6 +18,7 @@
 	};
 	
 	chosen {
+		bootargs = "console=ttymxc1,115200 earlycon=ec_imx6q,0x30890000,115200";
 		stdout-path = &uart2;
 	};
 	
@@ -592,7 +595,7 @@
 	};
 	
 	pinctrl_emmc_gpios: emmc_gpios {
-		fsl,pins = <	
+		fsl,pins = <
 		MX8MP_IOMUXC_SAI5_RXD2__GPIO3_IO23		0x00000140		// eMMC_nRESET
 		>;
 	};
@@ -613,7 +616,6 @@
 	
 	pinctrl_pin_gpios: pin_gpios {
 		fsl,pins = <
-		
 		MX8MP_IOMUXC_SAI2_MCLK__GPIO4_IO27		0x00000006		// GP_IN0
 		MX8MP_IOMUXC_SAI1_TXD6__GPIO4_IO18		0x00000006		// GP_IN1
 		MX8MP_IOMUXC_SAI3_TXD__GPIO5_IO01		0x00000006		// GP_IN2
@@ -956,39 +958,5 @@
 	};
 };
 
-&dsp {
-	status = "okay";
-};
 
-&vpu_g1 {
-	status = "okay";
-};
-
-&vpu_g2 {
-	status = "okay";
-};
-
-&vpu_vc8000e {
-	status = "okay";
-};
-
-&vpu_v4l2 {
-	status = "okay";
-};
-
-&gpu_3d {
-	status = "okay";
-};
-
-&gpu_2d {
-	status = "okay";
-};
-
-&ml_vipsi {
-	status = "okay";
-};
-
-&mix_gpu_ml {
-	status = "okay";
-};
 

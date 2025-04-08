@@ -5,5 +5,5 @@
 #include "aesys_2414.dtsi"
 
 / {
-	model = "AESYS 2501A";
+	model = "AESYS 2414A+2501A";
 };

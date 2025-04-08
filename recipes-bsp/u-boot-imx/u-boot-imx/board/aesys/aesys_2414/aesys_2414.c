@@ -33,13 +33,52 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
 #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
 
+#define HWREV_PAD_CTRL_NOPULL	(PAD_CTL_DSE6)
+#define HWREV_PAD_CTRL_PULL_UP	(PAD_CTL_DSE6 | PAD_CTL_PUE | PAD_CTL_PE)
+#define HWREV_PAD_CTRL_PULL_DOWN	(PAD_CTL_DSE6 | PAD_CTL_PE)
+
 static iomux_v3_cfg_t const uart_pads[] = {
-	MX8MP_PAD_SAI3_TXC__UART2_DCE_TX  | MUX_PAD_CTRL(UART_PAD_CTRL),
+	MX8MP_PAD_SAI3_TXC__UART2_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	MX8MP_PAD_SAI3_TXFS__UART2_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const wdog_pads[] = {
-	MX8MP_PAD_GPIO1_IO02__WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+	MX8MP_PAD_GPIO1_IO02__WDOG1_WDOG_B | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+};
+
+static int const hwrev_gpios[] = {
+	IMX_GPIO_NR(3, 6),
+	IMX_GPIO_NR(3, 7),
+	IMX_GPIO_NR(3, 8),
+	IMX_GPIO_NR(3, 9),
+	
+	IMX_GPIO_NR(3, 0),
+	IMX_GPIO_NR(3, 1),
+	IMX_GPIO_NR(3, 14),
+	IMX_GPIO_NR(5, 28),
+};
+
+static iomux_v3_cfg_t const hwrev_pads[] = {
+	MX8MP_PAD_NAND_DATA00__GPIO3_IO06,
+	MX8MP_PAD_NAND_DATA01__GPIO3_IO07,
+	MX8MP_PAD_NAND_DATA02__GPIO3_IO08,
+	MX8MP_PAD_NAND_DATA03__GPIO3_IO09,
+
+	MX8MP_PAD_NAND_ALE__GPIO3_IO00,
+	MX8MP_PAD_NAND_CE0_B__GPIO3_IO01,
+	MX8MP_PAD_NAND_DQS__GPIO3_IO14,
+	MX8MP_PAD_UART4_RXD__GPIO5_IO28,
+};
+
+struct hwrev_t {
+	const char *gpioid;
+	const char *boardid;
+};
+
+static struct hwrev_t const hwrevs[] = {
+	{ "0000xxxx", "aesys_2414a" },
+	{ "00000000", "aesys_2414a+aesys2415a" },
+	{ "00000001", "aesys_2414a+aesys2501a" },
 };
 
 #ifdef CONFIG_NAND_MXS
@@ -480,6 +519,51 @@ int board_late_init(void)
 	env_set("board_name", "EVK");
 	env_set("board_rev", "iMX8MP");
 #endif
+
+	// Detect hardware revision
+	int i;
+	int pup[8], pdn[8];
+	
+	char gpioid[8 + 1];
+	gpioid[8] = '\0';
+
+	// 1) Set GPIOs as input
+	for (i = 0; i < 8; i++) {
+		gpio_direction_input(hwrev_gpios[i]);
+	}
+
+	// 2) Set hwrev pads to pull-up & read GPIO values
+	for (i = 0; i < 8; i++) {
+		imx_iomux_v3_setup_pad(hwrev_pads[i] | HWREV_PAD_CTRL_PULL_UP);
+		pup[i] = gpio_get_value(hwrev_gpios[i]);
+	}
+
+	// 3) Set hwrev pads to pull-down & read GPIO values
+	for (i = 0; i < 8; i++) {
+		imx_iomux_v3_setup_pad(hwrev_pads[i] | HWREV_PAD_CTRL_PULL_DOWN);
+		pdn[i] = gpio_get_value(hwrev_gpios[i]);
+	}
+
+	// 4) Finalize GPIOID string
+	for (i = 0; i < 8; i++) {
+		gpioid[i] = ((pup[i] != pdn[i]) ? 'x' : (pup[i] ? '1' : '0'));
+	}
+
+	// 5) Determine board ID
+	char* boardid = 0;
+	for (i = 0; i < ARRAY_SIZE(hwrevs); i++) {
+		if(strcmp(hwrevs[i].gpioid, gpioid) == 0) {
+			boardid = hwrevs[i].boardid;
+			break;
+		}
+	}
+
+	if(!boardid)
+		boardid = "aesys_2414";
+
+	// 6) Set environment variables
+	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);
+	env_set(GEMINI_ENVVAR_BOARD_ID, boardid);
 
 	return 0;
 }

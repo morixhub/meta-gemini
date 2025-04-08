@@ -351,6 +351,11 @@ int board_late_init(void)
 	env_set("board_name", "AESYS 2409A");
 	env_set("board_rev", "2409A");
 #endif
+
+	// Set hardware revision environment variables
+	env_set(GEMINI_ENVVAR_BOARD_GPIOID, "");
+	env_set(GEMINI_ENVVAR_BOARD_ID, "aesys_2409a");
+
 	return 0;
 }
 

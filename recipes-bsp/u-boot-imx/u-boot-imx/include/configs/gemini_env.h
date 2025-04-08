@@ -1,6 +1,9 @@
 #ifndef __GEMINI_ENV_H
 #define __GEMINI_ENV_H
 
+#define GEMINI_ENVVAR_BOARD_GPIOID "gemini_board_gpioid"
+#define GEMINI_ENVVAR_BOARD_ID "gemini_board_boardid"
+
 #define GEMINI_ENV \
 	"bootcmd=run bsp_bootcmd\0" \
 	"initrd=initram.img\0" \
@@ -9,11 +12,20 @@
 		"ext4load mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
 	"fitaddr=0x48000000\0" \
 	"fitimage=fit.img\0" \
+	"gemini_hw_detect=echo Gemini hardware detection report: gpioid=${"GEMINI_ENVVAR_BOARD_GPIOID"}, boardid=${"GEMINI_ENVVAR_BOARD_ID"}; " \
+	"if test -n \"${"GEMINI_ENVVAR_BOARD_ID"}\" ; then " \
+		"gemini_fdt_file=${"GEMINI_ENVVAR_BOARD_ID"}.dtb; " \
+		"gemini_fit_conf=${"GEMINI_ENVVAR_BOARD_ID"}; " \
+	"else " \
+		"gemini_fdt_file=${fdtfile}; " \
+		"gemini_fit_conf=\"conf-1\"; " \
+	"fi\0" \
 	"loadfit=echo Attempting load of FIT image (${fitimage})...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
 	"fitboot=env set loadaddr ${fitaddr}; " \
-		"bootm ${fitaddr}\0" \
+		"bootm ${fitaddr}#${gemini_fit_conf}\0" \
 	"bsp_bootcmd=echo Running BSP bootcmd...; " \
+		"run gemini_hw_detect; " \
 		"mmc dev ${mmcdev}; " \
 		"if mmc rescan; " \
 		"run mmcargs; " \
@@ -44,8 +56,8 @@
 		"source\0" \
 	"loadimage=echo Attempting load of image (${image})...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
-	"loadfdt=echo Attempting load of DT (${fdtfile})...; " \
-		"ext4load mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${fdtfile}\0" \
+	"loadfdt=echo Attempting load of DT (${gemini_fdt_file})...; " \
+		"ext4load mmc ${mmcdev}:${mmcpart} ${fdt_addr_r} ${gemini_fdt_file}\0" \
     "mmcargs=echo Evaluating dual boot...; " \
 		"dbv_dual=\"\" ; " \
 		"dbv_dual_partitions=\"\" ; " \
@@ -98,9 +110,9 @@
 			"fi; " \
 			"if test -n \"$dbv_dual_files\" ; then " \
 				"setenv image ${image}.${db_current_half} ; " \
-				"setenv fdtfile ${fdtfile}.${db_current_half} ; " \
 				"setenv initrd ${initrd}.${db_current_half} ;  " \
 				"setenv fitimage ${fitimage}.${db_current_half} ; " \
+				"gemini_fdt_file=${gemini_fdt_file}.${db_current_half} ; " \
 			"fi; " \
 			"setenv dbargs db_current_half=${db_current_half} ; " \
 			"if test -n \"$dbv_dual_partitions\" ; then " \
@@ -115,7 +127,7 @@
 			"echo SINGLE BOOT MODE ; " \
 		"fi; " \
 		"setenv mmcroot /dev/mmcblk${mmcdev}p${mmcpart} rootwait rw ; " \
-		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} ${dbargs}\0" \
+		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} "GEMINI_ENVVAR_BOARD_GPIOID"=${"GEMINI_ENVVAR_BOARD_GPIOID"} "GEMINI_ENVVAR_BOARD_ID"=${"GEMINI_ENVVAR_BOARD_ID"} ${dbargs}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
  		"if run loadfdt; " \
 		"then " \

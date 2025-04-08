@@ -5,7 +5,8 @@
 #include "aesys_2414.dtsi"
 
 / {
-	model = "AESYS 2415A";
+
+	model = "AESYS 2414A+2415A";
 	
 	wm8524: audio-codec {
 		#sound-dai-cells = <0>;
@@ -40,7 +41,6 @@
 };
 
 &iomuxc {
-	
 	pinctrl_sound_wm8524: sound_wm8524_gpios {
 		fsl,pins = <
 		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
