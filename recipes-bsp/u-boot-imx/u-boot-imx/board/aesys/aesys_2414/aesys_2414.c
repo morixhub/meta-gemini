@@ -77,8 +77,8 @@ struct hwrev_t {
 
 static struct hwrev_t const hwrevs[] = {
 	{ "0000xxxx", "aesys_2414a" },
-	{ "00000000", "aesys_2414a+aesys2415a" },
-	{ "00000001", "aesys_2414a+aesys2501a" },
+	{ "00000000", "aesys_2414a__aesys2415a" },
+	{ "00000001", "aesys_2414a__aesys2501a" },
 };
 
 #ifdef CONFIG_NAND_MXS
@@ -527,8 +527,12 @@ int board_late_init(void)
 	char gpioid[8 + 1];
 	gpioid[8] = '\0';
 
-	// 1) Set GPIOs as input
+	char gpiolabel[32];
+
+	// 1) Request GPIOs and set as input
 	for (i = 0; i < 8; i++) {
+		snprintf(gpiolabel, 32, "hwrev_gpio%d", i);
+		gpio_request(hwrev_gpios[i], gpiolabel);
 		gpio_direction_input(hwrev_gpios[i]);
 	}
 

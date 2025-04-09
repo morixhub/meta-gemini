@@ -18,7 +18,7 @@
 		"gemini_fit_conf=${"GEMINI_ENVVAR_BOARD_ID"}; " \
 	"else " \
 		"gemini_fdt_file=${fdtfile}; " \
-		"gemini_fit_conf=\"conf-1\"; " \
+		"gemini_fit_conf=\"conf-default\"; " \
 	"fi\0" \
 	"loadfit=echo Attempting load of FIT image (${fitimage})...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
@@ -77,27 +77,27 @@
 			"fi; " \
             "if test -n \"${db_force_single}\" ; then " \
                 "echo FORCING SINGLE BOOT from half A... ; " \
-                "setenv db_current_half a ; " \
+                "setenv db_active_half a ; " \
                 "setenv db_last_half a ; " \
             "else " \
-                "if env exists db_current_half && test ${db_current_half} = b ; then " \
+                "if env exists db_active_half && test ${db_active_half} = b ; then " \
                     "if env exists db_last_half ; then " \
                         "echo Dual booting from half A... ; " \
-                        "setenv db_current_half a ; " \
+                        "setenv db_active_half a ; " \
                         "setenv db_last_half a ; " \
                     "else " \
                         "echo Dual booting from half B... ; " \
-                        "setenv db_current_half b ; " \
+                        "setenv db_active_half b ; " \
                         "setenv db_last_half b ; " \
                     "fi; " \
                 "else " \
                     "if env exists db_last_half ; then " \
                         "echo Dual booting from half B... ; " \
-                        "setenv db_current_half b ; " \
+                        "setenv db_active_half b ; " \
                         "setenv db_last_half b ; " \
                     "else " \
                         "echo Dual booting from half A... ; " \
-                        "setenv db_current_half a ; " \
+                        "setenv db_active_half a ; " \
                         "setenv db_last_half a ; " \
                     "fi; " \
                 "fi; " \
@@ -109,12 +109,12 @@
 				"setenv mmcpart 1 ; " \
 			"fi; " \
 			"if test -n \"$dbv_dual_files\" ; then " \
-				"setenv image ${image}.${db_current_half} ; " \
-				"setenv initrd ${initrd}.${db_current_half} ;  " \
-				"setenv fitimage ${fitimage}.${db_current_half} ; " \
-				"gemini_fdt_file=${gemini_fdt_file}.${db_current_half} ; " \
+				"setenv image ${image}.${db_active_half} ; " \
+				"setenv initrd ${initrd}.${db_active_half} ;  " \
+				"setenv fitimage ${fitimage}.${db_active_half} ; " \
+				"gemini_fdt_file=${gemini_fdt_file}.${db_active_half} ; " \
 			"fi; " \
-			"setenv dbargs db_current_half=${db_current_half} ; " \
+			"setenv dbargs db_active_half=${db_active_half} ; " \
 			"if test -n \"$dbv_dual_partitions\" ; then " \
 				"setenv dbargs ${dbargs} db_mode=partitions ; " \
 			"else " \
