@@ -47,27 +47,27 @@ static iomux_v3_cfg_t const wdog_pads[] = {
 };
 
 static int const hwrev_gpios[] = {
-	IMX_GPIO_NR(3, 6),
-	IMX_GPIO_NR(3, 7),
-	IMX_GPIO_NR(3, 8),
-	IMX_GPIO_NR(3, 9),
-	
-	IMX_GPIO_NR(3, 0),
-	IMX_GPIO_NR(3, 1),
-	IMX_GPIO_NR(3, 14),
-	IMX_GPIO_NR(5, 28),
+	IMX_GPIO_NR(3, 9),	// HW_REV3
+	IMX_GPIO_NR(3, 8),	// HW_REV2
+	IMX_GPIO_NR(3, 7),	// HW_REV1
+	IMX_GPIO_NR(3, 6),	// HW_REV0
+	0,	
+	IMX_GPIO_NR(5, 28),	// EXT_BOARD_HW_REV3
+	IMX_GPIO_NR(3, 14),	// EXT_BOARD_HW_REV2
+	IMX_GPIO_NR(3, 1),	// EXT_BOARD_HW_REV1
+	IMX_GPIO_NR(3, 0),	// EXT_BOARD_HW_REV0
 };
 
 static iomux_v3_cfg_t const hwrev_pads[] = {
-	MX8MP_PAD_NAND_DATA00__GPIO3_IO06,
-	MX8MP_PAD_NAND_DATA01__GPIO3_IO07,
-	MX8MP_PAD_NAND_DATA02__GPIO3_IO08,
 	MX8MP_PAD_NAND_DATA03__GPIO3_IO09,
-
-	MX8MP_PAD_NAND_ALE__GPIO3_IO00,
-	MX8MP_PAD_NAND_CE0_B__GPIO3_IO01,
-	MX8MP_PAD_NAND_DQS__GPIO3_IO14,
+	MX8MP_PAD_NAND_DATA02__GPIO3_IO08,
+	MX8MP_PAD_NAND_DATA01__GPIO3_IO07,
+	MX8MP_PAD_NAND_DATA00__GPIO3_IO06,
+	0,
 	MX8MP_PAD_UART4_RXD__GPIO5_IO28,
+	MX8MP_PAD_NAND_DQS__GPIO3_IO14,
+	MX8MP_PAD_NAND_CE0_B__GPIO3_IO01,
+	MX8MP_PAD_NAND_ALE__GPIO3_IO00,
 };
 
 struct hwrev_t {
@@ -76,9 +76,10 @@ struct hwrev_t {
 };
 
 static struct hwrev_t const hwrevs[] = {
-	{ "0000xxxx", "aesys_2414a" },
-	{ "00000000", "aesys_2414a__aesys2415a" },
-	{ "00000001", "aesys_2414a__aesys2501a" },
+	{ "0000_xxxx", "aesys_2414a" },
+	{ "0000_0000", "aesys_2414a__aesys2415a" },
+	{ "0000_0001", "aesys_2414a__aesys2501a" },
+	{ "0000_0010", "aesys_2414a__aesys2415a" },
 };
 
 #ifdef CONFIG_NAND_MXS
@@ -522,83 +523,62 @@ int board_late_init(void)
 
 	// Detect hardware revision
 	int i;
-	int pup[8], pdn[8];
+	int pup[9], pdn[9];
 	
-	char gpioid[8 + 1];
-	gpioid[8] = '\0';
+	char gpioid[9 + 1];
+	gpioid[9] = '\0';
 
 	char gpiolabel[32];
 
-	printf("//!! %s: [1]\n", __func__);
-
 	// 1) Request GPIOs and set as input
-	for (i = 0; i < 8; i++) {
-		printf("//!! %s: [1.%d.1]\n", __func__, i);
+	for (i = 0; i < 9; i++) {
+		if(hwrev_gpios[i] == 0)
+			continue;
 		snprintf(gpiolabel, 32, "hwrev_gpio%d", i);
-		printf("//!! %s: [1.%d.2]\n", __func__, i);
 		gpio_request(hwrev_gpios[i], gpiolabel);
-		printf("//!! %s: [1.%d.3]\n", __func__, i);
 		gpio_direction_input(hwrev_gpios[i]);
-		printf("//!! %s: [1.%d.4]\n", __func__, i);
 	}
-
-	printf("//!! %s: [2]\n", __func__);
 
 	// 2) Set hwrev pads to pull-up & read GPIO values
-	for (i = 0; i < 8; i++) {
-		printf("//!! %s: [2.%d.1]\n", __func__, i);
+	for (i = 0; i < 9; i++) {
+		if(hwrev_pads[i] == 0 || hwrev_gpios[i] == 0)
+			continue;
 		imx_iomux_v3_setup_pad(hwrev_pads[i] | MUX_PAD_CTRL(HWREV_PAD_CTRL_PULL_UP));
-		printf("//!! %s: [2.%d.2]\n", __func__, i);
 		pup[i] = gpio_get_value(hwrev_gpios[i]);
-		printf("//!! %s: [2.%d.3]\n", __func__, i);
 	}
-
-	printf("//!! %s: [3]\n", __func__);
 
 	// 3) Set hwrev pads to pull-down & read GPIO values
-	for (i = 0; i < 8; i++) {
-		printf("//!! %s: [3.%d.1]\n", __func__, i);
+	for (i = 0; i < 9; i++) {
+		if(hwrev_pads[i] == 0 || hwrev_gpios[i] == 0)
+			continue;
 		imx_iomux_v3_setup_pad(hwrev_pads[i] | MUX_PAD_CTRL(HWREV_PAD_CTRL_PULL_DOWN));
-		printf("//!! %s: [3.%d.2]\n", __func__, i);
 		pdn[i] = gpio_get_value(hwrev_gpios[i]);
-		printf("//!! %s: [3.%d.3]\n", __func__, i);
 	}
 
-	printf("//!! %s: [4]\n", __func__);
 
 	// 4) Finalize GPIOID string
-	for (i = 0; i < 8; i++) {
-		printf("//!! %s: [4.%d.1]\n", __func__, i);
-		gpioid[i] = ((pup[i] != pdn[i]) ? 'x' : (pup[i] ? '1' : '0'));
-		printf("//!! %s: [4.%d.2]\n", __func__, i);
+	for (i = 0; i < 9; i++) {
+		if(hwrev_pads[i] == 0 || hwrev_gpios[i] == 0)
+			gpioid[i] = '_';
+		else
+			gpioid[i] = ((pup[i] != pdn[i]) ? 'x' : (pup[i] ? '1' : '0'));
 	}
-
-	printf("//!! %s: [5]\n", __func__);
 
 	// 5) Determine board ID
 	char* boardid = 0;
 	for (i = 0; i < ARRAY_SIZE(hwrevs); i++) {
-		printf("//!! %s: [5.%d.1]\n", __func__, i);
 		if(strcmp(hwrevs[i].gpioid, gpioid) == 0) {
-			printf("//!! %s: [5.%d.2]\n", __func__, i);
 			boardid = hwrevs[i].boardid;
 			break;
 		}
-		printf("//!! %s: [5.%d.3]\n", __func__, i);
 	}
-
-	printf("//!! %s: [6]\n", __func__);
 
 	if(!boardid)
 		boardid = "aesys_2414";
 
-	printf("//!! %s: [7]\n", __func__);
-
 	// 6) Set environment variables
 	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);
 	env_set(GEMINI_ENVVAR_BOARD_ID, boardid);
-
-	printf("//!! %s: [8]\n", __func__);
 
 	return 0;
 }

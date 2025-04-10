@@ -45,12 +45,12 @@ APPBIN=app.bin
 KERNEL_CMDLINE=`cat /proc/cmdline`
 BOOT_PART=`echo ${KERNEL_CMDLINE} | sed -e 's/^.*root=//' -e 's/ .*$//'`
 BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
-DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_current_half="`
+DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="`
 DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}"
 DB_APPBIN="${APPBIN}"
 if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
-	DB_HALF=`echo $DB_CMDLINE_CURRENTHALF | sed -e 's/^.*db_current_half=//' -e 's/ .*$//'` ;
+	DB_HALF=`echo $DB_CMDLINE_CURRENTHALF | sed -e 's/^.*db_active_half=//' -e 's/ .*$//'` ;
 	DB_MODE=`echo $DB_CMDLINE_MODE | sed -e 's/^.*db_mode=//' -e 's/ .*$//'` ;
 	if [ "${DB_MODE}" == "partitions" ]; then
 		if [ "${DB_HALF}" == "a" ]; then

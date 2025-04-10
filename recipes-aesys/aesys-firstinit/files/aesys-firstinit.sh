@@ -51,7 +51,7 @@ fi
 
 # 4) FLAG THE BOOT AS SUCCESFULL, IN CASE OF DUAL-BOOT AWARE SYSTEMS
 KERNEL_CMDLINE=`cat /proc/cmdline`
-DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_current_half="`
+DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 if [ ! -z "${DB_CMDLINE}" ]; then
     fw_setenv db_last_half
 fi
