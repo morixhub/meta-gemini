@@ -6,6 +6,9 @@
 #ifndef __AESYS_2409A_H
 #define __AESYS_2409A_H
 
+// Remember to define GEMINI_PXE_UUID before including "gemini_env.h"
+#define GEMINI_PXE_UUID "2c31a685-ecc5-4458-9b88-9cdca302409a"
+
 #include <linux/sizes.h>
 #include <linux/stringify.h>
 #include <asm/arch/imx-regs.h>

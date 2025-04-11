@@ -3,15 +3,20 @@
 
 #define GEMINI_ENVVAR_BOARD_GPIOID "gemini_board_gpioid"
 #define GEMINI_ENVVAR_BOARD_ID "gemini_board_boardid"
+#define GEMINI_ENVVAR_HWDETECT_BOOTARGS "gemini_hw_detect_bootargs"
+
 
 #define GEMINI_ENV \
+	"pxeuuid="GEMINI_PXE_UUID"\0" \
 	"bootcmd=run bsp_bootcmd\0" \
 	"initrd=initram.img\0" \
 	"initrd_addr=0x43800000\0" \
+	"ramdisk_addr_r=0x43800000\0" \
 	"loadinitrd=echo Attempting load of initrd (${initrd})...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
 	"fitaddr=0x48000000\0" \
 	"fitimage=fit.img\0" \
+	"kernel_addr_r=0x48000000\0" \
 	"gemini_hw_detect=echo Gemini hardware detection report: gpioid=${"GEMINI_ENVVAR_BOARD_GPIOID"}, boardid=${"GEMINI_ENVVAR_BOARD_ID"}; " \
 	"if test -n \"${"GEMINI_ENVVAR_BOARD_ID"}\" ; then " \
 		"gemini_fdt_file=${"GEMINI_ENVVAR_BOARD_ID"}.dtb; " \
@@ -19,7 +24,8 @@
 	"else " \
 		"gemini_fdt_file=${fdtfile}; " \
 		"gemini_fit_conf=\"conf-default\"; " \
-	"fi\0" \
+	"fi; " \
+	GEMINI_ENVVAR_HWDETECT_BOOTARGS"=\""GEMINI_ENVVAR_BOARD_GPIOID"=${"GEMINI_ENVVAR_BOARD_GPIOID"} "GEMINI_ENVVAR_BOARD_ID"=${"GEMINI_ENVVAR_BOARD_ID"}\"\0" \
 	"loadfit=echo Attempting load of FIT image (${fitimage})...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
 	"fitboot=env set loadaddr ${fitaddr}; " \
@@ -127,7 +133,7 @@
 			"echo SINGLE BOOT MODE ; " \
 		"fi; " \
 		"setenv mmcroot /dev/mmcblk${mmcdev}p${mmcpart} rootwait rw ; " \
-		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} "GEMINI_ENVVAR_BOARD_GPIOID"=${"GEMINI_ENVVAR_BOARD_GPIOID"} "GEMINI_ENVVAR_BOARD_ID"=${"GEMINI_ENVVAR_BOARD_ID"} ${dbargs}\0" \
+		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} ${"GEMINI_ENVVAR_HWDETECT_BOOTARGS"} ${dbargs}\0" \
 	"mmcboot=echo Booting from mmc ...; " \
  		"if run loadfdt; " \
 		"then " \
