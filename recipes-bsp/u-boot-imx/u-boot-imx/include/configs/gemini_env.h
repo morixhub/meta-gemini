@@ -3,8 +3,18 @@
 
 #define GEMINI_ENVVAR_BOARD_GPIOID "gemini_board_gpioid"
 #define GEMINI_ENVVAR_BOARD_ID "gemini_board_boardid"
+#define GEMINI_ENVVAR_FORCED_BOARD_ID "gemini_board_forced_boardid"
 #define GEMINI_ENVVAR_HWDETECT_BOOTARGS "gemini_hw_detect_bootargs"
 
+/*
+ ATTENTION: kernel_addr_r is used by "pxe boot" for loading the kernel, but for "pxe boot" FIT images are treated
+ exactly as kernel images, so kernel_addr_r must take FIT image loading into consideration, so it is clever
+ to set kernel_addr_r to the same value defined for fitaddr 
+
+ ATTENTION: normally initrd_addr is used for defining the location to load initial RAM disk image to,
+ but also ramdisk_addr_r must be defined (and have the same value) since the latter is requested by
+ command "pxe boot".
+ */
 
 #define GEMINI_ENV \
 	"pxeuuid="GEMINI_PXE_UUID"\0" \
@@ -18,20 +28,26 @@
 	"fitimage=fit.img\0" \
 	"kernel_addr_r=0x48000000\0" \
 	"gemini_hw_detect=echo Gemini hardware detection report: gpioid=${"GEMINI_ENVVAR_BOARD_GPIOID"}, boardid=${"GEMINI_ENVVAR_BOARD_ID"}; " \
-	"if test -n \"${"GEMINI_ENVVAR_BOARD_ID"}\" ; then " \
-		"gemini_fdt_file=${"GEMINI_ENVVAR_BOARD_ID"}.dtb; " \
-		"gemini_fit_conf=${"GEMINI_ENVVAR_BOARD_ID"}; " \
-	"else " \
-		"gemini_fdt_file=${fdtfile}; " \
-		"gemini_fit_conf=\"conf-default\"; " \
-	"fi; " \
-	GEMINI_ENVVAR_HWDETECT_BOOTARGS"=\""GEMINI_ENVVAR_BOARD_GPIOID"=${"GEMINI_ENVVAR_BOARD_GPIOID"} "GEMINI_ENVVAR_BOARD_ID"=${"GEMINI_ENVVAR_BOARD_ID"}\"\0" \
+		"if test -z \"${"GEMINI_ENVVAR_FORCED_BOARD_ID"}\"; then " \
+			"if test -n \"${"GEMINI_ENVVAR_BOARD_ID"}\" ; then " \
+				"gemini_fdt_file=${"GEMINI_ENVVAR_BOARD_ID"}.dtb; " \
+				"gemini_fit_conf=${"GEMINI_ENVVAR_BOARD_ID"}; " \
+			"else " \
+				"gemini_fdt_file=${fdtfile}; " \
+				"gemini_fit_conf=\"conf-default\"; " \
+			"fi; " \
+		"else " \
+			"gemini_fdt_file=${"GEMINI_ENVVAR_FORCED_BOARD_ID"}.dtb; " \
+			"gemini_fit_conf=${"GEMINI_ENVVAR_FORCED_BOARD_ID"}; " \
+		"fi; " \
+		"setenv "GEMINI_ENVVAR_HWDETECT_BOOTARGS" \""GEMINI_ENVVAR_BOARD_GPIOID"=${"GEMINI_ENVVAR_BOARD_GPIOID"} "GEMINI_ENVVAR_BOARD_ID"=${"GEMINI_ENVVAR_BOARD_ID"} "GEMINI_ENVVAR_FORCED_BOARD_ID"=${"GEMINI_ENVVAR_FORCED_BOARD_ID"}\"\0" \
 	"loadfit=echo Attempting load of FIT image (${fitimage})...; " \
 		"ext4load mmc ${mmcdev}:${mmcpart} ${fitaddr} ${fitimage}\0" \
 	"fitboot=env set loadaddr ${fitaddr}; " \
 		"bootm ${fitaddr}#${gemini_fit_conf}\0" \
 	"bsp_bootcmd=echo Running BSP bootcmd...; " \
 		"run gemini_hw_detect; " \
+		"run pxeboot; " \
 		"mmc dev ${mmcdev}; " \
 		"if mmc rescan; " \
 		"run mmcargs; " \
@@ -51,7 +67,7 @@
 						"echo Image available... continue booting...; " \
 						"run mmcboot; " \
 					"else " \
-						"run netboot; " \
+						"run pxeboot_nocheck; " \
 					"fi; " \
 				"fi; " \
 			"fi; " \
@@ -134,7 +150,7 @@
 		"fi; " \
 		"setenv mmcroot /dev/mmcblk${mmcdev}p${mmcpart} rootwait rw ; " \
 		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} ${"GEMINI_ENVVAR_HWDETECT_BOOTARGS"} ${dbargs}\0" \
-	"mmcboot=echo Booting from mmc ...; " \
+	"mmcboot=echo Booting from mmc...; " \
  		"if run loadfdt; " \
 		"then " \
 			"if run loadinitrd; " \
@@ -146,5 +162,27 @@
 				"booti ${loadaddr} - ${fdt_addr_r}; " \
 			"fi; " \
 		"fi\0" \
+	"pxeboot=echo Booting from PXE...; " \
+		"if env exists pxe_disabled; then " \
+			"echo PXE disabled; " \
+		"else " \
+			"dhcp; " \
+			"if pxe get; then " \
+				"echo PXE server found: attempting boot from PXE...; " \
+				"pxe boot; " \
+				"echo Boot from PXE server failed: attempting other boot sources...; " \
+			"else " \
+				"echo Cannot find PXE server: attempting other boot sources...; " \
+			"fi; " \
+		"fi\0" \
+	"pxeboot_nocheck=echo Booting from PXE...; " \
+		"dhcp; " \
+		"if pxe get; then " \
+			"echo PXE server found: attempting boot from PXE...; " \
+			"pxe boot; " \
+			"echo Boot from PXE server failed; " \
+		"else " \
+			"echo Cannot find PXE server: boot failed; " \
+		"fi\0"
 
 #endif

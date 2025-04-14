@@ -156,7 +156,7 @@
 			   "else run netboot; " \
 			   "fi; " \
 		   "fi; " \
-	   "fi;" \
+	   "fi;\0" \
 	GEMINI_ENV
 #endif
 
