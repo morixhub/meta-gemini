@@ -87,7 +87,7 @@
 		"if ext4ls mmc ${mmcdev}:3 ; then " \
 			"dbv_dual=1 ; " \
 			"dbv_dual_partitions=1 ; " \
-		"elif ext4load mmc 1:1 ${loadaddr} fit.img.a || ext4load mmc 1:1 ${loadaddr} Image.a ; then " \
+		"elif test -e mmc ${mmcdev}:1 fit.img.a || test -e mmc ${mmcdev}:1 Image.a ; then " \
 			"dbv_dual=1 ; " \
 			"dbv_dual_files=1 ; " \
 		"fi; " \
@@ -163,9 +163,12 @@
 			"fi; " \
 		"fi\0" \
 	"pxeboot=echo Booting from PXE...; " \
-		"if env exists pxe_disabled; then " \
-			"echo PXE disabled; " \
+		"if env exists pxe_disabled && itest $pxe_disabled == 1; then " \
+			"echo PXE disabled (by environment); " \
+		"elif test -e mmc ${mmcdev}:2 .sys/pxe.disabled || test -e mmc ${mmcdev}:3 .sys/pxe.disabled ; then " \
+			"echo PXE disabled (by file-system); " \
 		"else " \
+			"echo Attempting PXE...; " \
 			"dhcp; " \
 			"if pxe get; then " \
 				"echo PXE server found: attempting boot from PXE...; " \
