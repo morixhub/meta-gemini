@@ -52,7 +52,7 @@ IMAGE_INSTALL:append = " coreutils "
 IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-firstinit aesys-startup-shutdown "
+IMAGE_INSTALL:append = " aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown "
 
 # Add rootfs customization
 IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "
@@ -141,7 +141,7 @@ aesys_image_customize_root() {
 # Managing of development IP address
 aesys_development_ip () {
     
-    sed -i 's|^iface eth0 inet dhcp.*|iface eth0 inet static\n\taddress 192.168.79.18\n\tnetmask 255.255.255.0\n|' ${IMAGE_ROOTFS}${sysconfdir}/network/interfaces
+    sed -i 's|^iface wired0 inet dhcp.*|iface wired0 inet static\n\taddress 192.168.79.18\n\tnetmask 255.255.255.0\n|' ${IMAGE_ROOTFS}${sysconfdir}/network/interfaces
 }
 
 # Root overlay disabling

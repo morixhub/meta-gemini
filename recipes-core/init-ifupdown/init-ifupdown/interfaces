@@ -1,8 +1,8 @@
 source-directory /etc/network/interfaces.d
 
-allow-hotplug eth0
-iface eth0 inet dhcp
+allow-hotplug wired0
+iface wired0 inet dhcp
 
-allow-hotplug eth1
-iface eth1 inet dhcp
+allow-hotplug wired1
+iface wired1 inet dhcp
 

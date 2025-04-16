@@ -1,0 +1,6 @@
+[Match]
+Property=ID_PATH=platform-30be0000.ethernet
+
+[Link]
+Name=wired1
+

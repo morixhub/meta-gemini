@@ -32,8 +32,8 @@ do_install:append(){
     install -d ${D}${systemd_unitdir}/system/
     install -m 0644 ${WORKDIR}/ifplugd.service ${D}${systemd_unitdir}/system
 
-    # Modify configuration for supporting eth0 and eth1
-    sed -i -e 's|^.*INTERFACES=.*|INTERFACES="eth0 eth1"|' ${D}${sysconfdir}/ifplugd/ifplugd.conf
+    # Modify configuration for supporting wired0 and wired1
+    sed -i -e 's|^.*INTERFACES=.*|INTERFACES="wired0 wired1"|' ${D}${sysconfdir}/ifplugd/ifplugd.conf
 }
 
 inherit systemd

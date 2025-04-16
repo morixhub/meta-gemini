@@ -21,6 +21,9 @@ IMAGE_FSTYPES = "tar.zst"
 # Add features
 IMAGE_FEATURES:append = " ssh-server-openssh splash "
 
+# Add aesys packages
+IMAGE_INSTALL:append = " aesys-persistent-nic-names "
+
 # Add utils
 IMAGE_INSTALL:append = " glibc-utils "
 IMAGE_INSTALL:append = " u-boot-fw-utils "

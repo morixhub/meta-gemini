@@ -6,6 +6,8 @@ PR = "r1"
 
 RDEPENDS:${PN} += "parted"
 
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
+
 SRC_URI =  " \
     file://aesys-firstinit.sh \
     file://aesys-firstinit.service \

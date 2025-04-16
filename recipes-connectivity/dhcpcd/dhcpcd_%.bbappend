@@ -33,22 +33,22 @@ do_configure:append() {
     echo "reboot 60" >> ${S}/src/dhcpcd.conf
     echo >> ${S}/src/dhcpcd.conf
 
-    echo "profile static_eth0" >> ${S}/src/dhcpcd.conf
+    echo "profile static_wired0" >> ${S}/src/dhcpcd.conf
     echo "static ip_address=192.168.1.1/24" >> ${S}/src/dhcpcd.conf
     echo "static routers=192.168.1.1" >> ${S}/src/dhcpcd.conf
     echo >> ${S}/src/dhcpcd.conf
 
-    echo "interface eth0" >> ${S}/src/dhcpcd.conf
-    echo "fallback static_eth0" >> ${S}/src/dhcpcd.conf
+    echo "interface wired0" >> ${S}/src/dhcpcd.conf
+    echo "fallback static_wired0" >> ${S}/src/dhcpcd.conf
     echo >> ${S}/src/dhcpcd.conf
 
-    echo "profile static_eth1" >> ${S}/src/dhcpcd.conf
+    echo "profile static_wired1" >> ${S}/src/dhcpcd.conf
     echo "static ip_address=192.168.2.1/24" >> ${S}/src/dhcpcd.conf
     echo "static routers=192.168.2.1" >> ${S}/src/dhcpcd.conf
     echo >> ${S}/src/dhcpcd.conf
 
-    echo "interface eth1" >> ${S}/src/dhcpcd.conf
-    echo "fallback static_eth1" >> ${S}/src/dhcpcd.conf
+    echo "interface wired1" >> ${S}/src/dhcpcd.conf
+    echo "fallback static_wired1" >> ${S}/src/dhcpcd.conf
     echo >> ${S}/src/dhcpcd.conf
 }
 
