@@ -53,6 +53,7 @@ IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-
 
 # Add aesys packages
 IMAGE_INSTALL:append = " aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown "
+IMAGE_INSTALL:append:aesys-2414 = " aesys-greenpak-programmer "
 
 # Add rootfs customization
 IMAGE_PREPROCESS_COMMAND += " aesys_image_customize_root; "
