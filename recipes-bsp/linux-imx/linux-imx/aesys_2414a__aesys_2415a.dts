@@ -40,6 +40,18 @@
 	};
 };
 
+&i2c5 {
+	i2c_temp: temp@48 {
+		compatible = "ti,tmp1075";
+		reg = <0x48>;
+	};
+
+	i2c_adc: adc@4d {
+		compatible = "microchip,mcp3221";
+		reg = <0x4d>;
+	};
+};
+
 &iomuxc {
 	pinctrl_sound_wm8524: sound_wm8524_gpios {
 		fsl,pins = <
