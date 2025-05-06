@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Update routers
+if [ -f /var/run/gw.$IFACE ]; then
+    rm /var/run/gw.$IFACE ;
+fi

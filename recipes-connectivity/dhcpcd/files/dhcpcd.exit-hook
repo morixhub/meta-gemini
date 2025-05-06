@@ -7,3 +7,17 @@ if [ "$reason" = "STATIC" ]; then
 		echo $profile >> "/tmp/static_"$interface
 	fi
 fi
+
+# Update routers
+if [ -f /var/run/gw.$interface ]; then
+	rm /var/run/gw.$interface ;
+fi
+for i in $new_routers ; do
+	echo $i > /var/run/gw.$interface
+done
+
+# Trigger custom routing script, if any
+if [ -x /etc/network/if-up.d/custom-routing ]; then
+	IFACE=$interface /etc/network/if-up.d/custom-routing
+fi
+

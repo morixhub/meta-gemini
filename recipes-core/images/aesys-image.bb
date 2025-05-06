@@ -70,10 +70,15 @@ aesys_image_customize_root() {
     # Create mount dirs
     mkdir -p ${IMAGE_ROOTFS}/boot ;
     mkdir -p ${IMAGE_ROOTFS}/data ;
+
+    # Create auxiliary dirs
     mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
 
+    # Create writable configuration dir
+    mkdir -p ${IMAGE_ROOTFS}/data/etcrw
+
     # Disable securefs check by default
-    touch ${IMAGE_ROOTFS}/data/.sys/securefs.skip
+    touch ${IMAGE_ROOTFS}/data/.sys/securefs.skip ;
 
     #######################################################
     # OS HARDENING BEGIN

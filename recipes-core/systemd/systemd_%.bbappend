@@ -14,5 +14,8 @@ do_install:append(){
     echo "ForwardToSyslog=yes" >> ${D}${sysconfdir}/systemd/journald.conf
     echo "Compress=yes" >> ${D}${sysconfdir}/systemd/journald.conf
     echo "Storage=persistent" >> ${D}${sysconfdir}/systemd/journald.conf
+
+    # Create symbolic links for systemd-resolved
+    ln -sf /data/etcrw/resolved.conf.d ${D}/${sysconfdir}/systemd/resolved.conf.d
 }
 
