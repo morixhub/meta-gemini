@@ -43,3 +43,8 @@ IMAGE_INSTALL_PKCS11TOOL = ""
 IMAGE_INSTALL_PKCS11TOOL:mx8-nxp-bsp = "opensc pkcs11-provider"
 IMAGE_INSTALL_PKCS11TOOL:mx9-nxp-bsp = "opensc pkcs11-provider"
 
+
+# Avoid installing v2x, docker and g2d_samples
+CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-imx-v2x"
+CORE_IMAGE_EXTRA_INSTALL:remove = "docker"
+CORE_IMAGE_EXTRA_INSTALL:remove = "imx-g2d-samples"
