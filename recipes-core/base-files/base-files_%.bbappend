@@ -10,7 +10,7 @@ SRC_URI += " \
 do_install:append(){
    install -m 0644 ${WORKDIR}/fstab ${D}${sysconfdir}/
 
-   # Adjust /etc/profile for OS hardenind purposes
+   # Adjust /etc/profile for OS hardening purposes
    sed -i -e "s|^umask 022|umask 027|" ${D}${sysconfdir}/profile
    echo "TMOUT=900" >> ${D}${sysconfdir}/profile
 }

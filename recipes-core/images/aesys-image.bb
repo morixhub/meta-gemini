@@ -30,7 +30,10 @@ IMAGE_FSTYPES:remove = "tar.zst"
 IMAGE_FSTYPES:append = " squashfs "
 
 # Add features
-IMAGE_FEATURES:append = " ssh-server-openssh splash "
+IMAGE_FEATURES:append = " ssh-server-openssh "
+
+# Add psplash (removed now)
+#IMAGE_FEATURES:append = " splash "
 
 # Add base packages (some packages cannot be included in aesys-packagegroup-base due to different architecture specialization)
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
