@@ -35,6 +35,11 @@ COPYSOURCE := "${THISDIR}/${PN}"
 
 do_after_patch() {
 
+	# GENERAL
+	# Aesys logo
+	cp "${COPYSOURCE}/linux_logo.png" "${WORKDIR}/git/drivers/video/logo"
+	cp "${COPYSOURCE}/logo_linux_clut224.ppm" "${WORKDIR}/git/drivers/video/logo"
+
 	# AESYS 2319A
 	cp "${COPYSOURCE}/aesys_2319a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 	cp "${COPYSOURCE}/aesys_2319a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"

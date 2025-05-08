@@ -17,6 +17,7 @@
  */
 
 #define GEMINI_ENV \
+	"bootargs_extra=vt.global_cursor_default=0 vt.cur_default=1 consoleblank=0 fbcon=logo-count:1 fbcon=logo-pos:center fbcon=nodefer\0" \
 	"pxeuuid="GEMINI_PXE_UUID"\0" \
 	"bootcmd=run bsp_bootcmd\0" \
 	"initrd=initram.img\0" \
@@ -149,7 +150,7 @@
 			"echo SINGLE BOOT MODE ; " \
 		"fi; " \
 		"setenv mmcroot /dev/mmcblk${mmcdev}p${mmcpart} rootwait rw ; " \
-		"setenv bootargs ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} ${"GEMINI_ENVVAR_HWDETECT_BOOTARGS"} ${dbargs}\0" \
+		"setenv bootargs ${bootargs_extra} ${jh_clk} ${mcore_clk} console=${console} root=${mmcroot} ${"GEMINI_ENVVAR_HWDETECT_BOOTARGS"} ${dbargs}\0" \
 	"mmcboot=echo Booting from mmc...; " \
  		"if run loadfdt; " \
 		"then " \
