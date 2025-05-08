@@ -20,6 +20,9 @@ do_install:append(){
     install -m 0755 ${WORKDIR}/aesys-ts-calibrate.sh ${D}${sbindir}
     install -m 0755 ${WORKDIR}/aesys-ts-calibrate-store.sh ${D}${sbindir}
 
+    # Adjust weston.service for enabling debug mode (requested by weston-screenshooter)
+    sed -i -e "s|^ExecStart=.*|ExecStart=/usr/bin/weston --debug --log=${XDG_RUNTIME_DIR}/weston.log --modules=systemd-notify.so|" ${D}${systemd_system_unitdir}/weston.service
+
     # Adjust weston.ini for enabling screen-share through vnc-backend
     sed -i -e "/^\[core\]/a modules=screen-share.so" ${D}${sysconfdir}/xdg/weston/weston.ini
     sed -i -e "s|^command=${bindir}/weston .*|command=${bindir}/weston --backend=vnc-backend.so --vnc-tls-cert=/etc/vnc/keys/tls.crt --vnc-tls-key=/etc/vnc/keys/tls.key --shell=fullscreen-shell.so --no-config|" ${D}${sysconfdir}/xdg/weston/weston.ini
