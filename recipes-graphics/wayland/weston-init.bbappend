@@ -26,7 +26,7 @@ do_install:append(){
     sed -i -e "s|^#start-on-startup=true|start-on-startup=true|" ${D}${sysconfdir}/xdg/weston/weston.ini
 
     # Set the touchscreen calibration helper
-    sed -i -e "/^\[libinput\]/a touchscreen_calibrator=/sbin/aesys-ts-calibrate-store.sh" ${D}${sysconfdir}/xdg/weston/weston.ini
+    sed -i -e "/^\[libinput\]/a calibration_helper=/sbin/aesys-ts-calibrate-store.sh" ${D}${sysconfdir}/xdg/weston/weston.ini
 
     # Disable the virtual keyboard
     echo "" >> ${D}${sysconfdir}/xdg/weston/weston.ini

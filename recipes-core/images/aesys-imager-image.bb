@@ -19,7 +19,10 @@ IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
 IMAGE_FSTYPES = "tar.zst"
 
 # Add features
-IMAGE_FEATURES:append = " ssh-server-openssh splash "
+IMAGE_FEATURES:append = " ssh-server-openssh "
+
+# Add psplash (removed now)
+#IMAGE_FEATURES:append = " splash "
 
 # Add aesys packages
 IMAGE_INSTALL:append = " aesys-persistent-nic-names "

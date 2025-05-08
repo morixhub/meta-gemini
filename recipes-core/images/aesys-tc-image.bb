@@ -7,3 +7,4 @@ require aesys-qt6-image.bb
 IMAGE_FEATURES:remove = "tools-testapps"
 CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-fsl-tools-testapps"
 CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-fsl-tools-benchmark"
+
