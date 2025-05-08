@@ -45,6 +45,9 @@ IMAGE_INSTALL:append = " sqlite3 "
 # Add Avahi-related packages
 IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-client avahi-utils "
 
+# Add PAM and related modules
+IMAGE_INSTALL:append = " libpam nss-pam-ldapd pam-radius "
+
 # Add unionfs-fuse packages
 IMAGE_INSTALL:append = " unionfs-fuse "
 
