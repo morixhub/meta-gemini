@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Invoke custom-routing script, if any
+if [ -x /data/etcrw/custom-routing ]; then
+    source /data/etcrw/custom-routing
+fi
+

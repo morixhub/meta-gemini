@@ -4,6 +4,7 @@ PACKAGECONFIG:append = " vnc"
 
 SRC_URI += " \
     file://weston-remote-access \
+    file://0001-screenshoter_to_stdout.patch \
 "
 
 FILES:${PN} += "\

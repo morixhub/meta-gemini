@@ -1,0 +1,70 @@
+diff --git a/clients/screenshot.c b/clients/screenshot.c
+index a160406b..1ec83010 100644
+--- a/clients/screenshot.c
++++ b/clients/screenshot.c
+@@ -307,9 +307,18 @@ screenshooter_output_capture(struct screenshooter_output *output)
+ 	output->app->waitcount++;
+ }
+ 
++static void write_to_png_func(void* closure,
++                              const unsigned char *data,
++                              unsigned int length)
++{
++	fwrite(data, sizeof(unsigned char), length, stdout);
++	fflush(stdout);
++}
++
+ static void
+ screenshot_write_png(const struct buffer_size *buff_size,
+-		     struct wl_list *output_list)
++		     struct wl_list *output_list,
++                     int directoutput)
+ {
+ 	pixman_image_t *shot;
+ 	cairo_surface_t *surface;
+@@ -339,11 +348,15 @@ screenshot_write_png(const struct buffer_size *buff_size,
+ 						      pixman_image_get_height(shot),
+ 						      pixman_image_get_stride(shot));
+ 
+-	fp = file_create_dated(getenv("XDG_PICTURES_DIR"), "wayland-screenshot-",
+-			       ".png", filepath, sizeof(filepath));
+-	if (fp) {
+-		fclose (fp);
+-		cairo_surface_write_to_png(surface, filepath);
++	if(directoutput) {
++		cairo_surface_write_to_png_stream(surface, write_to_png_func, NULL);
++	} else {
++		fp = file_create_dated(getenv("XDG_PICTURES_DIR"), "wayland-screenshot-",
++				       ".png", filepath, sizeof(filepath));
++		if (fp) {
++			fclose (fp);
++			cairo_surface_write_to_png(surface, filepath);
++		}
+ 	}
+ 	cairo_surface_destroy(surface);
+ 	pixman_image_unref(shot);
+@@ -390,6 +403,15 @@ main(int argc, char *argv[])
+ 	struct screenshooter_output *tmp_output;
+ 	struct buffer_size buff_size = {};
+ 	struct screenshooter_app app = {};
++	int directoutput = 0;
++	int i = 0;
++
++	for(i = 0; i < argc; i++) {
++		if(strcmp(argv[i], "-o") == 0) {
++			directoutput = 1;
++			break;
++		}
++	}
+ 
+ 	wl_list_init(&app.output_list);
+ 
+@@ -434,7 +456,7 @@ main(int argc, char *argv[])
+ 	if (!app.failed) {
+ 		if (screenshot_set_buffer_size(&buff_size, &app.output_list) < 0)
+ 			return -1;
+-		screenshot_write_png(&buff_size, &app.output_list);
++		screenshot_write_png(&buff_size, &app.output_list, directoutput);
+ 	} else {
+ 		fprintf(stderr, "Error: screenshot or protocol failure\n");
+ 	}

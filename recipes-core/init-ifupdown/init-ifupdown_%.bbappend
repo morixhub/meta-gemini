@@ -6,10 +6,15 @@ SRC_URI += " \
    file://interfaces \
    file://routers-down \
    file://routers-up \
+   file://custom-routing \
 "
 
 FILES:${PN} += " \
     ${sysconfdir}/network/interfaces \
+    ${sysconfdir}/network/if-down.d/routers \
+    ${sysconfdir}/network/if-pre-up.d/routers \
+    ${sysconfdir}/network/if-up.d/custom-routing \
+    ${sysconfdir}/network/if-post-down.d/custom-routing \
 "
 
 do_install:append(){
@@ -24,6 +29,6 @@ do_install:append(){
     install -d ${D}${sysconfdir}/network/if-up.d/
     install -m 755 ${WORKDIR}/routers-down ${D}${sysconfdir}/network/if-down.d/routers
     install -m 755 ${WORKDIR}/routers-up ${D}${sysconfdir}/network/if-pre-up.d/routers
-    ln -sf /data/etcrw/custom-routing ${D}${sysconfdir}/network/if-up.d/custom-routing
-    ln -sf /data/etcrw/custom-routing ${D}${sysconfdir}/network/if-post-down.d/custom-routing
+    install -m 755 ${WORKDIR}/custom-routing ${D}${sysconfdir}/network/if-up.d/custom-routing
+    install -m 755 ${WORKDIR}/custom-routing ${D}${sysconfdir}/network/if-post-down.d/custom-routing
 }
