@@ -337,11 +337,7 @@
 	
 	als: light-sensor@44 {
 		compatible = "ti,opt3001";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_light_sensor>;
 		reg = <0x44>;
-		interrupt-parent = <&gpio5>;
-		interrupts = <26 IRQ_TYPE_EDGE_FALLING>;
 	};
 	
 	rtc_i2c: rtc@51 {
@@ -563,12 +559,6 @@
 		MX8MP_IOMUXC_GPIO1_IO15__USB2_OC			0x00000084
 		MX8MP_IOMUXC_GPIO1_IO14__USB2_PWR		0x00000084
 		MX8MP_IOMUXC_GPIO1_IO11__USB2_ID		0x00000084
-		>;
-	};
-	
-	pinctrl_light_sensor: light_sensor_gpios {
-		fsl,pins = <
-		MX8MP_IOMUXC_UART3_RXD__GPIO5_IO26		0x00000006		// ALS_nINT
 		>;
 	};
 	
