@@ -379,7 +379,14 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		else
 
 			# Write a file on /initram for having a quick way for verifying at runtime if overlay is in place
-			touch /initram/overlayroot.enforced ;
+			# (the content of the file points to the root of the persisted root file system)
+			echo "/overlay/persisted-root" > /initram/overlayroot.enforced ;
+			chmod 444 /initram/overlayroot.enforced ;
+
+			# Make overlayroot-commit.sh available
+			if [ -e /overlayroot-commit.sh ]; then
+				cp /overlayroot-commit.sh /initram/overlayroot-commit.sh ;
+			fi
 
 			CHECK=1 ;
 		fi
