@@ -388,7 +388,7 @@
 &mipi_dsi {
 	status = "okay";
 	
-	panel@0 {
+	mipi_dsi_panel: panel@0 {
 		compatible = "disen,ds070boe30t";
 		pinctrl-0 = <&pinctrl_mipi_dsi>;
 		pinctrl-names = "default";
@@ -616,8 +616,6 @@
 		MX8MP_IOMUXC_SAI3_MCLK__GPIO5_IO02		0x00000006		// I2C5_nINT
 		
 		MX8MP_IOMUXC_SAI5_RXD0__GPIO3_IO21		0x00000006		// LCD_TYPE
-		
-		MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05		0x00000006		// M7_NMI
 		
 		MX8MP_IOMUXC_HDMI_DDC_SCL__GPIO3_IO26	0x00000006		// RS485_0_MODE
 		MX8MP_IOMUXC_HDMI_DDC_SDA__GPIO3_IO27	0x00000006		// RS485_1_MODE	
