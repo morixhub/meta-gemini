@@ -43,3 +43,7 @@ do_install:append(){
     chown weston:weston ${D}${sysconfdir}/vnc/keys/
 }
 
+do_install:append:aesys-2414 () {
+    # Set the kiosk shell
+    sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
+}
