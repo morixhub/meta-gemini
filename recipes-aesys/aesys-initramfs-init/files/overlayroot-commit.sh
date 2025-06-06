@@ -6,10 +6,11 @@ OVERLAYENFORCED="/initram/overlayroot.enforced"
 # General function
 main_help () {
     echo "USAGE" ;
-    echo "   ./overlayroot-commit.sh <filename> [<options>]" ;
+    echo "   ./overlayroot-commit.sh {<filename>|<dirname>} [<options>]" ;
     echo ;
-    echo "Where <filename> can be either an absolute or relative path to an existing file;" ;
-    echo "if <filename> does not exist, then the commit of a file removal is assumed." ;
+    echo "Where <filename> (or <dirname>) can be either an absolute or relative path to an" ;
+    echo "existing file (or directory); if <filename> (or <dirname>) does not exist, then" ;
+    echo "the commit of a file removal is assumed." ;
     echo ;
     echo "<options> can be one of the following:" ;
     echo ;
@@ -86,7 +87,10 @@ else
 fi
 
 # Process file
-if [ -e "$SOURCE" ]; then
+if [ -d "$SOURCE" ]; then
+    mkdir -p $(dirname "$TARGETFILE") ;
+    rsync -a "$SOURCE/" "$TARGETFILE/" --delete ;
+elif [ -e "$SOURCE" ]; then
     mkdir -p $(dirname "$TARGETFILE") ;
     cp -arf "$SOURCE" "$TARGETFILE" ;
 else

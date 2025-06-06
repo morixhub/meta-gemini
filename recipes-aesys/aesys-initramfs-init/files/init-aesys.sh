@@ -182,10 +182,16 @@ fi
 # Mount the persist file system
 mount -o loop,rw /data/.sys/persist.bin /persist
 
+# Mount initram filesystem
+mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
+
 # Mount the app file system
-APP_MOUNTED=0
+APP_ORIGIN=
 if [ -f /data/.sys/${DB_APPBIN} ]; then
-	APP_MOUNTED=1 ;
+	APP_ORIGIN=${DB_APPBIN} ;
+
+    # Save info about /app
+    echo "/data/.sys/${DB_APPBIN}" > /initram/app.mount ;
 
 	# Log
 	do_log "Mounting (dual-boot) app filesystem..." ;
@@ -193,10 +199,13 @@ if [ -f /data/.sys/${DB_APPBIN} ]; then
 	# Mount
 	mount -o loop,ro /data/.sys/${DB_APPBIN} /app ;
 elif [ -f /data/.sys/${APPBIN} ]; then
-	APP_MOUNTED=1 ;
+	APP_ORIGIN=${APPBIN} ;
+
+    # Save info about /app
+    echo "/data/.sys/${APPBIN}" > /initram/app.mount ;
 
 	# Log
-	do_log "Mounting app filesystem..." ;
+	do_log "Mounting app (failsafe, not dual-bool) filesystem..." ;
 
 	# Mount
 	mount -o loop,ro /data/.sys/${APPBIN} /app ;
@@ -207,9 +216,6 @@ fi
 
 # Log
 do_log "Mounting filesystems..." ;
-
-# Mount initram filesystems
-mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
 
 # Set U-Boot environment to /initram
 echo "${BOOT_DEVICE} 0x700000 0x4000" > /initram/fw_env.config
@@ -263,7 +269,7 @@ mount --move /boot /overlay-persist-root-merge/boot
 mkdir -p /overlay-persist-root-merge/data
 mount --move /data /overlay-persist-root-merge/data
 
-if [ $APP_MOUNTED -eq 1 ]; then
+if [ ! -z "$APP_ORIGIN" ]; then
 	mkdir -p /overlay-persist-root-merge/app ;
 	mount --move /app /overlay-persist-root-merge/app ;
 fi
@@ -400,7 +406,7 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 	mount --move /overlay-persist-root-merge/boot /overlay-ram-merge/boot
 	mount --move /overlay-persist-root-merge/data /overlay-ram-merge/data
 
-	if [ $APP_MOUNTED -eq 1 ]; then
+	if [ ! -z "$APP_ORIGIN" ]; then
 		mount --move /overlay-persist-root-merge/app /overlay-ram-merge/app
 	fi
 
