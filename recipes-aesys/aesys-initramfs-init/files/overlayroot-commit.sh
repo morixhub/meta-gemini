@@ -14,8 +14,11 @@ main_help () {
     echo ;
     echo "<options> can be one of the following:" ;
     echo ;
-    echo "   -h, --help" ;
-    echo "      Show this help screen" ;
+    echo "   -v, --verbose" ;
+    echo "         Toggles verborse mode" ;
+    echo ;
+    echo "      -h, --help" ;
+    echo "         Show this help screen" ;
     echo ;
     echo "Exits with 0 if successfull; otherwise an error code is used as status code," ;
     echo "following the given table:" ;
@@ -28,8 +31,9 @@ main_help () {
     echo ;
 }
 
-# Collect positional args
+# Initialize vars
 POSITIONAL_ARGS=()
+VERBOSE=
 
 # Use -gt 1 to consume two arguments per pass in the loop (e.g. each
 # argument has a corresponding value to go with it).
@@ -43,11 +47,14 @@ do
     case $key in
         -h|--help)
             main_help ;
-            exit -1;
+            exit -1 ;
+            ;;
+        -v|--verbose)
+            VERBOSE=$key ;
             ;;
         -*|--*)
             main_help ;
-            exit -1;
+            exit -1 ;
             ;;
         *)
             POSITIONAL_ARGS+=($1) ;
@@ -87,12 +94,31 @@ else
 fi
 
 # Process file
+RES=0
 if [ -d "$SOURCE" ]; then
-    mkdir -p $(dirname "$TARGETFILE") ;
-    rsync -a "$SOURCE/" "$TARGETFILE/" --delete ;
+    if [ ! -z "$VERBOSE" ]; then
+        echo "Syncing folder $SOURCE to $TARGETFILE..." ;
+    fi
+    mkdir $VERBOSE -p $(dirname "$TARGETFILE") ;
+    rsync $VERBOSE -a "$SOURCE/" "$TARGETFILE/" --delete ;
+    RES=$?
 elif [ -e "$SOURCE" ]; then
-    mkdir -p $(dirname "$TARGETFILE") ;
-    cp -arf "$SOURCE" "$TARGETFILE" ;
+    if [ ! -z "$VERBOSE" ]; then
+        echo "Syncing file $SOURCE to $TARGETFILE..." ;
+    fi
+    mkdir $VERBOSE -p $(dirname "$TARGETFILE") ;
+    cp $VERBOSE -arf "$SOURCE" "$TARGETFILE" ;
+    RES=$?
 else
-    rm -rf "$TARGETFILE" ;
+    if [ ! -z "$VERBOSE" ]; then
+        echo "Removing $TARGETFILE..." ;
+    fi
+    rm $VERBOSE -rf "$TARGETFILE" ;
+    RES=$?
 fi
+
+# Ensure file-system syncing
+sync;
+
+# Return result
+exit $RES
