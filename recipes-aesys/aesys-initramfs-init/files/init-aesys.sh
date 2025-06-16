@@ -49,6 +49,8 @@ DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="`
 DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}"
 DB_APPBIN="${APPBIN}"
+DB_HALF=
+DB_MODE=
 if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
 	DB_HALF=`echo $DB_CMDLINE_CURRENTHALF | sed -e 's/^.*db_active_half=//' -e 's/ .*$//'` ;
 	DB_MODE=`echo $DB_CMDLINE_MODE | sed -e 's/^.*db_mode=//' -e 's/ .*$//'` ;
@@ -185,6 +187,80 @@ mount -o loop,rw /data/.sys/persist.bin /persist
 # Mount initram filesystem
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
 
+# Clear temporary update files (if there they are a "remaining" of a failed update)
+if [ -f "/data/.sys/$ROOTFSSQUASHFS.update.tmp" ]; then
+    rm -f /data/.sys/$ROOTFSSQUASHFS.update.tmp ;
+    do_log "Removed stale rootfs update file" ; 
+fi
+if [ -f "/data/.sys/$APPBIN.update.tmp" ]; then
+    rm -f /data/.sys/$APPBIN.update.tmp ;
+    do_log "Removed stale app update file" ; 
+fi
+
+# Manage non-boot assets update while not in dual-boot mode
+if [ -z "$DB_HALF" ]; then
+
+    # Update rootfs
+    if [ -f "/data/.sys/$ROOTFSSQUASHFS.update" ]; then
+        
+        # Log
+        do_log "Updating rootfs..." ;
+
+        # Remount boot as R/W
+        mount -o remount,rw /boot ;
+
+        # Copy new file
+        TARGETDIGEST=$(sha256sum "/data/.sys/$ROOTFSSQUASHFS.update" 2>/dev/null | cut -d' ' -f1) ;
+        cp -f "/data/.sys/$ROOTFSSQUASHFS.update" "/boot/$ROOTFSSQUASHFS" ;
+        sync ;
+
+        # Remount boot as R/O
+        mount -o remount,ro /boot ;
+
+        # Verification
+        VERIFICATIONDIGEST=$(sha256sum "/boot/$ROOTFSSQUASHFS" 2>/dev/null | cut -d' ' -f1) ;
+
+        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+            # Error here: log and panic!
+            do_log "Update of rootfs failed: verification problem" ;
+            do_panic ;
+        else
+            # Remove update file
+            rm -f "/data/.sys/$ROOTFSSQUASHFS.update" ;
+
+            # Log
+            do_log "Rootfs update completed successfully" ;
+        fi
+    fi
+
+    # Update app.bin
+    if [ -f "/data/.sys/$APPBIN.update" ]; then
+
+        # Log
+        do_log "Updating app..." ;
+
+        # Copy new file
+        TARGETDIGEST=$(sha256sum "/data/.sys/$APPBIN.update" 2>/dev/null | cut -d' ' -f1) ;
+        cp -f "/data/.sys/$APPBIN.update" "/data/.sys/$APPBIN" ;
+        sync ;
+
+        # Verification
+        VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$APPBIN" 2>/dev/null | cut -d' ' -f1) ;
+
+        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+            # Error here: log and panic!
+            do_log "Update of app.bin failed" ;
+            do_panic ;
+        else
+            # Remove update file
+            rm -f "/data/.sys/$APPBIN.update" ;
+
+            # Log
+            do_log "App update completed successfully" ;
+        fi
+    fi
+fi
+
 # Mount the app file system
 APP_ORIGIN=
 if [ -f /data/.sys/${DB_APPBIN} ]; then
@@ -287,6 +363,11 @@ fi
 # (do it anyway, even if the SecureFS is going to be skipped by request afterward)
 if [ -e /securefs.publickey.pem ]; then
 	cp /securefs.publickey.pem /initram/securefs.publickey.pem ;
+fi
+
+# Make overlayroot-commit.sh available
+if [ -e /xdelta-apply.sh ]; then
+    cp /xdelta-apply.sh /initram/xdelta-apply.sh ;
 fi
 
 # Log
