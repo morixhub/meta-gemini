@@ -15,6 +15,31 @@ log_error () {
     echo >&2 ;
 }
 
+clean_up () {
+
+    # Remove package index, if any
+    if [ -f "$PACKAGEINDEX" ]; then
+        rm -rf "$PACKAGEINDEX" ;
+    fi
+
+    if [ "$PLATFORM" == "gemini" ]; then
+        # Ensure boot folder is remounted RO on Gemini
+        if [ ! -z "$BOOTFOLDER" ] && [ -d "$BOOTFOLDER" ]; then
+            mount -o remount,ro "${BOOTFOLDER}" >/dev/null 2>/dev/null ;
+        fi
+
+        # Ensure inactive boot folder is remounted RO on Gemini
+        if [ ! -z "$BOOTFOLDEROTHER" ] && [ -d "$BOOTFOLDEROTHER" ]; then
+            mount -o remount,ro "${BOOTFOLDEROTHER}" >/dev/null 2>/dev/null ;
+        fi
+    fi
+
+    # Restore initial kernel printk levels
+    if [ ! -z "$INITIAL_PRINT_LEVELS" ]; then
+        sysctl -w kernel.printk="$INITIAL_PRINT_LEVELS" >/dev/null 2>/dev/null;
+    fi
+}
+
 get_asset () {
     URL="$1" ;
 
@@ -90,64 +115,78 @@ delta_file () {
         COPYFROMEXISTING=0 ;
 
         # Check if the file is in the index as a target file
-        TARGETDIGEST=$(cat "$PACKAGEINDEX" | grep "${BASEFILE}=" | cut -d'=' -f2) ;
+        TARGETENTRY=$(cat "$PACKAGEINDEX" | grep "${BASEFILE}=") ;
 
-        # Calculate existing file digest
-        EXDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
+        if [ ! -z "$TARGETENTRY" ]; then
 
-        if [ "$TARGETDIGEST" != "$EXDIGEST" ]; then
+            TARGETDIGEST=$(echo "$TARGETENTRY" | cut -d'=' -f2) ;
 
-            # Log
-            log "+ File needs update" ;
+            # Calculate existing file digest
+            EXDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
 
-            # Check if the file exists as a delta in the package
-            DELTADIFF=$(mktemp) ;
-            get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
+            if [ "$TARGETDIGEST" != "$EXDIGEST" ]; then
 
-            if [ $? -eq 0 ] && [ -f "$DELTADIFF" ]; then
-                log "+ Applying delta..."
-                if [ $XDELTA -eq 1 ]; then
-                    xdelta patch -p "$DELTADIFF" "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                else
-                    xdelta3 -d -f -D -R -S djw -s "${FOLDER}/${FILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                fi
+                # Log
+                log "+ File needs update" ;
 
-                if [ $? -ne 0 ]; then
-                    rm -rf "$DELTADIFF" ;
-                    log_error "# Error while applying patch: cannot continue" ;
-                    return -1 ;
-                else
-                    rm -rf "$DELTADIFF" ;
-                fi
+                # Check if the file exists as a delta in the package
+                DELTADIFF=$(mktemp) ;
+                get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
 
-                # Flush
-                sync ;
-
-                # Perform verification
-                if [ $SKIPVERIFICATION -ne 1 ]; then
-                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
-                    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                        log_error "# Delta verification failed: cannot continue" ;
-                        return -2 ;
+                if [ $? -eq 0 ] && [ -f "$DELTADIFF" ]; then
+                    log "+ Applying delta..."
+                    if [ $XDELTA -eq 1 ]; then
+                        xdelta patch -p "$DELTADIFF" "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                    else
+                        xdelta3 -d -f -D -R -S djw -s "${FOLDER}/${FILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                     fi
-                fi
 
-                # Finalize ".update.tmp" files to ".update"
-                if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                    mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
                     if [ $? -ne 0 ]; then
-                        log_error "# Update file finalization failed: cannot continue" ;
-                        return -2 ;
+                        rm -rf "$DELTADIFF" ;
+                        log_error "# Error while applying patch: cannot continue" ;
+                        return -1 ;
+                    else
+                        rm -rf "$DELTADIFF" ;
                     fi
+
+                    # Flush
+                    sync ;
+
+                    # Drop disk caches (for forcing the system to reload data from disk)
+                    echo 3 > /proc/sys/vm/drop_caches ;
+
+                    # Perform verification, if requested
+                    if [ $SKIPVERIFICATION -ne 1 ]; then
+                        VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                            log_error "# Delta verification failed: cannot continue" ;
+                            return -2 ;
+                        fi
+                    fi
+
+                    # Finalize ".update.tmp" files to ".update"
+                    if [[ "$TARGETFILE" == *.update.tmp ]]; then
+                        mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                        if [ $? -ne 0 ]; then
+                            log_error "# Update file finalization failed: cannot continue" ;
+                            return -2 ;
+                        fi
+                    fi
+                else
+                    # Log
+                    log_warning "! Can't retrieve file from delta package: file is not going to be updated" ;
+
+                    # Set the flag for copy the assets from the current half, if it applies
+                    COPYFROMEXISTING=1 ;
                 fi
             else
-                # Log
-                log_warning "! Can't find file in delta package: file is not going to be updated" ;
 
                 # Set the flag for copy the assets from the current half, if it applies
                 COPYFROMEXISTING=1 ;
             fi
         else
+            # Log
+            log_warning "! Can't find file from delta package: file is not going to be updated" ;
 
             # Set the flag for copy the assets from the current half, if it applies
             COPYFROMEXISTING=1 ;
@@ -157,23 +196,39 @@ delta_file () {
         # from the current half
         if [ $COPYFROMEXISTING -eq 1 ] && [ ! -z "${DB_HALF}" ]; then
             if [ ! -z "DB_HALF" ]; then
-                # Log
-                log "+ No update available: copying from current half..." ;
 
-                # Copy file
-                cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" ;
+                diff "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                if [ $? -eq 0 ]; then
+                    # Log
+                    log "+ No update available and no need to copy from current half (target file is already good)" ;
+                else
+                    # Log
+                    log "+ No update available: copying from current half..." ;
 
-                # Check result
-                if [ $? -ne 0 ]; then
-                    log_error "# Error while copying from current half: cannot continue" ;
-                    return -3 ;
-                fi
+                    # Copy file
+                    cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" ;
 
-                # Verify
-                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
-                if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                    log_error "# Verification error while copying from current half: cannot continue" ;
-                    return -4 ;
+                    # Check result
+                    if [ $? -ne 0 ]; then
+                        log_error "# Error while copying from current half: cannot continue" ;
+                        return -3 ;
+                    fi
+
+                    # Flush
+                    sync ;
+
+                    # Drop disk caches (for forcing the system to reload data from disk)
+                    echo 3 > /proc/sys/vm/drop_caches ;
+
+                    # Perform verification, if requested
+                    if [ $SKIPVERIFICATION -ne 1 ]; then
+                        TARGETDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
+                        VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                            log_error "# Verification error while copying from current half: cannot continue" ;
+                            return -4 ;
+                        fi
+                    fi
                 fi
             fi
         fi
@@ -182,11 +237,9 @@ delta_file () {
 
 usage () {
     cat << EOF
-Usage: ${0##*/} [-hxn] [-d <mode>] <DELTA_PACKAGE> <BOOT_FOLDER> <DATA_FOLDER> [<OUTPUT_FOLDER>]
+Usage: ${0##*/} [-hxn] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] <DELTA_PACKAGE>
 
-Applies the delta package provided at <DELTA_PACKAGE> to stuff available
-in <BOOT_FOLDER> and <DATA_FOLDER>, producing the <OUTPUT_FOLDER>; if <OUTPUT_FOLDER>
-is not specified then it is assumed to be the same <BOOT_FOLDER>/<DATA_FOLDER>.
+Applies the delta package provided at <DELTA_PACKAGE> to system.
 
 <DELTA_PACKAGE> could an URL in http:// or https:// format (the package content
 is going to be fetched from web server), in sftp:// or ssh:// format (the package
@@ -197,15 +250,19 @@ If ssh:// or sftp:// is going to be used, then an enviroment variable named SSHP
 can be used for expressing the full sshpass command to be used for passing
 authentication credentials to SSH/SFTP server.
 
-If the current booting scheme (detected or forced via "-d" option) is partitions-based then
+If the current booting scheme (detected or forced via "-m" option) is partitions-based then
 the system expects to found the "inactive boot partition" to be mounted at position
-"<BOOT_FOLDER>-inactive", otherwise the script terminates with error.
+"<boot_folder>-inactive", otherwise the script terminates with error.
 
 -h  Displays this help and exit
 -x  Use xdelta instead of xdelta3
 -n  Do not verify delta (fast but unsafe)
--d  Forces the given boot scheme
+-m  Forces the given boot scheme
     (<mode> can be "none", "files:a", "files:b" or "partitions")
+-b  The folder containing boot assets (if not specified a guess is attempted based on platform)
+-d  The folder containing non-boot assets (if not specified a guess is attempted based on platform)
+-o  The output folder (if not specified, then the same <boot_folder> and <data_folder> are going
+    to be used, based on asset type)
 
 EOF
 }
@@ -222,6 +279,9 @@ SCRIPTNAME=$(basename "$0") ;
 XDELTA=0 ;
 SKIPVERIFICATION=0 ;
 FORCEDDUALBOOTSCHEME= ;
+BOOTFOLDER= ;
+DATAFOLDER= ;
+OUTPUTFOLDER= ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -243,7 +303,7 @@ COMMANDLINE_OUTPUT="${HIST}/commandline.txt" ;
 echo "$COMMANDNAME $COMMANDLINE" >> "$COMMANDLINE_OUTPUT" 2>/dev/null ;
 
 OPTIND=1 ;
-while getopts hxnd: opt; do
+while getopts hxnm:b:d:o: opt; do
     case $opt in
         h)
             usage ;
@@ -255,8 +315,17 @@ while getopts hxnd: opt; do
         n)
             SKIPVERIFICATION=1 ;
             ;;
-        d)
+        m)
             FORCEDDUALBOOTSCHEME="${OPTARG}" ;
+            ;;
+        b)
+            BOOTFOLDER="${OPTARG}" ;
+            ;;
+        d)
+            DATAFOLDER="${OPTARG}" ;
+            ;;
+        o)
+            OUTPUTFOLDER="${OPTARG}" ;
             ;;
         ?)
             echo >&2 ;
@@ -267,32 +336,61 @@ while getopts hxnd: opt; do
 done
 shift "$((OPTIND-1))" ;
 
-# Check if DELTA_PACKAGE_FOLDER and TARGET_FOLDER were provided
-PACKAGEFOLDER="$1" ;
-BOOTFOLDER="$2" ;
-DATAFOLDER="$3" ;
-OUTPUTFOLDER="$4" ;
+# Avoid kernel messages to flood the console during this script
+INITIAL_PRINT_LEVELS=$(sysctl kernel.printk | cut -d'=' -f2) ;
+sysctl -w kernel.printk="2 4 1 7" >/dev/null 2>/dev/null ;
+
+# Determine platform
+PLATFORM= ;
+KERNEL=$(uname -r) ;
+if [[ "$KERNEL" == *gemini* ]]; then
+    PLATFORM="gemini" ;
+fi
+
+# Check command line parameters
+if [ -z "$BOOTFOLDER" ]; then
+    if [ "$PLATFORM" == "gemini" ]; then
+        BOOTFOLDER="/boot" ;
+
+        # On Gemini the boot folder needs to be mounted R/W
+        mount -o remount,rw "${BOOTFOLDER}" >/dev/null 2>/dev/null ;
+        if [ $? -ne 0 ]; then
+            log_error "GEMINI: Cannot mount boot-folder as read-write" ;
+            clean_up ;
+            exit 2 ;
+        fi
+    fi
+fi
 
 if [ ! -d "$BOOTFOLDER" ]; then
+
     log_error "Invalid or unspecified boot folder" ;
-    exit 1 ;
+    clean_up ;
+    exit 2 ;
 fi;
+
+if [ -z "$DATAFOLDER" ]; then
+    if [ "$PLATFORM" == "gemini" ]; then
+        DATAFOLDER="/data/.sys" ;
+    fi
+fi
 
 if [ ! -d "$DATAFOLDER" ]; then
     log_error "Invalid or unspecified data folder" ;
-    exit 1 ;
+    clean_up ;
+    exit 3 ;
 fi;
 
 # Check the availability of index.ini in DELTA_PACKAGE_FOLDER
+PACKAGEFOLDER="$1" ;
 PACKAGEINDEX=$(mktemp) ;
 get_asset "$PACKAGEFOLDER/index.ini" > $PACKAGEINDEX ;
 PACKAGEINDEXSIZE=$(wc -c "$PACKAGEINDEX" | cut -d' ' -f1) ;
 
 if [ ! -f "$PACKAGEINDEX" ] || [ $PACKAGEINDEXSIZE -eq 0 ]; then
-    rm -rf "$PACKAGEINDEX" ;
     log_error "Invalid or unspecified package folder" ;
-    usage ;
-    exit 2 ;
+    clean_up ;
+    exit 4 ;
 fi
 
 # Prepare the output folder
@@ -300,6 +398,21 @@ if [ ! -z "$OUTPUTFOLDER" ] && [ "$OUTPUTFOLDER" != "$BOOTFOLDER" ] && [ "$OUTPU
     rm -rf "$OUTPUTFOLDER" ;
     mkdir -p "$OUTPUTFOLDER" ;
 fi
+
+# Dump info
+if [ -z "$PLATFORM" ]; then
+    log "Platform: (not specified)" ;
+else
+    log "Platform: ${PLATFORM^^}" ;
+fi
+log "Boot assets folder: $BOOTFOLDER" ;
+log "Non-boot assets folder: $DATAFOLDER" ;
+if [ -z "$OUTPUTFOLDER" ]; then
+    log "Output folder: (not specified)" ;
+else
+    log "Output folder: $OUTPUTFOLDER" ;
+fi
+log ;
 
 # Determine booting scheme
 DB_HALF= ;
@@ -321,9 +434,11 @@ if [ ! -z "$FORCEDDUALBOOTSCHEME" ]; then
         DB_MODE= ;
     else
         log_error "Invalid boot scheme partition force flag" ;
-        exit 3 ;
+        clean_up ;
+        exit 5 ;
     fi
 else
+    KERNEL_CMDLINE=`cat /proc/cmdline` ;
     DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="` ;
     DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="` ;
 
@@ -338,16 +453,26 @@ BOOTFOLDEROTHER= ;
 if [ -z "$DB_HALF" ]; then
     log "Booting scheme: SINGLE boot $DB_FORCED_ADDINFO" ;
 elif [ "${DB_MODE}" == "partitions" ]; then
-    log "Booting scheme: DUAL boot (partitions-based) $DB_FORCED_ADDINFO" ;
+    log "Booting scheme: DUAL boot (partitions-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
     BOOTFOLDEROTHER="${BOOTFOLDER}-inactive" ;
 
     if [ ! -d ${BOOTFOLDEROTHER} ]; then
-        rm -rf "$PACKAGEINDEX" ;
         log_error "Cannot access the inactive-half boot partition: cannot continue" ;
-        exit 4;
+        clean_up ;
+        exit 6;
+    fi
+
+    # On Gemini the boot folder needs to be mounted R/W
+    if [ "$PLATFORM" == "gemini" ]; then
+        mount -o remount,rw "${BOOTFOLDEROTHER}" >/dev/null 2>/dev/null ;
+        if [ $? -ne 0 ]; then
+            log_error "GEMINI: Cannot mount inactive boot folder as read-write" ;
+            clean_up ;
+            exit 7 ;
+        fi
     fi
 else
-    log "Booting scheme: DUAL boot (files-based) $DB_FORCED_ADDINFO" ;
+    log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
 fi
 log
 
@@ -360,9 +485,9 @@ for f in ${FILES[@]}; do
 
     # Check result
     if [ $? -ne 0 ]; then
-        rm -rf "$PACKAGEINDEX" ;
         log_error "Error detected while processing boot files: cannot continue" ;
-        exit 5;
+        clean_up ;
+        exit 8;
     fi
 done
 
@@ -376,11 +501,11 @@ for f in ${FILES[@]}; do
 
     # Check result
     if [ $? -ne 0 ]; then
-        rm -rf "$PACKAGEINDEX" ;
         log_error "Error detected while processing data files: cannot continue" ;
-        exit 6;
+        clean_up ;
+        exit 9;
     fi
 done
 
-# Clear-up
-rm -rf "$PACKAGEINDEX" ;
+# Clean-up
+clean_up ;

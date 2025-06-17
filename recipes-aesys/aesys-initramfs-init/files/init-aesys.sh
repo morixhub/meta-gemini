@@ -43,6 +43,7 @@ APPBIN=app.bin
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
 KERNEL_CMDLINE=`cat /proc/cmdline`
+OTHERBOOT_PART=
 BOOT_PART=`echo ${KERNEL_CMDLINE} | sed -e 's/^.*root=//' -e 's/ .*$//'`
 BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
 DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
@@ -57,13 +58,16 @@ if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
 	if [ "${DB_MODE}" == "partitions" ]; then
 		if [ "${DB_HALF}" == "a" ]; then
 			BOOT_PART=${BOOT_DEVICE}p1 ;
+            OTHERBOOT_PART=${BOOT_DEVICE}p2 ;
 			DATA_PART=${BOOT_DEVICE}p3 ;
 		elif [ "${DB_HALF}" == "b" ]; then
 			BOOT_PART=${BOOT_DEVICE}p2 ;
+            OTHERBOOT_PART=${BOOT_DEVICE}p1 ;
 			DATA_PART=${BOOT_DEVICE}p3 ;
 		else
 			BOOT_PART=${BOOT_DEVICE}p1 ;
-			DATA_PART=${BOOT_DEVICE}p2 ;
+			OTHERBOOT_PART=${BOOT_DEVICE}p2 ;
+			DATA_PART=${BOOT_DEVICE}p3 ;
 		fi
 	else
 		BOOT_PART=${BOOT_DEVICE}p1 ;
@@ -79,13 +83,23 @@ fi
 
 # Wait for block device
 if [ ! -b ${BOOT_PART} ] || [ ! -b ${DATA_PART} ]; then
-	do_log "Waiting for block device..." ;
+	do_log "Waiting for boot/data block device..." ;
+	sleep 1 ;
+fi
+
+if [ ! -z ${OTHERBOOT_PART} ]; then
+    do_log "Waiting for inactive boot block device..." ;
 	sleep 1 ;
 fi
 
 # Mount relevant file systems
 mount -t ext4 -o ro ${BOOT_PART} /boot
 mount -t ext4 -o rw ${DATA_PART} /data
+
+if [ ! -z ${OTHERBOOT_PART} ]; then
+    mkdir -p /boot-inactive ;
+    mount -t ext4 -o ro ${OTHERBOOT_PART} /boot-inactive ;
+fi
 
 # Create /data/.sys folder, if not there
 if [ ! -d /data/.sys ]; then
@@ -339,8 +353,13 @@ mkdir -p /overlay-persist-root-merge/var
 mount --move /overlay-ram-var-merge /overlay-persist-root-merge/var
 
 # Move boot, app and data mount points over persist overlay
-mkdir -p /overlay-root-merge/boot
+mkdir -p /overlay-persist-root-merge/boot
 mount --move /boot /overlay-persist-root-merge/boot
+
+if [ ! -z "$OTHERBOOT_PART" ]; then
+    mkdir -p /overlay-persist-root-merge/boot-inactive ;
+    mount --move /boot-inactive /overlay-persist-root-merge/boot-inactive ;
+fi
 
 mkdir -p /overlay-persist-root-merge/data
 mount --move /data /overlay-persist-root-merge/data
@@ -486,6 +505,10 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 	mount --move /overlay-persist-root-merge/var /overlay-ram-merge/var
 	mount --move /overlay-persist-root-merge/boot /overlay-ram-merge/boot
 	mount --move /overlay-persist-root-merge/data /overlay-ram-merge/data
+
+    if [ ! -z "OTHERBOOT_PART" ]; then
+        mount --move /overlay-persist-root-merge/boot-inactive /overlay-ram-merge/boot-inactive ;
+    fi
 
 	if [ ! -z "$APP_ORIGIN" ]; then
 		mount --move /overlay-persist-root-merge/app /overlay-ram-merge/app
