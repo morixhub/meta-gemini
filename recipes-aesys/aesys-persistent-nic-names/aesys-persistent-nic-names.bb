@@ -28,6 +28,11 @@ FILES:${PN}:aesys-2414 += " \
     ${systemd_unitdir}/network/71-wired1.link \
 "
 
+FILES:${PN}:aesys-2414-2g += " \
+    ${systemd_unitdir}/network/70-wired0.link \
+    ${systemd_unitdir}/network/71-wired1.link \
+"
+
 do_install:append:aesys-2319a () {
     install -d ${D}${systemd_unitdir}/network/
     install -m 0644 ${WORKDIR}/aesys-2319a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
@@ -40,6 +45,12 @@ do_install:append:aesys-2409a () {
 }
 
 do_install:append:aesys-2414 () {
+    install -d ${D}${systemd_unitdir}/network/
+    install -m 0644 ${WORKDIR}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${WORKDIR}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+}
+
+do_install:append:aesys-2414-2g () {
     install -d ${D}${systemd_unitdir}/network/
     install -m 0644 ${WORKDIR}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
     install -m 0644 ${WORKDIR}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link

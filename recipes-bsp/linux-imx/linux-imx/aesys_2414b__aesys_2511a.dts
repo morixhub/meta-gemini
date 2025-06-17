@@ -1,0 +1,153 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "aesys_2414_2g.dtsi"
+
+/ {
+    model = "AESYS 2414B+2511A";
+    
+    reg_ad7997_1_vcc: regulator-ad7997-1-vcc {
+        compatible = "regulator-fixed";
+        regulator-name = "AD7997_1_VCC";
+        regulator-min-microvolt = <3300000>;
+        regulator-max-microvolt = <3300000>;
+        enable-active-high;
+        regulator-always-on;
+    };
+    
+    reg_ad7997_1_vref: regulator-ad7997-1-vref {
+        compatible = "regulator-fixed";
+        regulator-name = "AD7997_1_VREF";
+        regulator-min-microvolt = <2500000>;
+        regulator-max-microvolt = <2500000>;
+        enable-active-high;
+        regulator-always-on;
+    };
+    
+    reg_ad7997_2_vcc: regulator-ad7997-2-vcc {
+        compatible = "regulator-fixed";
+        regulator-name = "AD7997_2_VCC";
+        regulator-min-microvolt = <3300000>;
+        regulator-max-microvolt = <3300000>;
+        enable-active-high;
+        regulator-always-on;
+    };
+    
+    reg_ad7997_2_vref: regulator-ad7997-2-vref {
+        compatible = "regulator-fixed";
+        regulator-name = "AD7997_2_VREF";
+        regulator-min-microvolt = <2500000>;
+        regulator-max-microvolt = <2500000>;
+        enable-active-high;
+        regulator-always-on;
+    };
+
+    reg_power_sensor: regulator-power-sensor {
+        compatible = "regulator-fixed";
+        regulator-name = "IN230_VS";
+        regulator-min-microvolt = <3300000>;
+        regulator-max-microvolt = <3300000>;
+        enable-active-high;
+        regulator-always-on;
+    };
+};
+
+&i2c3 {
+    /* ST 24C08 EEPROM */
+    eeprom_2: eeprom_2@54 {
+        compatible = "st,24c08";
+        reg = <0x54>;
+        pagesize = <16>;
+        num-addresses = <4>;
+    };
+};
+
+&i2c5 {
+    /* Analog Devices AD7997 ADC 1 */
+    ad7997_1: ad799x@21 {
+        compatible = "adi,ad7997";
+        reg = <0x21>;
+        vcc-supply = <&reg_ad7997_1_vcc>;
+        vref-supply = <&reg_ad7997_1_vref>;
+    };
+    
+    /* Analog Devices AD7997 ADC 2 */
+    ad7997_2: ad799x@22 {
+        compatible = "adi,ad7997";
+        reg = <0x22>;
+        vcc-supply = <&reg_ad7997_2_vcc>;
+        vref-supply = <&reg_ad7997_2_vref>;
+    };
+
+    /* Power sensor TI INA230 */
+    power-sensor@40 {
+        compatible = "ti,ina230";
+        reg = <0x40>;
+        vs-supply = <&reg_power_sensor>;
+        shunt-resistor = <200000>;
+    };
+};
+
+&mipi_dsi_panel {
+    /delete-property/ reset-gpios;
+    /delete-property/ power-gpios;
+    /delete-property/ updn-gpios;
+    /delete-property/ shlr-gpios;
+};
+
+&iomuxc {
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_emmc_gpios &pinctrl_pin_hwrev_gpios &pinctrl_pin_gpios &pinctrl_pin_gpios_2511>;
+    
+    pinctrl_pin_gpios_2511: pin_gpios_2511 {
+        fsl,pins = <
+        MX8MP_IOMUXC_SAI2_TXC__GPIO4_IO25       0x00000006
+
+        MX8MP_IOMUXC_SAI1_RXC__GPIO4_IO01       0x00000006
+        MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00      0x00000006
+        
+        MX8MP_IOMUXC_SAI1_RXD0__GPIO4_IO02      0x00000006
+        MX8MP_IOMUXC_SAI1_RXD1__GPIO4_IO03      0x00000006
+        
+        MX8MP_IOMUXC_SAI5_RXD1__GPIO3_IO22      0x00000006
+        
+        MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06      0x00000006
+        MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05     0x00000006
+        MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07      0x00000006
+        MX8MP_IOMUXC_SAI3_RXC__GPIO4_IO29       0x00000006
+        MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08      0x00000006
+        MX8MP_IOMUXC_SPDIF_EXT_CLK__GPIO5_IO05  0x00000006
+        MX8MP_IOMUXC_UART3_RXD__GPIO5_IO26      0x00000006
+        MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09      0x00000006
+        
+        MX8MP_IOMUXC_SAI1_MCLK__GPIO4_IO20      0x00000006
+
+        MX8MP_IOMUXC_SAI1_TXD7__GPIO4_IO19      0x00000006
+        MX8MP_IOMUXC_SAI5_RXFS__GPIO3_IO19      0x00000006
+        MX8MP_IOMUXC_SAI5_RXD3__GPIO3_IO24      0x00000006
+        MX8MP_IOMUXC_SAI5_MCLK__GPIO3_IO25      0x00000006
+        
+        MX8MP_IOMUXC_SD1_RESET_B__GPIO2_IO10    0x00000006
+        MX8MP_IOMUXC_SD1_DATA3__GPIO2_IO05      0x00000006
+        MX8MP_IOMUXC_SD1_CLK__GPIO2_IO00        0x00000006
+        MX8MP_IOMUXC_SD1_DATA1__GPIO2_IO03      0x00000006
+        MX8MP_IOMUXC_SD1_DATA2__GPIO2_IO04      0x00000006
+        MX8MP_IOMUXC_SD1_CMD__GPIO2_IO01        0x00000006
+        MX8MP_IOMUXC_SD1_DATA0__GPIO2_IO02      0x00000006
+        >;
+    };
+};
+
+&touchscreen {
+    status = "disabled";
+};
+
+&usdhc1 {
+    status = "disabled";
+};
+
+&sai1 {
+    status = "disabled";
+};
+

@@ -3,8 +3,8 @@
  * Copyright 2019 NXP
  */
 
-#ifndef __AESYS_2414_H
-#define __AESYS_2414_H
+#ifndef __AESYS_2414_2G_H
+#define __AESYS_2414_2G_H
 
 // Remember to define GEMINI_PXE_UUID before including "gemini_env.h"
 #define GEMINI_PXE_UUID "f736f96c-14f0-4f65-9fa1-78b37f9b2414"
@@ -166,13 +166,10 @@
 #define CFG_SYS_INIT_RAM_SIZE	0x80000
 
 
-/* Totally 4GB DDR */
+/* Totally 2GB DDR */
 #define CFG_SYS_SDRAM_BASE		0x40000000
 #define PHYS_SDRAM				0x40000000
-#define PHYS_SDRAM_SIZE			0xC0000000	/* 3 GB */
-#define PHYS_SDRAM_2			0x100000000
-#define PHYS_SDRAM_2_SIZE		0x40000000	/* 1 GB */
-
+#define PHYS_SDRAM_SIZE			0x80000000	/* 2 GB */
 
 #define CFG_MXC_UART_BASE		UART2_BASE_ADDR
 

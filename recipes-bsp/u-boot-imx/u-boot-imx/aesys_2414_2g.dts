@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "aesys_2414_2g.dtsi"
+
+/ {
+	model = "AESYS 2414-BASED BOARD (2GB RAM)";
+};

@@ -1,0 +1,6 @@
+AESYS 2414-BASED BOARDS (2GB RAM)
+M:	Morix Dev <morix.dev@gmail.com>
+S:	Maintained
+F:	board/aesys/aesys_2414_2g/
+F:	include/configs/aesys_2414_2g.h
+F:	configs/aesys_2414_2g_defconfig

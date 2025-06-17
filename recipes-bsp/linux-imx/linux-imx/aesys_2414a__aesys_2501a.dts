@@ -6,11 +6,62 @@
 
 / {
 	model = "AESYS 2414A+2501A";
+
+    wm8524: audio-codec {
+		#sound-dai-cells = <0>;
+		compatible = "wlf,wm8524";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_sound_wm8524>;
+		wlf,mute-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
+	
+	sound-wm8524 {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "wm8524-audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,frame-master = <&cpudai>;
+		simple-audio-card,bitclock-master = <&cpudai>;
+		simple-audio-card,widgets =
+			"Line", "Left Line Out Jack",
+			"Line", "Right Line Out Jack";
+		simple-audio-card,routing =
+			"Left Line Out Jack", "LINEVOUTL",
+			"Right Line Out Jack", "LINEVOUTR";
+		
+		cpudai: simple-audio-card,cpu {
+			sound-dai = <&sai1>;
+		};
+		
+		simple-audio-card,codec {
+			sound-dai = <&wm8524>;
+			clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIOMIX_SAI1_MCLK1>;
+		};
+	};
 };
 
 &i2c5 {
 	i2c_temp: temp@48 {
 		compatible = "ti,tmp1075";
 		reg = <0x48>;
+	};
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_emmc_gpios &pinctrl_pin_hwrev_gpios &pinctrl_pin_gpios &pinctrl_pin_gpios_2501>;
+
+	pinctrl_pin_gpios_2501: pin_gpios_2501 {
+		fsl,pins = <
+		MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06       0x00000006   	// AUDIO_nMUTE_CTRL
+		MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		 0x00000006		// USB_HUB_SOFT_RESET
+		MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08       0x00000006   	// LTE_nPWR_ON
+		MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09       0x00000006   	// WIFI_BLE_nRESET
+		>;
+	};
+
+	pinctrl_sound_wm8524: sound_wm8524_gpios {
+		fsl,pins = <
+		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
+		>;
 	};
 };
