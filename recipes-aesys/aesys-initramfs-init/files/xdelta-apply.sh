@@ -32,6 +32,14 @@ clean_up () {
         rm -rf "$PACKAGEPOST" ;
     fi
 
+    # Remove support files for boot loader update, if any
+    if [ -f "$UBOOTBIN" ]; then
+        rm -rf "$UBOOTBIN" ;
+    fi
+    if [ -f "$UBOOTBINEX" ]; then
+        rm -rf "$UBOOTBINEX" ;
+    fi
+
     if [ $SIMULATION -ne 1 ]; then
         if [ "$PLATFORM" == "gemini" ]; then
             # Ensure boot folder is remounted RO on Gemini
@@ -77,35 +85,41 @@ delta_file () {
     # Determine if, depending on boot scheme, the file has to be processed
     BASEFILE= ;
     TARGETFILE= ;
-    if [ -z "${DB_HALF}" ] || [ "${DB_MODE}" == "partitions" ]; then
-        if [[ $FILE == *.a ]] || [[ $FILE == *.b ]]; then
-            log "+ Skipped: half-based file while in single of dual (partitions-based) boot scheme" ;
-        else
-            BASEFILE="$FILE" ;
+    if [ "$FILE" == "uboot.bin" ]; then
+        BASEFILE="$FILE" ;
+        TARGETFILE=$(basename "$UBOOTBIN") ;
+        OTHERFOLDER=$(dirname "$UBOOTBIN") ;
+    else
+        if [ -z "${DB_HALF}" ] || [ "${DB_MODE}" == "partitions" ]; then
+            if [[ $FILE == *.a ]] || [[ $FILE == *.b ]]; then
+                log "+ Skipped: half-based file while in single of dual (partitions-based) boot scheme" ;
+            else
+                BASEFILE="$FILE" ;
 
-            if [ -z "${DB_HALF}" ]; then
-                # Special treatment for non-boot assets, if in single boot partition mode
-                # (in this case they are updated by system start-up script
-                # since they might be in use, and so not directly updatable)
-                if [ "$FILE" == "rootfs.squashfs" ] || [ "$FILE" == "app.bin" ]; then
-                    TARGETFILE="$FILE.update.tmp" ;
-                    OTHERFOLDER="$DATAFOLDER" ;
+                if [ -z "${DB_HALF}" ]; then
+                    # Special treatment for non-boot assets, if in single boot partition mode
+                    # (in this case they are updated by system start-up script
+                    # since they might be in use, and so not directly updatable)
+                    if [ "$FILE" == "rootfs.squashfs" ] || [ "$FILE" == "app.bin" ]; then
+                        TARGETFILE="$FILE.update.tmp" ;
+                        OTHERFOLDER="$DATAFOLDER" ;
+                    else
+                        TARGETFILE="$FILE" ;
+                    fi
                 else
                     TARGETFILE="$FILE" ;
                 fi
-            else
-                TARGETFILE="$FILE" ;
             fi
-        fi
-    else
-        if [[ $FILE != *.${DB_HALF} ]]; then
-            log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
         else
-            BASEFILE="${FILE::-2}" ;
-            if [ "${DB_HALF}" == "a" ]; then
-                TARGETFILE="$BASEFILE.b" ;
+            if [[ $FILE != *.${DB_HALF} ]]; then
+                log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
             else
-                TARGETFILE="$BASEFILE.a" ;
+                BASEFILE="${FILE::-2}" ;
+                if [ "${DB_HALF}" == "a" ]; then
+                    TARGETFILE="$BASEFILE.b" ;
+                else
+                    TARGETFILE="$BASEFILE.a" ;
+                fi
             fi
         fi
     fi
@@ -131,10 +145,19 @@ delta_file () {
 
         if [ ! -z "$TARGETENTRY" ]; then
 
-            TARGETDIGEST=$(echo "$TARGETENTRY" | cut -d'=' -f2) ;
+            TARGETENTRYVALUE=$(echo "$TARGETENTRY" | cut -d'=' -f2) ;
+            TARGETDIGEST=$(echo "$TARGETENTRYVALUE" | cut -d',' -f1) ;
+            TARGETSIZE=$(echo "$TARGETENTRYVALUE" | cut -d',' -f2) ;
 
             # Calculate existing file digest
-            EXDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
+            if [ "$BASEFILE" == "uboot.bin" ]; then
+                EXFILE="$UBOOTBINEX" ;
+                dd if="${FOLDER}" of="$EXFILE" bs=1024 skip=32 iflag=count_bytes count=$TARGETSIZE >/dev/null 2>/dev/null ;
+            else
+                EXFILE=${FOLDER}/${FILE} ;
+            fi
+
+            EXDIGEST=$(sha256sum "${EXFILE}" 2>/dev/null | cut -d' ' -f1) ;
 
             if [ "$TARGETDIGEST" != "$EXDIGEST" ]; then
 
@@ -151,9 +174,9 @@ delta_file () {
                     else
                         log "+ Applying delta..."
                         if [ $XDELTA -eq 1 ]; then
-                            xdelta patch -p "$DELTADIFF" "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                            xdelta patch -p "$DELTADIFF" "${EXFILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                         else
-                            xdelta3 -d -f -D -R -S djw -s "${FOLDER}/${FILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                            xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                         fi
 
                         if [ $? -ne 0 ]; then
@@ -167,11 +190,11 @@ delta_file () {
                         # Flush
                         sync ;
 
-                        # Drop disk caches (for forcing the system to reload data from disk)
-                        echo 3 > /proc/sys/vm/drop_caches ;
-
                         # Perform verification, if requested
                         if [ $SKIPVERIFICATION -ne 1 ]; then
+                            # Drop disk caches (for forcing the system to reload data from disk)
+                            echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
                             VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                 log_error "# Delta verification failed: cannot continue" ;
@@ -210,7 +233,7 @@ delta_file () {
 
         # Check if, for some reasons, the asset should be copied
         # from the current half
-        if [ $COPYFROMEXISTING -eq 1 ] && [ ! -z "${DB_HALF}" ]; then
+        if [ $COPYFROMEXISTING -eq 1 ] && [ ! -z "${DB_HALF}" ] && [ "$BASEFILE" != "uboot.bin" ]; then
             if [ ! -z "DB_HALF" ]; then
 
                 diff "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
@@ -237,11 +260,11 @@ delta_file () {
                         # Flush
                         sync ;
 
-                        # Drop disk caches (for forcing the system to reload data from disk)
-                        echo 3 > /proc/sys/vm/drop_caches ;
-
                         # Perform verification, if requested
                         if [ $SKIPVERIFICATION -ne 1 ]; then
+                            # Drop disk caches (for forcing the system to reload data from disk)
+                            echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
                             TARGETDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
                             VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
@@ -279,6 +302,7 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 -s  Simulation mode: do not actually any file on system
 -x  Use xdelta instead of xdelta3
 -n  Do not verify delta (fast but unsafe)
+-f  Update boot loader (ATTENTION: could brick the system in case of errors)
 -m  Forces the given boot scheme
     (<mode> can be "none", "files:a", "files:b" or "partitions")
 -b  The folder containing boot assets (if not specified a guess is attempted based on platform)
@@ -305,6 +329,7 @@ FORCEDDUALBOOTSCHEME= ;
 BOOTFOLDER= ;
 DATAFOLDER= ;
 OUTPUTFOLDER= ;
+UPDATEBOOTLOADER=0 ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -330,7 +355,7 @@ if [ -d "${HIST}" ]; then
 fi
 
 OPTIND=1 ;
-while getopts hsxnm:b:d:o: opt; do
+while getopts hsxnfm:b:d:o: opt; do
     case $opt in
         h)
             usage ;
@@ -344,6 +369,9 @@ while getopts hsxnm:b:d:o: opt; do
             ;;
         n)
             SKIPVERIFICATION=1 ;
+            ;;
+        f)
+            UPDATEBOOTLOADER=1 ;
             ;;
         m)
             FORCEDDUALBOOTSCHEME="${OPTARG}" ;
@@ -366,11 +394,9 @@ while getopts hsxnm:b:d:o: opt; do
 done
 shift "$((OPTIND-1))" ;
 
-if [ $SIMULATION -ne 1 ]; then
-    # Avoid kernel messages to flood the console during this script
-    INITIAL_PRINT_LEVELS=$(sysctl kernel.printk | cut -d'=' -f2) ;
-    sysctl -w kernel.printk="2 4 1 7" >/dev/null 2>/dev/null ;
-fi
+# Avoid kernel messages to flood the console during this script
+INITIAL_PRINT_LEVELS=$(sysctl kernel.printk | cut -d'=' -f2) ;
+sysctl -w kernel.printk="2 4 1 7" >/dev/null 2>/dev/null ;
 
 # Determine platform
 PLATFORM= ;
@@ -397,11 +423,10 @@ if [ -z "$BOOTFOLDER" ]; then
 fi
 
 if [ ! -d "$BOOTFOLDER" ]; then
-
     log_error "Invalid or unspecified boot folder" ;
     clean_up ;
-    exit 2 ;
-fi;
+    exit 3 ;
+fi
 
 if [ -z "$DATAFOLDER" ]; then
     if [ "$PLATFORM" == "gemini" ]; then
@@ -412,35 +437,44 @@ fi
 if [ ! -d "$DATAFOLDER" ]; then
     log_error "Invalid or unspecified data folder" ;
     clean_up ;
-    exit 3 ;
+    exit 4 ;
 fi;
 
 # Check the availability of index.ini in DELTA_PACKAGE_FOLDER
 PACKAGEFOLDER="$1" ;
 PACKAGEINDEX=$(mktemp) ;
 get_asset "$PACKAGEFOLDER/index.ini" > $PACKAGEINDEX ;
-PACKAGEINDEXSIZE=$(wc -c "$PACKAGEINDEX" | cut -d' ' -f1) ;
+PACKAGEINDEXSIZE=$(wc -c "$PACKAGEINDEX" 2>/dev/null | cut -d' ' -f1) ;
 
 if [ ! -f "$PACKAGEINDEX" ] || [ $PACKAGEINDEXSIZE -eq 0 ]; then
     log_error "Invalid or unspecified package folder" ;
     clean_up ;
-    exit 4 ;
+    exit 5 ;
 fi
 
 # Get pre.sh script from package
 PACKAGEPRE=$(mktemp) ;
 get_asset "$PACKAGEFOLDER/pre.sh" > $PACKAGEPRE ;
-PACKAGEPRESIZE=$(wc -c "$PACKAGEPRE" | cut -d' ' -f1) ;
+PACKAGEPRESIZE=$(wc -c "$PACKAGEPRE" 2>/dev/null | cut -d' ' -f1) ;
 
 # Get post.sh script from package
 PACKAGEPOST=$(mktemp) ;
 get_asset "$PACKAGEFOLDER/post.sh" > $PACKAGEPOST ;
-PACKAGEPOSTSIZE=$(wc -c "$PACKAGEPOST" | cut -d' ' -f1) ;
+PACKAGEPOSTSIZE=$(wc -c "$PACKAGEPOST" 2>/dev/null | cut -d' ' -f1) ;
 
 # Prepare the output folder
 if [ ! -z "$OUTPUTFOLDER" ] && [ "$OUTPUTFOLDER" != "$BOOTFOLDER" ] && [ "$OUTPUTFOLDER" != "$DATAFOLDER" ]; then
     rm -rf "$OUTPUTFOLDER" ;
     mkdir -p "$OUTPUTFOLDER" ;
+fi
+
+# Get kernel parameters
+KERNEL_CMDLINE=`cat /proc/cmdline` ;
+
+# Determine boot device (only if platform is set, just for avoiding dramatic results on working stations)
+if [ ! -z "$PLATFORM" ]; then
+    BOOT_PART=`echo ${KERNEL_CMDLINE} | sed -e 's/^.*root=//' -e 's/ .*$//'`
+    BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
 fi
 
 # Dump info
@@ -456,6 +490,8 @@ if [ -z "$PLATFORM" ]; then
     log "Platform: (not specified)" ;
 else
     log "Platform: ${PLATFORM^^}" ;
+    log "Boot device: $BOOT_DEVICE" ;
+    log "Boot partition: $BOOT_PART" ;
 fi
 log "Boot assets folder: $BOOTFOLDER" ;
 log "Non-boot assets folder: $DATAFOLDER" ;
@@ -487,10 +523,9 @@ if [ ! -z "$FORCEDDUALBOOTSCHEME" ]; then
     else
         log_error "Invalid boot scheme partition force flag" ;
         clean_up ;
-        exit 5 ;
+        exit 6 ;
     fi
 else
-    KERNEL_CMDLINE=`cat /proc/cmdline` ;
     DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="` ;
     DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="` ;
 
@@ -511,7 +546,7 @@ elif [ "${DB_MODE}" == "partitions" ]; then
     if [ ! -d ${BOOTFOLDEROTHER} ]; then
         log_error "Cannot access the inactive-half boot partition: cannot continue" ;
         clean_up ;
-        exit 6;
+        exit 7;
     fi
 
     if [ $SIMULATION -ne 1 ]; then
@@ -521,7 +556,7 @@ elif [ "${DB_MODE}" == "partitions" ]; then
             if [ $? -ne 0 ]; then
                 log_error "GEMINI: Cannot mount inactive boot folder as read-write" ;
                 clean_up ;
-                exit 7 ;
+                exit 8 ;
             fi
         fi
     fi
@@ -529,6 +564,10 @@ else
     log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
 fi
 log
+
+# Prepare support files for boot loader update
+UBOOTBIN=$(mktemp) ;
+UBOOTBINEX=$(mktemp) ;
 
 # Execute pre.sh, if any
 if [ -f "$PACKAGEPRE" ] && [ $PACKAGEPRESIZE -ne 0 ]; then
@@ -545,6 +584,52 @@ if [ -f "$PACKAGEPRE" ] && [ $PACKAGEPRESIZE -ne 0 ]; then
     log ;
 fi
 
+# Manage bootloader update, if requested
+if [ -z "$PLATFORM" ]; then
+    log_warning "Boot loader check disabled on non-identified platforms" ;
+elif [ $UPDATEBOOTLOADER -ne 1 ]; then
+    log "Boot loader check disabled by user choice" ;
+elif [ -z "$BOOT_DEVICE" ]; then
+    log_error "Cannot perform boot loader check due to unavailability of boot device" ;
+    clean_up ;
+    exit 9 ;
+else
+    delta_file "$BOOT_DEVICE" "uboot.bin" ;
+
+    UBOOTBINSIZE=$(wc -c "$UBOOTBIN" 2>/dev/null | cut -d' ' -f1) ;
+    if [ ! -f "$UBOOTBIN" ] || [ $UBOOTBINSIZE -eq 0 ]; then
+        log "+ No update available" ;
+    else
+        dd if="$UBOOTBIN" of="$BOOT_DEVICE" bs=1024 seek=32 >/dev/null 2>/null ;
+
+        if [ $? -ne 0 ]; then
+            log_error "# Error while patching boot loader: the system could be BRICKED!" ;
+            clean_up ;
+            exit 10 ;
+        fi
+
+        # Flush
+        sync ;
+
+        # Perform verification, if requested
+        if [ $SKIPVERIFICATION -ne 1 ]; then
+            # Drop disk caches (for forcing the system to reload data from disk)
+            echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
+            TARGETDIGEST=$(sha256sum "$UBOOTBIN" 2>/dev/null | cut -d' ' -f1);
+            TARGETSIZE=$(wc -c "$UBOOTBIN" 2>/dev/null | cut -d' ' -f1) ;
+
+            VERIFICATIONDIGEST=$(dd if=${BOOT_DEVICE} bs=1024 skip=32 iflag=count_bytes count=$TARGETSIZE 2>/dev/null | sha256sum 2>/dev/null | cut -d' ' -f1);
+
+            if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                log_error "# Delta verification failed for boot loader: the system could be BRICKED!" ;
+                clean_up ;
+                exit 11 ;
+            fi
+        fi
+    fi
+fi
+
 # Determine the list of files in boot folder to be updated
 FILES=( $(ls -1p "${BOOTFOLDER}" | grep -v "/") ) ;
 for f in ${FILES[@]}; do
@@ -556,7 +641,7 @@ for f in ${FILES[@]}; do
     if [ $? -ne 0 ]; then
         log_error "Error detected while processing boot files: cannot continue" ;
         clean_up ;
-        exit 8;
+        exit 12;
     fi
 done
 
@@ -572,7 +657,7 @@ for f in ${FILES[@]}; do
     if [ $? -ne 0 ]; then
         log_error "Error detected while processing data files: cannot continue" ;
         clean_up ;
-        exit 9;
+        exit 13;
     fi
 done
 log ;
