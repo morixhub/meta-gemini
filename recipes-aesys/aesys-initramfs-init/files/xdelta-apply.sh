@@ -2,7 +2,7 @@
 
 # Functions declaration
 log () {
-    echo $1 ;
+    echo "$1" ;
 }
 
 log_warning () {
@@ -22,21 +22,33 @@ clean_up () {
         rm -rf "$PACKAGEINDEX" ;
     fi
 
-    if [ "$PLATFORM" == "gemini" ]; then
-        # Ensure boot folder is remounted RO on Gemini
-        if [ ! -z "$BOOTFOLDER" ] && [ -d "$BOOTFOLDER" ]; then
-            mount -o remount,ro "${BOOTFOLDER}" >/dev/null 2>/dev/null ;
-        fi
-
-        # Ensure inactive boot folder is remounted RO on Gemini
-        if [ ! -z "$BOOTFOLDEROTHER" ] && [ -d "$BOOTFOLDEROTHER" ]; then
-            mount -o remount,ro "${BOOTFOLDEROTHER}" >/dev/null 2>/dev/null ;
-        fi
+    # Remove pre.sh, if any
+    if [ -f "$PACKAGEPRE" ]; then
+        rm -rf "$PACKAGEPRE" ;
     fi
 
-    # Restore initial kernel printk levels
-    if [ ! -z "$INITIAL_PRINT_LEVELS" ]; then
-        sysctl -w kernel.printk="$INITIAL_PRINT_LEVELS" >/dev/null 2>/dev/null;
+    # Remove post.sh, if any
+    if [ -f "$PACKAGEPOST" ]; then
+        rm -rf "$PACKAGEPOST" ;
+    fi
+
+    if [ $SIMULATION -ne 1 ]; then
+        if [ "$PLATFORM" == "gemini" ]; then
+            # Ensure boot folder is remounted RO on Gemini
+            if [ ! -z "$BOOTFOLDER" ] && [ -d "$BOOTFOLDER" ]; then
+                mount -o remount,ro "${BOOTFOLDER}" >/dev/null 2>/dev/null ;
+            fi
+
+            # Ensure inactive boot folder is remounted RO on Gemini
+            if [ ! -z "$BOOTFOLDEROTHER" ] && [ -d "$BOOTFOLDEROTHER" ]; then
+                mount -o remount,ro "${BOOTFOLDEROTHER}" >/dev/null 2>/dev/null ;
+            fi
+        fi
+
+        # Restore initial kernel printk levels
+        if [ ! -z "$INITIAL_PRINT_LEVELS" ]; then
+            sysctl -w kernel.printk="$INITIAL_PRINT_LEVELS" >/dev/null 2>/dev/null;
+        fi
     fi
 }
 
@@ -134,42 +146,46 @@ delta_file () {
                 get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
 
                 if [ $? -eq 0 ] && [ -f "$DELTADIFF" ]; then
-                    log "+ Applying delta..."
-                    if [ $XDELTA -eq 1 ]; then
-                        xdelta patch -p "$DELTADIFF" "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                    if [ $SIMULATION -eq 1 ]; then
+                        log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
                     else
-                        xdelta3 -d -f -D -R -S djw -s "${FOLDER}/${FILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                    fi
-
-                    if [ $? -ne 0 ]; then
-                        rm -rf "$DELTADIFF" ;
-                        log_error "# Error while applying patch: cannot continue" ;
-                        return -1 ;
-                    else
-                        rm -rf "$DELTADIFF" ;
-                    fi
-
-                    # Flush
-                    sync ;
-
-                    # Drop disk caches (for forcing the system to reload data from disk)
-                    echo 3 > /proc/sys/vm/drop_caches ;
-
-                    # Perform verification, if requested
-                    if [ $SKIPVERIFICATION -ne 1 ]; then
-                        VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
-                        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                            log_error "# Delta verification failed: cannot continue" ;
-                            return -2 ;
+                        log "+ Applying delta..."
+                        if [ $XDELTA -eq 1 ]; then
+                            xdelta patch -p "$DELTADIFF" "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                        else
+                            xdelta3 -d -f -D -R -S djw -s "${FOLDER}/${FILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                         fi
-                    fi
 
-                    # Finalize ".update.tmp" files to ".update"
-                    if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                        mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
                         if [ $? -ne 0 ]; then
-                            log_error "# Update file finalization failed: cannot continue" ;
-                            return -2 ;
+                            rm -rf "$DELTADIFF" ;
+                            log_error "# Error while applying patch: cannot continue" ;
+                            return -1 ;
+                        else
+                            rm -rf "$DELTADIFF" ;
+                        fi
+
+                        # Flush
+                        sync ;
+
+                        # Drop disk caches (for forcing the system to reload data from disk)
+                        echo 3 > /proc/sys/vm/drop_caches ;
+
+                        # Perform verification, if requested
+                        if [ $SKIPVERIFICATION -ne 1 ]; then
+                            VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                            if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                                log_error "# Delta verification failed: cannot continue" ;
+                                return -2 ;
+                            fi
+                        fi
+
+                        # Finalize ".update.tmp" files to ".update"
+                        if [[ "$TARGETFILE" == *.update.tmp ]]; then
+                            mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                            if [ $? -ne 0 ]; then
+                                log_error "# Update file finalization failed: cannot continue" ;
+                                return -2 ;
+                            fi
                         fi
                     fi
                 else
@@ -202,31 +218,36 @@ delta_file () {
                     # Log
                     log "+ No update available and no need to copy from current half (target file is already good)" ;
                 else
-                    # Log
-                    log "+ No update available: copying from current half..." ;
+                    if [ $SIMULATION -eq 1 ]; then
+                        # Log
+                        log "+ No update available: copying from current half... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                    else
+                        # Log
+                        log "+ No update available: copying from current half..." ;
 
-                    # Copy file
-                    cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" ;
+                        # Copy file
+                        cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" ;
 
-                    # Check result
-                    if [ $? -ne 0 ]; then
-                        log_error "# Error while copying from current half: cannot continue" ;
-                        return -3 ;
-                    fi
+                        # Check result
+                        if [ $? -ne 0 ]; then
+                            log_error "# Error while copying from current half: cannot continue" ;
+                            return -3 ;
+                        fi
 
-                    # Flush
-                    sync ;
+                        # Flush
+                        sync ;
 
-                    # Drop disk caches (for forcing the system to reload data from disk)
-                    echo 3 > /proc/sys/vm/drop_caches ;
+                        # Drop disk caches (for forcing the system to reload data from disk)
+                        echo 3 > /proc/sys/vm/drop_caches ;
 
-                    # Perform verification, if requested
-                    if [ $SKIPVERIFICATION -ne 1 ]; then
-                        TARGETDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
-                        VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
-                        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                            log_error "# Verification error while copying from current half: cannot continue" ;
-                            return -4 ;
+                        # Perform verification, if requested
+                        if [ $SKIPVERIFICATION -ne 1 ]; then
+                            TARGETDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
+                            VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                            if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                                log_error "# Verification error while copying from current half: cannot continue" ;
+                                return -4 ;
+                            fi
                         fi
                     fi
                 fi
@@ -255,6 +276,7 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 "<boot_folder>-inactive", otherwise the script terminates with error.
 
 -h  Displays this help and exit
+-s  Simulation mode: do not actually any file on system
 -x  Use xdelta instead of xdelta3
 -n  Do not verify delta (fast but unsafe)
 -m  Forces the given boot scheme
@@ -276,6 +298,7 @@ echo ;
 COMMANDLINE="$@" ;
 COMMANDNAME="$0" ;
 SCRIPTNAME=$(basename "$0") ;
+SIMULATION=0 ;
 XDELTA=0 ;
 SKIPVERIFICATION=0 ;
 FORCEDDUALBOOTSCHEME= ;
@@ -299,15 +322,22 @@ HIST="$COMMANDDIR/.hist" ;
 if [ ! -d "${HIST}" ]; then
     mkdir -p "${HIST}" 2>/dev/null ;
 fi
-COMMANDLINE_OUTPUT="${HIST}/commandline.txt" ;
-echo "$COMMANDNAME $COMMANDLINE" >> "$COMMANDLINE_OUTPUT" 2>/dev/null ;
+if [ -d "${HIST}" ]; then
+    mkdir -p "${HIST}" 2>/dev/null ;
+
+    COMMANDLINE_OUTPUT="${HIST}/commandline.txt" ;
+    echo "$COMMANDNAME $COMMANDLINE" >> "$COMMANDLINE_OUTPUT" 2>/dev/null ;
+fi
 
 OPTIND=1 ;
-while getopts hxnm:b:d:o: opt; do
+while getopts hsxnm:b:d:o: opt; do
     case $opt in
         h)
             usage ;
             exit 0 ;
+            ;;
+        s)
+            SIMULATION=1 ;
             ;;
         x)
             XDELTA=1 ;
@@ -336,9 +366,11 @@ while getopts hxnm:b:d:o: opt; do
 done
 shift "$((OPTIND-1))" ;
 
-# Avoid kernel messages to flood the console during this script
-INITIAL_PRINT_LEVELS=$(sysctl kernel.printk | cut -d'=' -f2) ;
-sysctl -w kernel.printk="2 4 1 7" >/dev/null 2>/dev/null ;
+if [ $SIMULATION -ne 1 ]; then
+    # Avoid kernel messages to flood the console during this script
+    INITIAL_PRINT_LEVELS=$(sysctl kernel.printk | cut -d'=' -f2) ;
+    sysctl -w kernel.printk="2 4 1 7" >/dev/null 2>/dev/null ;
+fi
 
 # Determine platform
 PLATFORM= ;
@@ -352,12 +384,14 @@ if [ -z "$BOOTFOLDER" ]; then
     if [ "$PLATFORM" == "gemini" ]; then
         BOOTFOLDER="/boot" ;
 
-        # On Gemini the boot folder needs to be mounted R/W
-        mount -o remount,rw "${BOOTFOLDER}" >/dev/null 2>/dev/null ;
-        if [ $? -ne 0 ]; then
-            log_error "GEMINI: Cannot mount boot-folder as read-write" ;
-            clean_up ;
-            exit 2 ;
+        if [ $SIMULATION -ne 1 ]; then
+            # On Gemini the boot folder needs to be mounted R/W
+            mount -o remount,rw "${BOOTFOLDER}" >/dev/null 2>/dev/null ;
+            if [ $? -ne 0 ]; then
+                log_error "GEMINI: Cannot mount boot-folder as read-write" ;
+                clean_up ;
+                exit 2 ;
+            fi
         fi
     fi
 fi
@@ -393,6 +427,16 @@ if [ ! -f "$PACKAGEINDEX" ] || [ $PACKAGEINDEXSIZE -eq 0 ]; then
     exit 4 ;
 fi
 
+# Get pre.sh script from package
+PACKAGEPRE=$(mktemp) ;
+get_asset "$PACKAGEFOLDER/pre.sh" > $PACKAGEPRE ;
+PACKAGEPRESIZE=$(wc -c "$PACKAGEPRE" | cut -d' ' -f1) ;
+
+# Get post.sh script from package
+PACKAGEPOST=$(mktemp) ;
+get_asset "$PACKAGEFOLDER/post.sh" > $PACKAGEPOST ;
+PACKAGEPOSTSIZE=$(wc -c "$PACKAGEPOST" | cut -d' ' -f1) ;
+
 # Prepare the output folder
 if [ ! -z "$OUTPUTFOLDER" ] && [ "$OUTPUTFOLDER" != "$BOOTFOLDER" ] && [ "$OUTPUTFOLDER" != "$DATAFOLDER" ]; then
     rm -rf "$OUTPUTFOLDER" ;
@@ -400,6 +444,14 @@ if [ ! -z "$OUTPUTFOLDER" ] && [ "$OUTPUTFOLDER" != "$BOOTFOLDER" ] && [ "$OUTPU
 fi
 
 # Dump info
+if [ $SIMULATION -eq 1 ]; then
+    log "+------------------------------------------------+" ;
+    log "|                 SIMULATION MODE                |" ;
+    log "| The system is not going to be modified at all! |" ;
+    log "+------------------------------------------------+" ;
+    log ;
+fi
+
 if [ -z "$PLATFORM" ]; then
     log "Platform: (not specified)" ;
 else
@@ -462,19 +514,36 @@ elif [ "${DB_MODE}" == "partitions" ]; then
         exit 6;
     fi
 
-    # On Gemini the boot folder needs to be mounted R/W
-    if [ "$PLATFORM" == "gemini" ]; then
-        mount -o remount,rw "${BOOTFOLDEROTHER}" >/dev/null 2>/dev/null ;
-        if [ $? -ne 0 ]; then
-            log_error "GEMINI: Cannot mount inactive boot folder as read-write" ;
-            clean_up ;
-            exit 7 ;
+    if [ $SIMULATION -ne 1 ]; then
+        # On Gemini the boot folder needs to be mounted R/W
+        if [ "$PLATFORM" == "gemini" ]; then
+            mount -o remount,rw "${BOOTFOLDEROTHER}" >/dev/null 2>/dev/null ;
+            if [ $? -ne 0 ]; then
+                log_error "GEMINI: Cannot mount inactive boot folder as read-write" ;
+                clean_up ;
+                exit 7 ;
+            fi
         fi
     fi
 else
     log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
 fi
 log
+
+# Execute pre.sh, if any
+if [ -f "$PACKAGEPRE" ] && [ $PACKAGEPRESIZE -ne 0 ]; then
+    if [ $SIMULATION -eq 1 ]; then
+        # Log
+        log "Executing pre.sh script... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+    else
+        # Log
+        log "Executing pre.sh script..." ;
+
+        # Execute script
+        source "$PACKAGEPRE" ;
+    fi
+    log ;
+fi
 
 # Determine the list of files in boot folder to be updated
 FILES=( $(ls -1p "${BOOTFOLDER}" | grep -v "/") ) ;
@@ -506,6 +575,22 @@ for f in ${FILES[@]}; do
         exit 9;
     fi
 done
+log ;
+
+# Execute post.sh, if any
+if [ -f "$PACKAGEPOST" ] && [ $PACKAGEPOSTSIZE -ne 0 ]; then
+    if [ $SIMULATION -eq 1 ]; then
+        # Log
+        log "Executing post.sh script... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+    else
+        # Log
+        log "Executing post.sh script..." ;
+
+        # Execute script
+        source "$PACKAGEPOST" ;
+    fi
+    log ;
+fi
 
 # Clean-up
 clean_up ;

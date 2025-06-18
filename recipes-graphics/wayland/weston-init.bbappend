@@ -2,7 +2,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 RDEPENDS:${PN} += "bash"
 
-SRC_URI =  " \
+SRC_URI +=  " \
     file://aesys-ts-calibrate.sh \
     file://aesys-ts-calibrate-store.sh \
 "
