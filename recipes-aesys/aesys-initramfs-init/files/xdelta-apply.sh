@@ -167,11 +167,21 @@ delta_file () {
                 # Check if the file exists as a delta in the package
                 DELTADIFF=$(mktemp) ;
                 get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
+                DELTADIFFSIZE=$(wc -c "$DELTADIFF" 2>/dev/null | cut -d' ' -f1) ;
 
-                if [ $? -eq 0 ] && [ -f "$DELTADIFF" ]; then
+                if [ $? -eq 0 ] && [ -f "$DELTADIFF" ] && [ $DELTADIFFSIZE -ne 0 ]; then
                     if [ $SIMULATION -eq 1 ]; then
                         log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                        if [ -f "$DELTADIFF" ]; then
+                            rm -rf "$DELTADIFF" ;
+                        fi
                     else
+                        # Flag the system for changes
+                        if [ "$FILE" != "uboot.bin" ]; then
+                            REBOOTPENDING=1 ;
+                        fi
+
+                        # Apply delta
                         log "+ Applying delta..."
                         if [ $XDELTA -eq 1 ]; then
                             xdelta patch -p "$DELTADIFF" "${EXFILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
@@ -180,11 +190,15 @@ delta_file () {
                         fi
 
                         if [ $? -ne 0 ]; then
-                            rm -rf "$DELTADIFF" ;
+                            if [ -f "$DELTADIFF" ]; then
+                                rm -rf "$DELTADIFF" ;
+                            fi
                             log_error "# Error while applying patch: cannot continue" ;
                             return -1 ;
                         else
-                            rm -rf "$DELTADIFF" ;
+                            if [ -f "$DELTADIFF" ]; then
+                                rm -rf "$DELTADIFF" ;
+                            fi
                         fi
 
                         # Flush
@@ -207,16 +221,88 @@ delta_file () {
                             mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
                             if [ $? -ne 0 ]; then
                                 log_error "# Update file finalization failed: cannot continue" ;
-                                return -2 ;
+                                return -3 ;
                             fi
                         fi
                     fi
                 else
-                    # Log
-                    log_warning "! Can't retrieve file from delta package: file is not going to be updated" ;
+                    if [ -f "$DELTADIFF" ]; then
+                        rm -rf "$DELTADIFF" ;
+                    fi
 
-                    # Set the flag for copy the assets from the current half, if it applies
-                    COPYFROMEXISTING=1 ;
+                    # Log
+                    log_warning "! Can't retrieve delta file from package: attempt to retrieve resource from target..." ;
+
+                    # Check if the file exists as a delta in the package
+                    RESOURCETARGET=$(mktemp) ;
+                    get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "$RESOURCETARGET" ;
+                    RESOURCETARGETSIZE=$(wc -c "$RESOURCETARGET" 2>/dev/null | cut -d' ' -f1) ;
+
+                    if [ $? -eq 0 ] && [ -f "$RESOURCETARGET" ] && [ $RESOURCETARGETSIZE -ne 0 ]; then
+                        if [ $SIMULATION -eq 1 ]; then
+                            log "+ Applying target resource... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+
+                            if [ -f "$RESOURCETARGET" ]; then
+                                rm -rf "$RESOURCETARGET" ;
+                            fi
+                        else
+                            # Flag the system for changes
+                            if [ "$FILE" != "uboot.bin" ]; then
+                                REBOOTPENDING=1 ;
+                            fi
+
+                            # Apply delta
+                            log "+ Applying target resource..."
+
+                            cp -f "$RESOURCETARGET" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null;
+
+                            if [ $? -ne 0 ]; then
+                                if [ -f "$RESOURCETARGET" ]; then
+                                    rm -rf "$RESOURCETARGET" ;
+                                fi
+                                log_error "# Error while applying target resource cannot continue" ;
+                                return -4 ;
+                            else
+                                if [ -f "$RESOURCETARGET" ]; then
+                                    rm -rf "$RESOURCETARGET" ;
+                                fi
+                            fi
+
+                            # Flush
+                            sync ;
+
+                            # Perform verification, if requested
+                            if [ $SKIPVERIFICATION -ne 1 ]; then
+                                # Drop disk caches (for forcing the system to reload data from disk)
+                                echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
+                                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                                    log_error "# Delta verification failed: cannot continue" ;
+                                    return -5 ;
+                                fi
+                            fi
+
+                            # Finalize ".update.tmp" files to ".update"
+                            if [[ "$TARGETFILE" == *.update.tmp ]]; then
+                                mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                                if [ $? -ne 0 ]; then
+                                    log_error "# Update file finalization failed: cannot continue" ;
+                                    return -6 ;
+                                fi
+                            fi
+                        fi
+                    else
+                        if [ -f "$RESOURCETARGET" ]; then
+                            rm -rf "$RESOURCETARGET" ;
+                        fi
+
+                        # Log
+                        log_warning "! Can't retrieve target resource from package: the file is not going to be updated";
+
+                        # Set the flag for copy the assets from the current half, if it applies
+                        COPYFROMEXISTING=1 ;
+                    fi
                 fi
             else
 
@@ -248,13 +334,18 @@ delta_file () {
                         # Log
                         log "+ No update available: copying from current half..." ;
 
+                        # Flag the system for changes
+                        if [ "$FILE" != "uboot.bin" ]; then
+                            REBOOTPENDING=1 ;
+                        fi
+
                         # Copy file
                         cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" ;
 
                         # Check result
                         if [ $? -ne 0 ]; then
                             log_error "# Error while copying from current half: cannot continue" ;
-                            return -3 ;
+                            return -7 ;
                         fi
 
                         # Flush
@@ -269,7 +360,7 @@ delta_file () {
                             VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                 log_error "# Verification error while copying from current half: cannot continue" ;
-                                return -4 ;
+                                return -8 ;
                             fi
                         fi
                     fi
@@ -310,6 +401,11 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 -o  The output folder (if not specified, then the same <boot_folder> and <data_folder> are going
     to be used, based on asset type)
 
+RETURN VALUE:
+    0: Success (no changes made)
+    1-254: Error codes
+    255: Success (some changes have been made and a reboot is pending)
+
 EOF
 }
 
@@ -330,6 +426,7 @@ BOOTFOLDER= ;
 DATAFOLDER= ;
 OUTPUTFOLDER= ;
 UPDATEBOOTLOADER=0 ;
+REBOOTPENDING=0 ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -464,7 +561,7 @@ PACKAGEPOSTSIZE=$(wc -c "$PACKAGEPOST" 2>/dev/null | cut -d' ' -f1) ;
 
 # Prepare the output folder
 if [ ! -z "$OUTPUTFOLDER" ] && [ "$OUTPUTFOLDER" != "$BOOTFOLDER" ] && [ "$OUTPUTFOLDER" != "$DATAFOLDER" ]; then
-    rm -rf "$OUTPUTFOLDER" ;
+    rm -rf "$OUTPUTFOLDER" >/dev/null 2>/dev/null ;
     mkdir -p "$OUTPUTFOLDER" ;
 fi
 
@@ -578,6 +675,9 @@ if [ -f "$PACKAGEPRE" ] && [ $PACKAGEPRESIZE -ne 0 ]; then
         # Log
         log "Executing pre.sh script..." ;
 
+        # Flag the system for (possible) changes
+        REBOOTPENDING=1 ;
+
         # Execute script
         source "$PACKAGEPRE" ;
     fi
@@ -600,6 +700,10 @@ else
     if [ ! -f "$UBOOTBIN" ] || [ $UBOOTBINSIZE -eq 0 ]; then
         log "+ No update available" ;
     else
+        # Flag the system for changes
+        REBOOTPENDING=1 ;
+
+        # Flash the bootloader
         dd if="$UBOOTBIN" of="$BOOT_DEVICE" bs=1024 seek=32 >/dev/null 2>/null ;
 
         if [ $? -ne 0 ]; then
@@ -671,6 +775,9 @@ if [ -f "$PACKAGEPOST" ] && [ $PACKAGEPOSTSIZE -ne 0 ]; then
         # Log
         log "Executing post.sh script..." ;
 
+        # Flag the system for (possible) changes
+        REBOOTPENDING=1 ;
+
         # Execute script
         source "$PACKAGEPOST" ;
     fi
@@ -679,3 +786,8 @@ fi
 
 # Clean-up
 clean_up ;
+
+# Manage exit status
+if [ $REBOOTPENDING -eq 1 ]; then
+    exit 255;
+fi
