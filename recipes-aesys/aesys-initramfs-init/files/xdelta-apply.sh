@@ -90,29 +90,68 @@ delta_file () {
         TARGETFILE=$(basename "$UBOOTBIN") ;
         OTHERFOLDER=$(dirname "$UBOOTBIN") ;
     else
-        if [ -z "${DB_HALF}" ] || [ "${DB_MODE}" == "partitions" ]; then
+        if [ -z "${DB_HALF}" ]; then
             if [[ $FILE == *.a ]] || [[ $FILE == *.b ]]; then
-                log "+ Skipped: half-based file while in single of dual (partitions-based) boot scheme" ;
+                log "+ Skipped: half-based file while in single boot scheme" ;
             else
                 BASEFILE="$FILE" ;
 
-                if [ -z "${DB_HALF}" ]; then
-                    # Special treatment for non-boot assets, if in single boot partition mode
-                    # (in this case they are updated by system start-up script
-                    # since they might be in use, and so not directly updatable)
-                    if [ "$FILE" == "rootfs.squashfs" ] || [ "$FILE" == "app.bin" ]; then
-                        TARGETFILE="$FILE.update.tmp" ;
-                        OTHERFOLDER="$DATAFOLDER" ;
+                # Special treatment for non-boot assets, if in single boot partition mode
+                # (in this case they are updated by system start-up script
+                # since they might be in use, and so not directly updatable)
+                if [ "$FILE" == "rootfs.squashfs" ] || [ "$FILE" == "app.squashfs" ]; then
+                    TARGETFILE="$FILE.update.tmp" ;
+                    OTHERFOLDER="$DATAFOLDER" ;
+                else
+                    TARGETFILE="$FILE" ;
+                fi
+            fi
+        elif [ "${DB_MODE}" == "partitions" ]; then
+            if [[ $FILE == *.a ]] || [[ $FILE == *.b ]]; then
+                # In dual boot (partitions-based) mode the app.squashfs is the
+                # only file that is managed anyway via .a and .b, and this
+                # fact has to be managed
+                if [[ $FILE == app.squashfs.* ]]; then
+                    if [[ $FILE != *.${DB_HALF} ]]; then
+                        log "+ Skipped: not current-half file while in dual (partitions-based) boot scheme" ;
                     else
-                        TARGETFILE="$FILE" ;
+                        BASEFILE="${FILE::-2}" ;
+                        if [ "${DB_HALF}" == "a" ]; then
+                            TARGETFILE="$BASEFILE.b" ;
+                        else
+                            TARGETFILE="$BASEFILE.a" ;
+                        fi
                     fi
+                else
+                    log "+ Skipped: half-based file while in dual (partitions-based) boot scheme" ;
+                fi
+            else
+                BASEFILE="$FILE" ;
+
+                # Special treatment for app.squashfs while in dual-boot (partitions-based),
+                # for handing the case when /app was mount from failsafe app.squashfs
+                # and not from the app.squashfs.<current_half>
+                # (in this case the file is updated by system start-up script
+                # since it might be in use, and so not directly updatable)
+                if [ "$FILE" == "app.squashfs" ]; then
+                    TARGETFILE="$FILE.update.tmp" ;
                 else
                     TARGETFILE="$FILE" ;
                 fi
             fi
         else
             if [[ $FILE != *.${DB_HALF} ]]; then
-                log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
+                # Special treatment for app.squashfs while in dual-boot (files-based),
+                # for handing the case when /app was mount from failsafe app.squashfs
+                # and not from the app.squashfs.<current_half>
+                # (in this case the file is updated by system start-up script
+                # since it might be in use, and so not directly updatable)
+                if [[ $FILE == "app.squashfs" ]]; then
+                    BASEFILE="$FILE" ;
+                    TARGETFILE="$FILE.update.tmp" ;
+                else
+                    log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
+                fi
             else
                 BASEFILE="${FILE::-2}" ;
                 if [ "${DB_HALF}" == "a" ]; then
@@ -750,12 +789,12 @@ for f in ${FILES[@]}; do
 done
 
 # Determine the list of files in data folder to be updated
-# (all .bin* files, for also handling .bin.a and .bin.b, except persist.bin)
-FILES=( $(ls -1p "${DATAFOLDER}"/*.bin* | grep -v "/" | grep -v "persist.bin" ) ) ;
+# (all .squashfs* files, for also handling .squashfs.a and .squashfs.b)
+FILES=( $(ls -1p "${DATAFOLDER}"/*.squashfs*) ) ;
 for f in ${FILES[@]}; do
 
     # Apply delta to current file, if any
-    delta_file "${DATAFOLDER}" "${f}" ;
+    delta_file "${DATAFOLDER}" "$(basename ${f})" ;
 
     # Check result
     if [ $? -ne 0 ]; then

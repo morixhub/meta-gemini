@@ -38,7 +38,7 @@ mount -t devtmpfs dev /dev
 
 # Declare file name
 ROOTFSSQUASHFS=rootfs.squashfs
-APPBIN=app.bin
+APPSQUASHFS=app.squashfs
 
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
@@ -49,7 +49,7 @@ BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
 DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="`
 DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}"
-DB_APPBIN="${APPBIN}"
+DB_APPSQUASHFS="${APPSQUASHFS}"
 DB_HALF=
 DB_MODE=
 if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
@@ -75,7 +75,7 @@ if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
 
 		DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}.${DB_HALF}" ;
 	fi
-	DB_APPBIN="${APPBIN}.${DB_HALF}" ;
+	DB_APPSQUASHFS="${APPSQUASHFS}.${DB_HALF}" ;
 else
 	BOOT_PART=${BOOT_DEVICE}p1 ;
 	DATA_PART=${BOOT_DEVICE}p2 ;
@@ -206,99 +206,95 @@ if [ -f "/data/.sys/$ROOTFSSQUASHFS.update.tmp" ]; then
     rm -f /data/.sys/$ROOTFSSQUASHFS.update.tmp ;
     do_log "Removed stale rootfs update file" ; 
 fi
-if [ -f "/data/.sys/$APPBIN.update.tmp" ]; then
-    rm -f /data/.sys/$APPBIN.update.tmp ;
+if [ -f "/data/.sys/$APPSQUASHFS.update.tmp" ]; then
+    rm -f /data/.sys/$APPSQUASHFS.update.tmp ;
     do_log "Removed stale app update file" ; 
 fi
 
-# Manage non-boot assets update while not in dual-boot mode
-if [ -z "$DB_HALF" ]; then
+# Update rootfs
+if [ -f "/data/.sys/$ROOTFSSQUASHFS.update" ]; then
+    
+    # Log
+    do_log "Updating rootfs..." ;
 
-    # Update rootfs
-    if [ -f "/data/.sys/$ROOTFSSQUASHFS.update" ]; then
-        
+    # Remount boot as R/W
+    mount -o remount,rw /boot ;
+
+    # Copy new file
+    TARGETDIGEST=$(sha256sum "/data/.sys/$ROOTFSSQUASHFS.update" 2>/dev/null | cut -d' ' -f1) ;
+    cp -f "/data/.sys/$ROOTFSSQUASHFS.update" "/boot/$ROOTFSSQUASHFS" ;
+    sync ;
+
+    # Remount boot as R/O
+    mount -o remount,ro /boot ;
+
+    # Verification
+    VERIFICATIONDIGEST=$(sha256sum "/boot/$ROOTFSSQUASHFS" 2>/dev/null | cut -d' ' -f1) ;
+
+    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+        # Error here: log and panic!
+        do_log "Update of rootfs failed: verification problem" ;
+        do_panic ;
+    else
+        # Remove update file
+        rm -f "/data/.sys/$ROOTFSSQUASHFS.update" ;
+
         # Log
-        do_log "Updating rootfs..." ;
-
-        # Remount boot as R/W
-        mount -o remount,rw /boot ;
-
-        # Copy new file
-        TARGETDIGEST=$(sha256sum "/data/.sys/$ROOTFSSQUASHFS.update" 2>/dev/null | cut -d' ' -f1) ;
-        cp -f "/data/.sys/$ROOTFSSQUASHFS.update" "/boot/$ROOTFSSQUASHFS" ;
-        sync ;
-
-        # Remount boot as R/O
-        mount -o remount,ro /boot ;
-
-        # Verification
-        VERIFICATIONDIGEST=$(sha256sum "/boot/$ROOTFSSQUASHFS" 2>/dev/null | cut -d' ' -f1) ;
-
-        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-            # Error here: log and panic!
-            do_log "Update of rootfs failed: verification problem" ;
-            do_panic ;
-        else
-            # Remove update file
-            rm -f "/data/.sys/$ROOTFSSQUASHFS.update" ;
-
-            # Log
-            do_log "Rootfs update completed successfully" ;
-        fi
+        do_log "Rootfs update completed successfully" ;
     fi
+fi
 
-    # Update app.bin
-    if [ -f "/data/.sys/$APPBIN.update" ]; then
+# Update app.squashfs
+if [ -f "/data/.sys/$APPSQUASHFS.update" ]; then
+
+    # Log
+    do_log "Updating app..." ;
+
+    # Copy new file
+    TARGETDIGEST=$(sha256sum "/data/.sys/$APPSQUASHFS.update" 2>/dev/null | cut -d' ' -f1) ;
+    cp -f "/data/.sys/$APPSQUASHFS.update" "/data/.sys/$APPSQUASHFS" ;
+    sync ;
+
+    # Verification
+    VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$APPSQUASHFS" 2>/dev/null | cut -d' ' -f1) ;
+
+    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+        # Error here: log and panic!
+        do_log "Update of app failed" ;
+        do_panic ;
+    else
+        # Remove update file
+        rm -f "/data/.sys/$APPSQUASHFS.update" ;
 
         # Log
-        do_log "Updating app..." ;
-
-        # Copy new file
-        TARGETDIGEST=$(sha256sum "/data/.sys/$APPBIN.update" 2>/dev/null | cut -d' ' -f1) ;
-        cp -f "/data/.sys/$APPBIN.update" "/data/.sys/$APPBIN" ;
-        sync ;
-
-        # Verification
-        VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$APPBIN" 2>/dev/null | cut -d' ' -f1) ;
-
-        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-            # Error here: log and panic!
-            do_log "Update of app.bin failed" ;
-            do_panic ;
-        else
-            # Remove update file
-            rm -f "/data/.sys/$APPBIN.update" ;
-
-            # Log
-            do_log "App update completed successfully" ;
-        fi
+        do_log "App update completed successfully" ;
     fi
 fi
 
 # Mount the app file system
 APP_ORIGIN=
-if [ -f /data/.sys/${DB_APPBIN} ]; then
-	APP_ORIGIN=${DB_APPBIN} ;
+if [ -f /data/.sys/${DB_APPSQUASHFS} ]; then
+	APP_ORIGIN=${DB_APPSQUASHFS} ;
 
     # Save info about /app
-    echo "/data/.sys/${DB_APPBIN}" > /initram/app.mount ;
+    echo "/data/.sys/${DB_APPSQUASHFS}" > /initram/app.mount ;
 
 	# Log
-	do_log "Mounting (dual-boot) app filesystem..." ;
+	do_log "Mounting app filesystem..." ;
 
 	# Mount
-	mount -o loop,ro /data/.sys/${DB_APPBIN} /app ;
-elif [ -f /data/.sys/${APPBIN} ]; then
-	APP_ORIGIN=${APPBIN} ;
+	mount -t squashfs -o ro /data/.sys/${DB_APPSQUASHFS} /app ;
+elif [ -f /data/.sys/${APPSQUASHFS} ]; then
+	APP_ORIGIN=${APPSQUASHFS} ;
 
     # Save info about /app
-    echo "/data/.sys/${APPBIN}" > /initram/app.mount ;
+    echo "/data/.sys/${APPSQUASHFS}" > /initram/app.mount ;
 
 	# Log
 	do_log "Mounting app (failsafe, not dual-bool) filesystem..." ;
 
 	# Mount
-	mount -o loop,ro /data/.sys/${APPBIN} /app ;
+	mount -t squashfs -o ro /data/.sys/${APPSQUASHFS} /app ;
 else
 	# Log
 	do_log "app filesystem not found" ;
