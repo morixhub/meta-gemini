@@ -58,6 +58,77 @@ clean_up () {
             sysctl -w kernel.printk="$INITIAL_PRINT_LEVELS" >/dev/null 2>/dev/null;
         fi
     fi
+
+    # Remove temp files, if any
+    if [ "$PLATFORM" == "gemini" ]; then
+        if [ -d "$DATAFOLDER/.delta-tmp" ]; then
+            rm -rf "$DATAFOLDER/.delta-tmp" ;
+        fi
+    fi
+}
+
+get_temp_for_size () {
+
+    # If not on GEMINI platform then temporary location is always the system one
+    if [ "$PLATFORM" != "gemini" ]; then
+        TEMPLOCATION=$(mktemp) ;
+        return 0;
+    fi
+
+    # Reset location
+    USE_RAM=0 ;
+
+    # Get the size we are requesting for from input
+    TEMPSIZE=$(( "$1" )) ;
+
+    if [ $TEMPSIZE -gt 0 ]; then
+
+        # Determine maximum available RAM
+        AVAILABLERAM=0 ;
+        if [ $FORCEDMAXRAM -gt 0 ]; then
+            AVAILABLERAM=$FORCEDMAXRAM ;
+        else
+            # Determine the maximum size available on /tmp (1K-blocks)
+            TOTALAVAILABLETMP=$(( $(df "/tmp" | grep -i "tmpfs" | awk ' { print $4 } ') ));
+            if [ $? -eq 0 ] && [ $TOTALAVAILABLETMP -gt 0 ]; then
+                # The maximum available RAM for storage is half the total available
+                AVAILABLERAM=$(( $TOTALAVAILABLETMP * 1024 / 2 )) ;
+            fi
+        fi
+
+        # If requested size is available in RAM, then use RAM
+        if [ $TEMPSIZE -le $AVAILABLERAM ]; then
+            USE_RAM=1 ;
+        fi
+
+        # If RAM has to be used, then we can proceed...
+        if [ $USE_RAM -eq 1 ]; then
+            log "+ Using RAM storage ($TEMPSIZE out of $AVAILABLERAM bytes available)" ;
+            TEMPLOCATION=$(mktemp);
+            return 0;
+        fi
+
+        # ...otherwise we can check if there is enough space on disk
+        AVAILABLEDISK=0 ;
+        TOTALAVAILABLEDISK=$(( $(df "/data/.sys" | grep -i "/data" | awk ' { print $4 } ') ));
+        if [ $? -eq 0 ] && [ $TOTALAVAILABLEDISK -gt 0 ]; then
+            AVAILABLEDISK=$(( $TOTALAVAILABLEDISK * 1024 )) ;
+        fi
+
+        if [ $TEMPSIZE -le $AVAILABLEDISK ]; then
+            log "+ Using disk storage ($TEMPSIZE out of $AVAILABLEDISK bytes available)" ;
+            mkdir -p "/data/.sys/.delta-tmp" ;
+            TEMPLOCATION=$(mktemp -p "/data/.sys/.delta-tmp") ;
+            return 0;
+        fi
+    else
+        log "+ Using disk storage (unknown size requested)" ;
+        mkdir -p "/data/.sys/.delta-tmp" ;
+        TEMPLOCATION=$(mktemp -p "/data/.sys/.delta-tmp") ;
+        return 0;
+    fi
+
+    return -1;
 }
 
 get_asset () {
@@ -184,9 +255,15 @@ delta_file () {
 
         if [ ! -z "$TARGETENTRY" ]; then
 
+            # Extract target details
             TARGETENTRYVALUE=$(echo "$TARGETENTRY" | cut -d'=' -f2) ;
             TARGETDIGEST=$(echo "$TARGETENTRYVALUE" | cut -d',' -f1) ;
-            TARGETSIZE=$(echo "$TARGETENTRYVALUE" | cut -d',' -f2) ;
+            TARGETSIZE=$(( $(echo "$TARGETENTRYVALUE" | cut -d',' -f2) )) ;
+
+            if [ -z "$TARGETDIGEST" ] || [ $TARGETSIZE -le 0 ]; then
+                log_error "Cannot determine target digest and/or size: cannot continue" ;
+                return -1 ;
+            fi
 
             # Calculate existing file digest
             if [ "$BASEFILE" == "uboot.bin" ]; then
@@ -203,77 +280,118 @@ delta_file () {
                 # Log
                 log "+ File needs update" ;
 
-                # Check if the file exists as a delta in the package
-                DELTADIFF=$(mktemp) ;
-                get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
-                DELTADIFFSIZE=$(wc -c "$DELTADIFF" 2>/dev/null | cut -d' ' -f1) ;
+                # Set the flag for using resource
+                # (the flag is going to be reset only if delta is retrieved and applied successfully)
+                USE_RESOURCE=1;
 
-                if [ $? -eq 0 ] && [ -f "$DELTADIFF" ] && [ $DELTADIFFSIZE -ne 0 ]; then
-                    if [ $SIMULATION -eq 1 ]; then
-                        log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                # Check if the file exists as a delta in the package
+                DELTAENTRY=$(cat "$PACKAGEINDEX" | grep "${EXDIGEST}=") ;
+
+                if [ ! -z "$DELTAENTRY" ]; then
+
+                    # Extract delta details
+                    DELTAENTRYVALUE=$(echo "$DELTAENTRY" | cut -d'=' -f2) ;
+                    DELTASOURCE=$(echo "$DELTAENTRYVALUE" | cut -d',' -f1) ;
+                    DELTASIZE=$(( $(echo "$DELTAENTRYVALUE" | cut -d',' -f2) )) ;
+
+                    # Get the temporary location of file depending on size
+                    # (it populates variable TEMPLOCATION if successfull )
+                    get_temp_for_size $DELTASIZE ;
+
+                    if [ $? -ne 0 ]; then
+                        log_error "Can't determine delta storage location: cannot continue" ;
+                        return -2;
+                    fi
+
+                    DELTADIFF="$TEMPLOCATION" ;
+                    get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
+                    DELTADIFFSIZE=$(wc -c "$DELTADIFF" 2>/dev/null | cut -d' ' -f1) ;
+
+                    if [ $? -eq 0 ] && [ -f "$DELTADIFF" ] && [ $DELTADIFFSIZE -ne 0 ]; then
+                        if [ $SIMULATION -eq 1 ]; then
+                            log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                            if [ -f "$DELTADIFF" ]; then
+                                rm -rf "$DELTADIFF" ;
+                            fi
+
+                            # If here we can assume that delta can be successfully applied and verified
+                            USE_RESOURCE=0 ;
+                        else
+                            # Flag the system for changes
+                            if [ "$FILE" != "uboot.bin" ]; then
+                                REBOOTPENDING=1 ;
+                            fi
+
+                            # Apply delta
+                            log "+ Applying delta..."
+                            if [ $XDELTA -eq 1 ]; then
+                                xdelta patch -p "$DELTADIFF" "${EXFILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                            else
+                                xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                            fi
+
+                            if [ $? -ne 0 ]; then
+                                if [ -f "$DELTADIFF" ]; then
+                                    rm -rf "$DELTADIFF" ;
+                                fi
+                                log_error "Error while applying patch: cannot continue" ;
+                                return -3 ;
+                            else
+                                if [ -f "$DELTADIFF" ]; then
+                                    rm -rf "$DELTADIFF" ;
+                                fi
+                            fi
+
+                            # Flush
+                            sync ;
+
+                            # Perform verification, if requested
+                            if [ $SKIPVERIFICATION -ne 1 ]; then
+                                # Drop disk caches (for forcing the system to reload data from disk)
+                                echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
+                                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                                    log_error "Delta verification failed: cannot continue" ;
+                                    return -4 ;
+                                fi
+                            fi
+
+                            # Finalize ".update.tmp" files to ".update"
+                            if [[ "$TARGETFILE" == *.update.tmp ]]; then
+                                mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                                if [ $? -ne 0 ]; then
+                                    log_error "Update file finalization failed: cannot continue" ;
+                                    return -5 ;
+                                fi
+                            fi
+
+                            # If here the delta was successfully applied and verified
+                            USE_RESOURCE=0 ;
+                        fi
+                    else
+                        # Remove temporary file, if any
                         if [ -f "$DELTADIFF" ]; then
                             rm -rf "$DELTADIFF" ;
                         fi
-                    else
-                        # Flag the system for changes
-                        if [ "$FILE" != "uboot.bin" ]; then
-                            REBOOTPENDING=1 ;
-                        fi
-
-                        # Apply delta
-                        log "+ Applying delta..."
-                        if [ $XDELTA -eq 1 ]; then
-                            xdelta patch -p "$DELTADIFF" "${EXFILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                        else
-                            xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                        fi
-
-                        if [ $? -ne 0 ]; then
-                            if [ -f "$DELTADIFF" ]; then
-                                rm -rf "$DELTADIFF" ;
-                            fi
-                            log_error "# Error while applying patch: cannot continue" ;
-                            return -1 ;
-                        else
-                            if [ -f "$DELTADIFF" ]; then
-                                rm -rf "$DELTADIFF" ;
-                            fi
-                        fi
-
-                        # Flush
-                        sync ;
-
-                        # Perform verification, if requested
-                        if [ $SKIPVERIFICATION -ne 1 ]; then
-                            # Drop disk caches (for forcing the system to reload data from disk)
-                            echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
-
-                            VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
-                            if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                                log_error "# Delta verification failed: cannot continue" ;
-                                return -2 ;
-                            fi
-                        fi
-
-                        # Finalize ".update.tmp" files to ".update"
-                        if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                            mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
-                            if [ $? -ne 0 ]; then
-                                log_error "# Update file finalization failed: cannot continue" ;
-                                return -3 ;
-                            fi
-                        fi
                     fi
-                else
-                    if [ -f "$DELTADIFF" ]; then
-                        rm -rf "$DELTADIFF" ;
-                    fi
+                fi
+
+                if [ $USE_RESOURCE -eq 1 ]; then
 
                     # Log
-                    log_warning "! Can't retrieve delta file from package: attempt to retrieve resource from target..." ;
+                    log "! Can't retrieve or process delta file from package: attempt to retrieve resource from target..." ;
 
-                    # Check if the file exists as a delta in the package
-                    RESOURCETARGET=$(mktemp) ;
+                    # Get the temporary location of file depending on size
+                    # (it populates variable TEMPLOCATION if successfull )
+                    get_temp_for_size $TARGETSIZE ;
+
+                    if [ $? -ne 0 ]; then
+                        log_error "Can't determine resource storage location: cannot continue" ;
+                        return -6;
+                    fi
+
+                    RESOURCETARGET="$TEMPLOCATION" ;
                     get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "$RESOURCETARGET" ;
                     RESOURCETARGETSIZE=$(wc -c "$RESOURCETARGET" 2>/dev/null | cut -d' ' -f1) ;
 
@@ -299,8 +417,8 @@ delta_file () {
                                 if [ -f "$RESOURCETARGET" ]; then
                                     rm -rf "$RESOURCETARGET" ;
                                 fi
-                                log_error "# Error while applying target resource cannot continue" ;
-                                return -4 ;
+                                log_error "Error while applying target resource: cannot continue" ;
+                                return -7 ;
                             else
                                 if [ -f "$RESOURCETARGET" ]; then
                                     rm -rf "$RESOURCETARGET" ;
@@ -317,8 +435,8 @@ delta_file () {
 
                                 VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                 if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                                    log_error "# Delta verification failed: cannot continue" ;
-                                    return -5 ;
+                                    log_error "Delta verification failed: cannot continue" ;
+                                    return -8 ;
                                 fi
                             fi
 
@@ -326,8 +444,8 @@ delta_file () {
                             if [[ "$TARGETFILE" == *.update.tmp ]]; then
                                 mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
                                 if [ $? -ne 0 ]; then
-                                    log_error "# Update file finalization failed: cannot continue" ;
-                                    return -6 ;
+                                    log_error "Update file finalization failed: cannot continue" ;
+                                    return -9 ;
                                 fi
                             fi
                         fi
@@ -337,7 +455,7 @@ delta_file () {
                         fi
 
                         # Log
-                        log_warning "! Can't retrieve target resource from package: the file is not going to be updated";
+                        log "! Can't retrieve target resource from package: the file is not going to be updated";
 
                         # Set the flag for copy the assets from the current half, if it applies
                         COPYFROMEXISTING=1 ;
@@ -350,7 +468,7 @@ delta_file () {
             fi
         else
             # Log
-            log_warning "! Can't find file from delta package: file is not going to be updated" ;
+            log "! Can't find file from delta package: file is not going to be updated" ;
 
             # Set the flag for copy the assets from the current half, if it applies
             COPYFROMEXISTING=1 ;
@@ -383,8 +501,8 @@ delta_file () {
 
                         # Check result
                         if [ $? -ne 0 ]; then
-                            log_error "# Error while copying from current half: cannot continue" ;
-                            return -7 ;
+                            log_error "Error while copying from current half: cannot continue" ;
+                            return -10 ;
                         fi
 
                         # Flush
@@ -398,8 +516,8 @@ delta_file () {
                             TARGETDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
                             VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                                log_error "# Verification error while copying from current half: cannot continue" ;
-                                return -8 ;
+                                log_error "Verification error while copying from current half: cannot continue" ;
+                                return -11 ;
                             fi
                         fi
                     fi
@@ -411,7 +529,7 @@ delta_file () {
 
 usage () {
     cat << EOF
-Usage: ${0##*/} [-hxn] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] <DELTA_PACKAGE>
+Usage: ${0##*/} [-hxn] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] [ -r <max_ram_storage_size> ]<DELTA_PACKAGE>
 
 Applies the delta package provided at <DELTA_PACKAGE> to system.
 
@@ -439,6 +557,8 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 -d  The folder containing non-boot assets (if not specified a guess is attempted based on platform)
 -o  The output folder (if not specified, then the same <boot_folder> and <data_folder> are going
     to be used, based on asset type)
+-r  For GEMINI platform only, it limits the maximum size of RAM to be used for assests storage
+    (if not specified then half the available RAM is used at maximum)
 
 RETURN VALUE:
     0: Success (no changes made)
@@ -466,6 +586,7 @@ DATAFOLDER= ;
 OUTPUTFOLDER= ;
 UPDATEBOOTLOADER=0 ;
 REBOOTPENDING=0 ;
+FORCEDMAXRAM=-1 ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -491,7 +612,7 @@ if [ -d "${HIST}" ]; then
 fi
 
 OPTIND=1 ;
-while getopts hsxnfm:b:d:o: opt; do
+while getopts hsxnfm:b:d:o:r: opt; do
     case $opt in
         h)
             usage ;
@@ -520,6 +641,9 @@ while getopts hsxnfm:b:d:o: opt; do
             ;;
         o)
             OUTPUTFOLDER="${OPTARG}" ;
+            ;;
+        r)
+            FORCEDMAXRAM=$(( "${OPTARG}" )) ;
             ;;
         ?)
             echo >&2 ;
@@ -726,8 +850,10 @@ fi
 # Manage bootloader update, if requested
 if [ -z "$PLATFORM" ]; then
     log_warning "Boot loader check disabled on non-identified platforms" ;
+    log ;
 elif [ $UPDATEBOOTLOADER -ne 1 ]; then
-    log "Boot loader check disabled by user choice" ;
+    log_warning "Boot loader check disabled by user choice" ;
+    log ;
 elif [ -z "$BOOT_DEVICE" ]; then
     log_error "Cannot perform boot loader check due to unavailability of boot device" ;
     clean_up ;
@@ -746,7 +872,7 @@ else
         dd if="$UBOOTBIN" of="$BOOT_DEVICE" bs=1024 seek=32 >/dev/null 2>/null ;
 
         if [ $? -ne 0 ]; then
-            log_error "# Error while patching boot loader: the system could be BRICKED!" ;
+            log_error "Error while patching boot loader: the system could be BRICKED!" ;
             clean_up ;
             exit 10 ;
         fi
@@ -765,7 +891,7 @@ else
             VERIFICATIONDIGEST=$(dd if=${BOOT_DEVICE} bs=1024 skip=32 iflag=count_bytes count=$TARGETSIZE 2>/dev/null | sha256sum 2>/dev/null | cut -d' ' -f1);
 
             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-                log_error "# Delta verification failed for boot loader: the system could be BRICKED!" ;
+                log_error "Delta verification failed for boot loader: the system could be BRICKED!" ;
                 clean_up ;
                 exit 11 ;
             fi
@@ -790,17 +916,19 @@ done
 
 # Determine the list of files in data folder to be updated
 # (all .squashfs* files, for also handling .squashfs.a and .squashfs.b)
-FILES=( $(ls -1p "${DATAFOLDER}"/*.squashfs*) ) ;
+FILES=( $(ls -1p "${DATAFOLDER}"/*.squashfs* 2>/dev/null) ) ;
 for f in ${FILES[@]}; do
 
-    # Apply delta to current file, if any
-    delta_file "${DATAFOLDER}" "$(basename ${f})" ;
+    if [[ "${f}" != *".update" ]] && [[ "${f}" != *".update.tmp" ]]; then
+        # Apply delta to current file, if any
+        delta_file "${DATAFOLDER}" "$(basename ${f})" ;
 
-    # Check result
-    if [ $? -ne 0 ]; then
-        log_error "Error detected while processing data files: cannot continue" ;
-        clean_up ;
-        exit 13;
+        # Check result
+        if [ $? -ne 0 ]; then
+            log_error "Error detected while processing data files: cannot continue" ;
+            clean_up ;
+            exit 13;
+        fi
     fi
 done
 log ;

@@ -201,13 +201,19 @@ mount -o loop,rw /data/.sys/persist.bin /persist
 # Mount initram filesystem
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
 
-# Clear temporary update files (if there they are a "remaining" of a failed update)
+# Clear temporary delta files (if there, they are a "remaining" of a failed delta update)
+if [ -d "/data/.sys/.delta-tmp" ]; then
+    rm -rf "/data/.sys/.delta-tmp" ;
+    do_log "Removed stale delta temporary files" ; 
+fi
+
+# Clear temporary update files (if there, they are a "remaining" of a failed update)
 if [ -f "/data/.sys/$ROOTFSSQUASHFS.update.tmp" ]; then
-    rm -f /data/.sys/$ROOTFSSQUASHFS.update.tmp ;
+    rm -f "/data/.sys/$ROOTFSSQUASHFS.update.tmp" ;
     do_log "Removed stale rootfs update file" ; 
 fi
 if [ -f "/data/.sys/$APPSQUASHFS.update.tmp" ]; then
-    rm -f /data/.sys/$APPSQUASHFS.update.tmp ;
+    rm -f "/data/.sys/$APPSQUASHFS.update.tmp" ;
     do_log "Removed stale app update file" ; 
 fi
 
@@ -437,7 +443,7 @@ if [ $SKIPVERIFY -eq 0 ]; then
 	done
 
 	# Log
-	do_log "Filesystem is secured OK" ;
+	do_log "Filesystem verification SUCCEEDED: filesystem is secure" ;
 
 else
 
