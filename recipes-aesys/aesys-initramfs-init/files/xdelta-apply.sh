@@ -632,7 +632,7 @@ delta_file () {
 
 usage () {
     cat << EOF
-Usage: ${0##*/} [-hxn] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] [ -r <max_ram_storage_size> ]<DELTA_PACKAGE>
+Usage: ${0##*/} [-hslnf] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] [ -r <max_ram_storage_size> ] <DELTA_PACKAGE>
 
 Applies the delta package provided at <DELTA_PACKAGE> to system.
 
@@ -652,7 +652,7 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 -h  Displays this help and exit
 -s  Simulation mode: do not actually any file on system
 -l  Download patches before applying them
--n  Do not verify delta (fast but unsafe)
+-n  Do not verify data (fast but unsafe)
 -f  Update boot loader (ATTENTION: could brick the system in case of errors)
 -m  Forces the given boot scheme
     (<mode> can be "none", "files:a", "files:b" or "partitions")
@@ -672,7 +672,7 @@ EOF
 }
 
 echo "Aesys(R) Gemini(TM) xdelta processor" ;
-echo "Copyright (C) 2025 Aesys S.p.A." ;
+echo "Copyright (C) Aesys S.p.A." ;
 echo "Version 1.0.0.0" ;
 echo ;
 
