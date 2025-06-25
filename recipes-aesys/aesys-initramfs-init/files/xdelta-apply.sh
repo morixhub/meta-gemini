@@ -280,6 +280,20 @@ delta_file () {
                 # Log
                 log "+ File needs update" ;
 
+                if [ -f "${WORKOUTPUT}/${TARGETFILE}" ]; then
+                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                    if [ "$TARGETDIGEST" == "$VERIFICATIONDIGEST" ]; then
+                        log "+ Target file is already good: no need for further processing" ;
+
+                        # Flag the system for changes
+                        if [ "$FILE" != "uboot.bin" ]; then
+                            REBOOTPENDING=1 ;
+                        fi
+
+                        return 0 ;
+                    fi
+                fi
+
                 # Set the flag for using resource
                 # (the flag is going to be reset only if delta is retrieved and applied successfully)
                 USE_RESOURCE=1;
@@ -294,25 +308,9 @@ delta_file () {
                     DELTASOURCE=$(echo "$DELTAENTRYVALUE" | cut -d',' -f1) ;
                     DELTASIZE=$(( $(echo "$DELTAENTRYVALUE" | cut -d',' -f2) )) ;
 
-                    # Get the temporary location of file depending on size
-                    # (it populates variable TEMPLOCATION if successfull )
-                    get_temp_for_size $DELTASIZE ;
-
-                    if [ $? -ne 0 ]; then
-                        log_error "Can't determine delta storage location: cannot continue" ;
-                        return -2;
-                    fi
-
-                    DELTADIFF="$TEMPLOCATION" ;
-                    get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
-                    DELTADIFFSIZE=$(wc -c "$DELTADIFF" 2>/dev/null | cut -d' ' -f1) ;
-
-                    if [ $? -eq 0 ] && [ -f "$DELTADIFF" ] && [ $DELTADIFFSIZE -ne 0 ]; then
+                    if [ $DOWNLOADPATCHES -eq 0 ]; then
                         if [ $SIMULATION -eq 1 ]; then
                             log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
-                            if [ -f "$DELTADIFF" ]; then
-                                rm -rf "$DELTADIFF" ;
-                            fi
 
                             # If here we can assume that delta can be successfully applied and verified
                             USE_RESOURCE=0 ;
@@ -322,24 +320,12 @@ delta_file () {
                                 REBOOTPENDING=1 ;
                             fi
 
-                            # Apply delta
-                            log "+ Applying delta..."
-                            if [ $XDELTA -eq 1 ]; then
-                                xdelta patch -p "$DELTADIFF" "${EXFILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                            else
-                                xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
-                            fi
+                            log "+ Applying delta..." ;
+                            get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" | xdelta3 -c -d -f -D -R -S djw -s "${EXFILE}" > "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null ;
 
                             if [ $? -ne 0 ]; then
-                                if [ -f "$DELTADIFF" ]; then
-                                    rm -rf "$DELTADIFF" ;
-                                fi
                                 log_error "Error while applying patch: cannot continue" ;
-                                return -3 ;
-                            else
-                                if [ -f "$DELTADIFF" ]; then
-                                    rm -rf "$DELTADIFF" ;
-                                fi
+                                return -2 ;
                             fi
 
                             # Flush
@@ -353,7 +339,7 @@ delta_file () {
                                 VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                 if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                     log_error "Delta verification failed: cannot continue" ;
-                                    return -4 ;
+                                    return -3 ;
                                 fi
                             fi
 
@@ -362,7 +348,7 @@ delta_file () {
                                 mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
                                 if [ $? -ne 0 ]; then
                                     log_error "Update file finalization failed: cannot continue" ;
-                                    return -5 ;
+                                    return -4 ;
                                 fi
                             fi
 
@@ -370,9 +356,82 @@ delta_file () {
                             USE_RESOURCE=0 ;
                         fi
                     else
-                        # Remove temporary file, if any
-                        if [ -f "$DELTADIFF" ]; then
-                            rm -rf "$DELTADIFF" ;
+                        # Get the temporary location of file depending on size
+                        # (it populates variable TEMPLOCATION if successfull )
+                        get_temp_for_size $DELTASIZE ;
+
+                        if [ $? -ne 0 ]; then
+                            log_error "Can't determine delta storage location: cannot continue" ;
+                            return -5;
+                        fi
+
+                        DELTADIFF="$TEMPLOCATION" ;
+                        get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" > "$DELTADIFF" ;
+                        DELTADIFFSIZE=$(wc -c "$DELTADIFF" 2>/dev/null | cut -d' ' -f1) ;
+
+                        if [ $? -eq 0 ] && [ -f "$DELTADIFF" ] && [ $DELTADIFFSIZE -ne 0 ]; then
+                            if [ $SIMULATION -eq 1 ]; then
+                                log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                                if [ -f "$DELTADIFF" ]; then
+                                    rm -rf "$DELTADIFF" ;
+                                fi
+
+                                # If here we can assume that delta can be successfully applied and verified
+                                USE_RESOURCE=0 ;
+                            else
+                                # Flag the system for changes
+                                if [ "$FILE" != "uboot.bin" ]; then
+                                    REBOOTPENDING=1 ;
+                                fi
+
+                                # Apply delta
+                                log "+ Applying delta..."
+                                xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+
+                                if [ $? -ne 0 ]; then
+                                    if [ -f "$DELTADIFF" ]; then
+                                        rm -rf "$DELTADIFF" ;
+                                    fi
+                                    log_error "Error while applying patch: cannot continue" ;
+                                    return -6 ;
+                                else
+                                    if [ -f "$DELTADIFF" ]; then
+                                        rm -rf "$DELTADIFF" ;
+                                    fi
+                                fi
+
+                                # Flush
+                                sync ;
+
+                                # Perform verification, if requested
+                                if [ $SKIPVERIFICATION -ne 1 ]; then
+                                    # Drop disk caches (for forcing the system to reload data from disk)
+                                    echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
+                                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                                        log_error "Delta verification failed: cannot continue" ;
+                                        return -7 ;
+                                    fi
+                                fi
+
+                                # Finalize ".update.tmp" files to ".update"
+                                if [[ "$TARGETFILE" == *.update.tmp ]]; then
+                                    mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                                    if [ $? -ne 0 ]; then
+                                        log_error "Update file finalization failed: cannot continue" ;
+                                        return -8 ;
+                                    fi
+                                fi
+
+                                # If here the delta was successfully applied and verified
+                                USE_RESOURCE=0 ;
+                            fi
+                        else
+                            # Remove temporary file, if any
+                            if [ -f "$DELTADIFF" ]; then
+                                rm -rf "$DELTADIFF" ;
+                            fi
                         fi
                     fi
                 fi
@@ -382,47 +441,22 @@ delta_file () {
                     # Log
                     log "! Can't retrieve or process delta file from package: attempt to retrieve resource from target..." ;
 
-                    # Get the temporary location of file depending on size
-                    # (it populates variable TEMPLOCATION if successfull )
-                    get_temp_for_size $TARGETSIZE ;
+                    if [ $DOWNLOADPATCHES -eq 0 ]; then
 
-                    if [ $? -ne 0 ]; then
-                        log_error "Can't determine resource storage location: cannot continue" ;
-                        return -6;
-                    fi
-
-                    RESOURCETARGET="$TEMPLOCATION" ;
-                    get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "$RESOURCETARGET" ;
-                    RESOURCETARGETSIZE=$(wc -c "$RESOURCETARGET" 2>/dev/null | cut -d' ' -f1) ;
-
-                    if [ $? -eq 0 ] && [ -f "$RESOURCETARGET" ] && [ $RESOURCETARGETSIZE -ne 0 ]; then
                         if [ $SIMULATION -eq 1 ]; then
                             log "+ Applying target resource... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
-
-                            if [ -f "$RESOURCETARGET" ]; then
-                                rm -rf "$RESOURCETARGET" ;
-                            fi
                         else
                             # Flag the system for changes
                             if [ "$FILE" != "uboot.bin" ]; then
                                 REBOOTPENDING=1 ;
                             fi
 
-                            # Apply delta
                             log "+ Applying target resource..."
-
-                            cp -f "$RESOURCETARGET" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null;
+                            get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null ;
 
                             if [ $? -ne 0 ]; then
-                                if [ -f "$RESOURCETARGET" ]; then
-                                    rm -rf "$RESOURCETARGET" ;
-                                fi
                                 log_error "Error while applying target resource: cannot continue" ;
-                                return -7 ;
-                            else
-                                if [ -f "$RESOURCETARGET" ]; then
-                                    rm -rf "$RESOURCETARGET" ;
-                                fi
+                                return -9 ;
                             fi
 
                             # Flush
@@ -436,7 +470,7 @@ delta_file () {
                                 VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                 if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                     log_error "Delta verification failed: cannot continue" ;
-                                    return -8 ;
+                                    return -10 ;
                                 fi
                             fi
 
@@ -445,20 +479,89 @@ delta_file () {
                                 mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
                                 if [ $? -ne 0 ]; then
                                     log_error "Update file finalization failed: cannot continue" ;
-                                    return -9 ;
+                                    return -11 ;
                                 fi
                             fi
                         fi
                     else
-                        if [ -f "$RESOURCETARGET" ]; then
-                            rm -rf "$RESOURCETARGET" ;
+                        # Get the temporary location of file depending on size
+                        # (it populates variable TEMPLOCATION if successfull )
+                        get_temp_for_size $TARGETSIZE ;
+
+                        if [ $? -ne 0 ]; then
+                            log_error "Can't determine resource storage location: cannot continue" ;
+                            return -12;
                         fi
 
-                        # Log
-                        log "! Can't retrieve target resource from package: the file is not going to be updated";
+                        RESOURCETARGET="$TEMPLOCATION" ;
+                        get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "$RESOURCETARGET" ;
+                        RESOURCETARGETSIZE=$(wc -c "$RESOURCETARGET" 2>/dev/null | cut -d' ' -f1) ;
 
-                        # Set the flag for copy the assets from the current half, if it applies
-                        COPYFROMEXISTING=1 ;
+                        if [ $? -eq 0 ] && [ -f "$RESOURCETARGET" ] && [ $RESOURCETARGETSIZE -ne 0 ]; then
+                            if [ $SIMULATION -eq 1 ]; then
+                                log "+ Applying target resource... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+
+                                if [ -f "$RESOURCETARGET" ]; then
+                                    rm -rf "$RESOURCETARGET" ;
+                                fi
+                            else
+                                # Flag the system for changes
+                                if [ "$FILE" != "uboot.bin" ]; then
+                                    REBOOTPENDING=1 ;
+                                fi
+
+                                # Apply delta
+                                log "+ Applying target resource..."
+
+                                cp -f "$RESOURCETARGET" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null;
+
+                                if [ $? -ne 0 ]; then
+                                    if [ -f "$RESOURCETARGET" ]; then
+                                        rm -rf "$RESOURCETARGET" ;
+                                    fi
+                                    log_error "Error while applying target resource: cannot continue" ;
+                                    return -13 ;
+                                else
+                                    if [ -f "$RESOURCETARGET" ]; then
+                                        rm -rf "$RESOURCETARGET" ;
+                                    fi
+                                fi
+
+                                # Flush
+                                sync ;
+
+                                # Perform verification, if requested
+                                if [ $SKIPVERIFICATION -ne 1 ]; then
+                                    # Drop disk caches (for forcing the system to reload data from disk)
+                                    echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
+
+                                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+                                        log_error "Delta verification failed: cannot continue" ;
+                                        return -14 ;
+                                    fi
+                                fi
+
+                                # Finalize ".update.tmp" files to ".update"
+                                if [[ "$TARGETFILE" == *.update.tmp ]]; then
+                                    mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                                    if [ $? -ne 0 ]; then
+                                        log_error "Update file finalization failed: cannot continue" ;
+                                        return -15 ;
+                                    fi
+                                fi
+                            fi
+                        else
+                            if [ -f "$RESOURCETARGET" ]; then
+                                rm -rf "$RESOURCETARGET" ;
+                            fi
+
+                            # Log
+                            log "! Can't retrieve target resource from package: the file is not going to be updated";
+
+                            # Set the flag for copy the assets from the current half, if it applies
+                            COPYFROMEXISTING=1 ;
+                        fi
                     fi
                 fi
             else
@@ -502,7 +605,7 @@ delta_file () {
                         # Check result
                         if [ $? -ne 0 ]; then
                             log_error "Error while copying from current half: cannot continue" ;
-                            return -10 ;
+                            return -16 ;
                         fi
 
                         # Flush
@@ -517,7 +620,7 @@ delta_file () {
                             VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                 log_error "Verification error while copying from current half: cannot continue" ;
-                                return -11 ;
+                                return -17 ;
                             fi
                         fi
                     fi
@@ -548,7 +651,7 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 
 -h  Displays this help and exit
 -s  Simulation mode: do not actually any file on system
--x  Use xdelta instead of xdelta3
+-l  Download patches before applying them
 -n  Do not verify delta (fast but unsafe)
 -f  Update boot loader (ATTENTION: could brick the system in case of errors)
 -m  Forces the given boot scheme
@@ -578,7 +681,6 @@ COMMANDLINE="$@" ;
 COMMANDNAME="$0" ;
 SCRIPTNAME=$(basename "$0") ;
 SIMULATION=0 ;
-XDELTA=0 ;
 SKIPVERIFICATION=0 ;
 FORCEDDUALBOOTSCHEME= ;
 BOOTFOLDER= ;
@@ -587,6 +689,7 @@ OUTPUTFOLDER= ;
 UPDATEBOOTLOADER=0 ;
 REBOOTPENDING=0 ;
 FORCEDMAXRAM=-1 ;
+DOWNLOADPATCHES=0 ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -612,7 +715,7 @@ if [ -d "${HIST}" ]; then
 fi
 
 OPTIND=1 ;
-while getopts hsxnfm:b:d:o:r: opt; do
+while getopts hslnfm:b:d:o:r: opt; do
     case $opt in
         h)
             usage ;
@@ -621,8 +724,8 @@ while getopts hsxnfm:b:d:o:r: opt; do
         s)
             SIMULATION=1 ;
             ;;
-        x)
-            XDELTA=1 ;
+        l)
+            DOWNLOADPATCHES=1 ;
             ;;
         n)
             SKIPVERIFICATION=1 ;
