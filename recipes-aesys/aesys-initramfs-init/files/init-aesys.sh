@@ -386,9 +386,14 @@ if [ -e /securefs.publickey.pem ]; then
 	cp /securefs.publickey.pem /initram/securefs.publickey.pem ;
 fi
 
-# Make overlayroot-commit.sh available
+# Make xdelta-apply.sh available
 if [ -e /xdelta-apply.sh ]; then
     cp /xdelta-apply.sh /initram/xdelta-apply.sh ;
+fi
+
+# Make dual-tool.sh available, if requested
+if [ ! -z "$DB_HALF" ] && [ -e /dual-tool.sh ]; then
+    cp /dual-tool.sh /initram/dual-tool.sh ;
 fi
 
 # Log

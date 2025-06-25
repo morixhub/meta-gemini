@@ -7,6 +7,7 @@ inherit populate_sdk_base
 # Extend recognized IMAGE_FEATURES valid items
 IMAGE_FEATURES[validitems] += " aesys-development-ip "
 IMAGE_FEATURES[validitems] += " aesys-disable-overlayroot "
+IMAGE_FEATURES[validitems] += " aesys-disable-pxe "
 
 # Remove nfs-client (because it implies rpcbind, which we want to get rid of, for OS hardening purposes)
 IMAGE_FEATURES:remove = "nfs-client"
@@ -70,6 +71,9 @@ ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys
 
 # If requested, then inject the file for forcing disabled overlay
 ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-disable-overlayroot', " aesys_disable_overlayroot; ", "", d)}'
+
+# If requested, then inject the file for forcing disabled PXE
+ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-disable-pxe', " aesys_disable_pxe; ", "", d)}'
 
 # Root FS customization
 aesys_image_customize_root() {
@@ -164,4 +168,10 @@ aesys_disable_overlayroot () {
     touch ${IMAGE_ROOTFS}/data/.sys/overlayroot.disabled ;
 }
 
+# PXE boot disabling
+aesys_disable_pxe () {
+
+    mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
+    touch ${IMAGE_ROOTFS}/data/.sys/pxe.disabled ;
+}
 

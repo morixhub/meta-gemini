@@ -582,7 +582,7 @@ delta_file () {
         if [ $COPYFROMEXISTING -eq 1 ] && [ ! -z "${DB_HALF}" ] && [ "$BASEFILE" != "uboot.bin" ]; then
             if [ ! -z "DB_HALF" ]; then
 
-                diff "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                diff -q "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                 if [ $? -eq 0 ]; then
                     # Log
                     log "+ No update available and no need to copy from current half (target file is already good)" ;
