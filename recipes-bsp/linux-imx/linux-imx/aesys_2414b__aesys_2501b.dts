@@ -57,6 +57,14 @@
 	};
 };
 
+&ethphy0 {
+    max-speed = <100>;
+};
+
+&ethphy1 {
+    max-speed = <100>;
+};
+
 &i2c5 {
 	i2c_temp: temp@48 {
 		compatible = "ti,tmp1075";
