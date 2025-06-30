@@ -358,7 +358,7 @@ mount --move /overlay-ram-var-merge /overlay-persist-root-merge/var
 mkdir -p /overlay-persist-root-merge/boot
 mount --move /boot /overlay-persist-root-merge/boot
 
-if [ ! -z "$OTHERBOOT_PART" ]; then
+if [ ! -z "${OTHERBOOT_PART}" ]; then
     mkdir -p /overlay-persist-root-merge/boot-inactive ;
     mount --move /boot-inactive /overlay-persist-root-merge/boot-inactive ;
 fi
@@ -513,7 +513,7 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 	mount --move /overlay-persist-root-merge/boot /overlay-ram-merge/boot
 	mount --move /overlay-persist-root-merge/data /overlay-ram-merge/data
 
-    if [ ! -z "OTHERBOOT_PART" ]; then
+    if [ ! -z "${OTHERBOOT_PART}" ]; then
         mount --move /overlay-persist-root-merge/boot-inactive /overlay-ram-merge/boot-inactive ;
     fi
 
