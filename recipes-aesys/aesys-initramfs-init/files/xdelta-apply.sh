@@ -136,9 +136,18 @@ get_asset () {
 
     if [[ "$URL" == http://* ]] || [[ "$URL" == https://* ]]; then
         wget -O - "$URL" 2>/dev/null ;
-    elif [[ "$URL" == sftp://* ]] || [[ "$URL" == ssh://* ]]; then
+    elif [[ "$URL" == scp://* ]] || [[ "$URL" == ssh://* ]]; then
         # Environment variable SSHPASS should contain the full `sshpass` command, if requested
-        $SSHPASS scp -O "${URL#*://}" /dev/stdout 2>/dev/null ;
+        # (other options may be passed via SCPOPTIONS variable)
+        if [ ! -z "$SSHPASS" ]; then
+            $SSHPASS scp $SCPOPTIONS -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -O "${URL#*://}" /dev/stdout 2>/dev/null ;
+        else
+            scp $SCPOPTIONS -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -O "${URL#*://}" /dev/stdout 2>/dev/null ;
+        fi
+    elif [[ "$URL" == sftp://* ]]; then
+        # Environment variable SFTPOPTIONS should contain the extra parameter for curl, if requested
+        # (especially the `--user` parameter for authenticated access to the server)
+        curl $SFTPOPTIONS -k "$URL" --output /dev/stdout 2>/dev/null ;
     else
         cat ${URL#*file://} 2>/dev/null ;
     fi
@@ -637,13 +646,19 @@ Usage: ${0##*/} [-hslnf] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ 
 Applies the delta package provided at <DELTA_PACKAGE> to system.
 
 <DELTA_PACKAGE> could an URL in http:// or https:// format (the package content
-is going to be fetched from web server), in sftp:// or ssh:// format (the package
-content is going to be fetched from SSH/SFTP server via SCP sequential protocol)
-or can be a local system folder (file:// format or plain path).
+is going to be fetched from web server), in sftp://, scp:// or ssh:// format (ssh:// and scp://
+uses the SCP protocol for transferring files from SSH/SFTP server, while sftp:// makes use
+of the SFTP protocol) or can be a local system folder (file:// format or plain path).
 
-If ssh:// or sftp:// is going to be used, then an enviroment variable named SSHPASS
+If sftp:// is going to be used, then an environment variable named SFTPOPTIONS can
+be used for expressing extra paramters for the CURL command implementing the SFTP transfer,
+if requested.
+
+If ssh:// or scp:// is going to be used, then an enviroment variable named SSHPASS
 can be used for expressing the full sshpass command to be used for passing
-authentication credentials to SSH/SFTP server.
+authentication credentials to the SCP command. In this case also an environment
+variable named SCPOPTIONS can be used for expressing extra parameters for the SCP command,
+if requested.
 
 If the current booting scheme (detected or forced via "-m" option) is partitions-based then
 the system expects to found the "inactive boot partition" to be mounted at position
