@@ -137,12 +137,12 @@ get_asset () {
     if [[ "$URL" == http://* ]] || [[ "$URL" == https://* ]]; then
         wget -O - "$URL" 2>/dev/null ;
     elif [[ "$URL" == scp://* ]] || [[ "$URL" == ssh://* ]]; then
-        # Environment variable SSHPASS should contain the full `sshpass` command, if requested
+        # Environment variable SSHPASS should contain the password, if requested
         # (other options may be passed via SCPOPTIONS variable)
         if [ ! -z "$SSHPASS" ]; then
-            $SSHPASS scp $SCPOPTIONS -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -O "${URL#*://}" /dev/stdout 2>/dev/null ;
+            sshpass -e scp $SCPOPTIONS -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -O "${URL#*://}" /dev/stdout 2>/dev/null ;
         else
-            scp $SCPOPTIONS -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -O "${URL#*://}" /dev/stdout 2>/dev/null ;
+            scp $SCPOPTIONS -B -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -O "${URL#*://}" /dev/stdout 2>/dev/null ;
         fi
     elif [[ "$URL" == sftp://* ]]; then
         # Environment variable SFTPOPTIONS should contain the extra parameter for curl, if requested
@@ -655,10 +655,9 @@ be used for expressing extra paramters for the CURL command implementing the SFT
 if requested.
 
 If ssh:// or scp:// is going to be used, then an enviroment variable named SSHPASS
-can be used for expressing the full sshpass command to be used for passing
-authentication credentials to the SCP command. In this case also an environment
-variable named SCPOPTIONS can be used for expressing extra parameters for the SCP command,
-if requested.
+can be used for expressing the password to be used for authentication to the SCP command.
+For ssh:// and scp:// endpoints also an environment variable named SCPOPTIONS can be used for
+expressing extra parameters for the SCP command, if requested.
 
 If the current booting scheme (detected or forced via "-m" option) is partitions-based then
 the system expects to found the "inactive boot partition" to be mounted at position
