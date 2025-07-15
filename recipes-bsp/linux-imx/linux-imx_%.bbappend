@@ -19,6 +19,8 @@ SRC_URI += " file://0015-Fixed-RTC-pcf85063-For-SysFS-Entries.patch"
 # Include AuFS patches, if requested by distribution
 SRC_URI += " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', 'file://0016-AuFS-Support.patch', '', d)}"
 
+SRC_URI += " file://0017-SGTL5000-Added-MCLK-Generation_For_I2C.patch"
+
 # Remove the commit ID string from kernel version
 # ATTENTION: the value of LINUX_VERSION_EXTENSION is not really important here: it is just for
 # avoiding that FSL BSP generates something on its own; the correct kernel version is then

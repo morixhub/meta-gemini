@@ -404,6 +404,7 @@
 };
 
 &sai1 {
+    #clock-cells = <0>;
 	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sai1>;

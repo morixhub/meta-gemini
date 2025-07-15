@@ -8,12 +8,6 @@
 
 	model = "AESYS 2414B+2415A";
 	
-    clk_ext_audio_codec: clock-codec {
-    	#clock-cells = <0>;
-        compatible = "fixed-clock";
-        clock-frequency = <12000000>;
-    };
-
     reg_sound_1p8_vddd: regulator-sound-1p8-vddd {
         compatible = "regulator-fixed";
         regulator-always-on;
@@ -39,13 +33,17 @@
 	};
 
     sound-sgtl5000 {
+        #address-cells = <1>;
+	    #size-cells = <0>;
+
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "SGTL5000-Card";
 		simple-audio-card,format = "i2s";
-		simple-audio-card,bitclock-master = <&codec_dai>;
-		simple-audio-card,frame-master = <&codec_dai>;
+		simple-audio-card,bitclock-master = <&cpu_dai>;
+		simple-audio-card,frame-master = <&cpu_dai>;
 		simple-audio-card,widgets = "Headphone", "Headphone Jack";
 		simple-audio-card,routing = "Headphone Jack", "HP_OUT";
+        status = "okay";
 
 		cpu_dai: simple-audio-card,cpu {
 			sound-dai = <&sai1>;
@@ -53,7 +51,7 @@
 
 		codec_dai: simple-audio-card,codec {
 			sound-dai = <&i2c_sgtl5000>;
-            clocks = <&audio_blk_ctrl IMX8MP_CLK_AUDIOMIX_SAI1_MCLK1>;
+            clocks = <&sai1 1>;
 		};
 	};
 };
@@ -73,9 +71,7 @@
         #sound-dai-cells = <0>;
 		compatible = "fsl,sgtl5000";
 		reg = <0x0a>;
-        pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_sound_sgtl5000>;
-		clocks = <&clk_ext_audio_codec>;
+		clocks = <&sai1 1>;
         VDDD-supply = <&reg_sound_1p8_vddd>;
         VDDA-supply = <&reg_sound_3p3_vdda>;
         VDDIO-supply = <&reg_sound_3p3_vddio>;
@@ -92,12 +88,6 @@
 		MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		 0x00000006		// USB_HUB_SOFT_RESET
 		MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08       0x00000006   	// LTE_nPWR_ON
 		MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09       0x00000006   	// WIFI_BLE_nRESET
-		>;
-	};
-
-	pinctrl_sound_sgtl5000: sound_sgtl5000_gpios {
-		fsl,pins = <
-		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
 		>;
 	};
 };
