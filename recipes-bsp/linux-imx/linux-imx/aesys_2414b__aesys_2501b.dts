@@ -40,8 +40,10 @@
 		simple-audio-card,format = "i2s";
 		simple-audio-card,bitclock-master = <&cpu_dai>;
 		simple-audio-card,frame-master = <&cpu_dai>;
-		simple-audio-card,widgets = "Headphone", "Headphone Jack";
-		simple-audio-card,routing = "Headphone Jack", "HP_OUT";
+		simple-audio-card,widgets = "Headphone", "Headphone Jack",
+                                    "Lineout", "Lineout Jack";
+		simple-audio-card,routing = "Headphone Jack", "HP_OUT",
+                                    "Lineout Jack", "LINE_OUT";
         status = "okay";
 
 		cpu_dai: simple-audio-card,cpu {
