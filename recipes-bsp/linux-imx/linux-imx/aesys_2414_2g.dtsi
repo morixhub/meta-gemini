@@ -403,14 +403,14 @@
 };
 
 &sai1 {
-    #clock-cells = <1>;
+	#clock-cells = <1>;
 	#sound-dai-cells = <0>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_sai1>;
 	assigned-clocks = <&clk IMX8MP_CLK_SAI1>;
 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL2_OUT>;
 	assigned-clock-rates = <22579200>;
-    fsl,sai-mclk-direction-output;
+	fsl,sai-mclk-direction-output;
 	status = "okay";
 };
 
@@ -1005,7 +1005,7 @@
 };
 
 &mix_gpu_ml {
-	reg = <0x0 0x40000000 0x0 0x80000000>, <0x0 0x40000000 0x0 0x08000000>;
+	reg = <0x0 0x40000000 0x0 0x80000000>, <0x0 0x0 0x0 0x10000000>;
 	status = "okay";
 };
 

@@ -55,6 +55,9 @@ IMAGE_INSTALL:append = " unionfs-fuse "
 # Add coreutils
 IMAGE_INSTALL:append = " coreutils "
 
+# Add pulseaudio
+IMAGE_INSTALL:append = " pulseaudio pulseaudio-server pulseaudio-misc pulseaudio-module-dbus-protocol "
+
 # Add AuFS utils, if requested by distribution
 IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 

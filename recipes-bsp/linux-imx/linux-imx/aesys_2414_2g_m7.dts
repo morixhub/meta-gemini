@@ -6,26 +6,26 @@
 
 &resmem {
 	// M7 RAM
-	m7_reserved: m7@ad000000 {
+	m7_reserved: m7@75000000 {
 		no-map;
-		reg = <0 0xad000000 0 0x1000000>;
+		reg = <0 0x75000000 0 0x1000000>;
 	};
 
 	// IMX Remote Proc; tx buffer 32KiB
-	m7_vdev0vring0: vdev0vring0@acff0000 {
-		reg = <0 0xacff0000 0 0x8000>;
+	m7_vdev0vring0: vdev0vring0@74ff0000 {
+		reg = <0 0x74ff0000 0 0x8000>;
 		no-map;
 	};
 
 	// IMX Remote Proc; rx buffer 32KiB
-	m7_vdev0vring1: vdev0vring1@acff8000 {
-		reg = <0 0xacff8000 0 0x8000>;
+	m7_vdev0vring1: vdev0vring1@74ff8000 {
+		reg = <0 0x74ff8000 0 0x8000>;
 		no-map;
 	};
 
 	// M7 Resource table
 	m7_rsc_table: rsc-table@74eef000 {
-		reg = <0 0xacfef000 0 0x1000>;	// <-- MUST MATCH THE LOCATION WHERE M7 CODE COPIES THE RESOURCES
+		reg = <0 0x74eef000 0 0x1000>;	// <-- MUST MATCH THE LOCATION WHERE M7 CODE COPIES THE RESOURCES
 		no-map;
 	};
 
@@ -48,7 +48,7 @@
 / {
 	imx8mp-cm7 {
 		compatible = "fsl,imx8mp-cm7";
-		rsc-da = <0xacff0000>;		// <-- IT MUST POINT TO THE BASE OF THE FIRST VDEV0 RING AND
+		rsc-da = <0x74ff0000>;		// <-- IT MUST POINT TO THE BASE OF THE FIRST VDEV0 RING AND
 									//     MUST MATCH WITH VDEV0_VRING_BASE IN M7 CODE
 		clocks = <&clk IMX8MP_CLK_M7_DIV>;
 		clock-names = "core";
