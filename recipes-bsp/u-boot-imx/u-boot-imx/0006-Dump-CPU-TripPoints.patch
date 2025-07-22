@@ -1,0 +1,14 @@
+diff --git a/drivers/thermal/imx_tmu.c b/drivers/thermal/imx_tmu.c
+index ca775e5c7d..b01613a22d 100644
+--- a/drivers/thermal/imx_tmu.c
++++ b/drivers/thermal/imx_tmu.c
+@@ -566,6 +566,9 @@ static int imx_tmu_bind(struct udevice *dev)
+ 			dev_err(dev, "Error binding driver: %d\n", ret);
+ 	}
+ 
++	printf("Thermal trip points (alert/critical): %dC/%dC\n", pdata->alert, pdata->critical);
++
++
+ 	return 0;
+ }
+ 
