@@ -6,7 +6,7 @@ index ca775e5c7d..b01613a22d 100644
  			dev_err(dev, "Error binding driver: %d\n", ret);
  	}
  
-+	printf("Thermal trip points (alert/critical): %dC/%dC\n", pdata->alert, pdata->critical);
++	printf("Thermal trip points (alert/critical): %dC/%dC\n", pdata->alert / 1000, pdata->critical / 1000);
 +
 +
  	return 0;
