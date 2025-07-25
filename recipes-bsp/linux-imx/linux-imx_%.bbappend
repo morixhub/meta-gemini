@@ -15,11 +15,11 @@ SRC_URI += " file://0012-Reset-And-Power-GPIOs-Now-Optional-For-Disen-Panel.patc
 SRC_URI += " file://0013-Fixed-Optional-UpDn-ShLr-For-Disen-Panel.patch"
 SRC_URI += " file://0014-Added-Fixed-Clock-Disable-For-RTC-pcf85063.patch"
 SRC_URI += " file://0015-Fixed-RTC-pcf85063-For-SysFS-Entries.patch"
+SRC_URI += " file://0017-SGTL5000-Added-MCLK-Generation_For_I2C.patch"
+SRC_URI += " file://0018-iMX8-Added-Scaling-Frequencies.patch"
 
 # Include AuFS patches, if requested by distribution
 SRC_URI += " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', 'file://0016-AuFS-Support.patch', '', d)}"
-
-SRC_URI += " file://0017-SGTL5000-Added-MCLK-Generation_For_I2C.patch"
 
 # Remove the commit ID string from kernel version
 # ATTENTION: the value of LINUX_VERSION_EXTENSION is not really important here: it is just for
