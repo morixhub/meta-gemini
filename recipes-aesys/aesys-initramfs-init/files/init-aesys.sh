@@ -109,6 +109,7 @@ fi
 # Determine if (early) shell is requested
 EARLY_SHELL_REQUESTED=0
 SHELL_REQUESTED=0
+SHELL_CHROOT_DISABLED=0
 
 if [ -e /data/.sys/earlyshell.requested ]; then
 	EARLY_SHELL_REQUESTED=1 ;
@@ -116,6 +117,10 @@ fi
 
 if [ -e /data/.sys/shell.requested ]; then
 	SHELL_REQUESTED=1 ;
+fi
+
+if [ -e /data/.sys/shell-chroot.disabled ]; then
+    SHELL_CHROOT_DISABLED=1 ;
 fi
 
 # Enter early shell, if requested
@@ -549,7 +554,11 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		# for piping stderr to grep we have to swap stdout and stderr; further we have to
 		# invoke an intermediate shell for doing that, because otherwise redirection will
 		# occur for chroot, and not for ash
-		chroot /overlay-ram-merge sh -c "ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:'" ;
+        if [ $SHELL_CHROOT_DISABLED -eq 1 ]; then
+            ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:' ;
+        else
+    		chroot /overlay-ram-merge sh -c "ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:'" ;
+        fi
 	fi
 
 else

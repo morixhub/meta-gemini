@@ -22,6 +22,11 @@ clean_up () {
         rm -rf "$PACKAGEINDEX" ;
     fi
 
+    # Remove package index signature, if any
+    if [ -f "$PACKAGEINDEXSIG" ]; then
+        rm -rf "$PACKAGEINDEXSIG" ;
+    fi
+
     # Remove pre.sh, if any
     if [ -f "$PACKAGEPRE" ]; then
         rm -rf "$PACKAGEPRE" ;
@@ -674,6 +679,8 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 -d  The folder containing non-boot assets (if not specified a guess is attempted based on platform)
 -o  The output folder (if not specified, then the same <boot_folder> and <data_folder> are going
     to be used, based on asset type)
+-x  Allow unsecure update
+-y  The path to the public key to be used for verification
 -r  For GEMINI platform only, it limits the maximum size of RAM to be used for assests storage
     (if not specified then half the available RAM is used at maximum)
 
@@ -704,6 +711,8 @@ UPDATEBOOTLOADER=0 ;
 REBOOTPENDING=0 ;
 FORCEDMAXRAM=-1 ;
 DOWNLOADPATCHES=0 ;
+ALLOWUNSECURE=0 ;
+VERIFICATIONKEY= ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -729,7 +738,7 @@ if [ -d "${HIST}" ]; then
 fi
 
 OPTIND=1 ;
-while getopts hslnfm:b:d:o:r: opt; do
+while getopts hslnfxm:b:d:o:r:y: opt; do
     case $opt in
         h)
             usage ;
@@ -747,6 +756,9 @@ while getopts hslnfm:b:d:o:r: opt; do
         f)
             UPDATEBOOTLOADER=1 ;
             ;;
+        x)
+            ALLOWUNSECURE=1 ;
+            ;;
         m)
             FORCEDDUALBOOTSCHEME="${OPTARG}" ;
             ;;
@@ -761,6 +773,9 @@ while getopts hslnfm:b:d:o:r: opt; do
             ;;
         r)
             FORCEDMAXRAM=$(( "${OPTARG}" )) ;
+            ;;
+        y)
+            VERIFICATIONKEY="${OPTARG}" ;
             ;;
         ?)
             echo >&2 ;
@@ -780,6 +795,17 @@ PLATFORM= ;
 KERNEL=$(uname -r) ;
 if [[ "$KERNEL" == *gemini* ]]; then
     PLATFORM="gemini" ;
+fi
+
+# Pre-process settings depending on platform
+if [ "$PLATFORM" == "gemini" ]; then
+    if [ -f /data/.sys/unsecure-update.allowed ]; then
+        ALLOWUNSECURE=1 ;
+    fi
+
+    if [ -z "$VERIFICATIONKEY" ]; then
+        VERIFICATIONKEY="/initram/securefs.publickey.pem" ;
+    fi
 fi
 
 # Check command line parameters
@@ -817,26 +843,34 @@ if [ ! -d "$DATAFOLDER" ]; then
     exit 4 ;
 fi;
 
+if [ $ALLOWUNSECURE -ne 1 ]; then
+    if [ -z "$VERIFICATIONKEY" ] || [ ! -f "$VERIFICATIONKEY" ]; then
+        log_error "Verification key was not specified or cannot be found" ;
+        clean_up ;
+        exit 5 ;
+    fi;
+fi
+
 # Check the availability of index.ini in DELTA_PACKAGE_FOLDER
 PACKAGEFOLDER="$1" ;
 PACKAGEINDEX=$(mktemp) ;
-get_asset "$PACKAGEFOLDER/index.ini" > $PACKAGEINDEX ;
+get_asset "$PACKAGEFOLDER/index.ini" > "$PACKAGEINDEX" ;
 PACKAGEINDEXSIZE=$(wc -c "$PACKAGEINDEX" 2>/dev/null | cut -d' ' -f1) ;
 
 if [ ! -f "$PACKAGEINDEX" ] || [ $PACKAGEINDEXSIZE -eq 0 ]; then
     log_error "Invalid or unspecified package folder" ;
     clean_up ;
-    exit 5 ;
+    exit 6 ;
 fi
 
 # Get pre.sh script from package
 PACKAGEPRE=$(mktemp) ;
-get_asset "$PACKAGEFOLDER/pre.sh" > $PACKAGEPRE ;
+get_asset "$PACKAGEFOLDER/pre.sh" > "$PACKAGEPRE" ;
 PACKAGEPRESIZE=$(wc -c "$PACKAGEPRE" 2>/dev/null | cut -d' ' -f1) ;
 
 # Get post.sh script from package
 PACKAGEPOST=$(mktemp) ;
-get_asset "$PACKAGEFOLDER/post.sh" > $PACKAGEPOST ;
+get_asset "$PACKAGEFOLDER/post.sh" > "$PACKAGEPOST" ;
 PACKAGEPOSTSIZE=$(wc -c "$PACKAGEPOST" 2>/dev/null | cut -d' ' -f1) ;
 
 # Prepare the output folder
@@ -900,7 +934,7 @@ if [ ! -z "$FORCEDDUALBOOTSCHEME" ]; then
     else
         log_error "Invalid boot scheme partition force flag" ;
         clean_up ;
-        exit 6 ;
+        exit 9 ;
     fi
 else
     DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="` ;
@@ -923,7 +957,7 @@ elif [ "${DB_MODE}" == "partitions" ]; then
     if [ ! -d ${BOOTFOLDEROTHER} ]; then
         log_error "Cannot access the inactive-half boot partition: cannot continue" ;
         clean_up ;
-        exit 7;
+        exit 10;
     fi
 
     if [ $SIMULATION -ne 1 ]; then
@@ -933,12 +967,40 @@ elif [ "${DB_MODE}" == "partitions" ]; then
             if [ $? -ne 0 ]; then
                 log_error "GEMINI: Cannot mount inactive boot folder as read-write" ;
                 clean_up ;
-                exit 8 ;
+                exit 11 ;
             fi
         fi
     fi
 else
     log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
+fi
+log
+
+# Verify package signature, if requested
+if [ $ALLOWUNSECURE -ne 1 ]; then
+
+    # Check the availability of index.ini signature in DELTA_PACKAGE_FOLDER, if requested
+    PACKAGEINDEXSIG=$(mktemp);
+    get_asset "$PACKAGEFOLDER/index.ini.sig" > "$PACKAGEINDEXSIG"
+    PACKAGEINDEXSIGSIZE=$(wc -c "$PACKAGEINDEXSIG" 2>/dev/null | cut -d' ' -f1) ;
+
+    if [ ! -f "$PACKAGEINDEXSIG" ] || [ $PACKAGEINDEXSIGSIZE -eq 0 ]; then
+        log_error "Cannot find package signature" ;
+        clean_up ;
+        exit 7 ;
+    fi
+
+    # Package signature verification
+    openssl dgst -keyform PEM -verify "${VERIFICATIONKEY}" -sha256 -signature "$PACKAGEINDEXSIG" "$PACKAGEINDEX" >/dev/null 2>/dev/null
+    if [ $? -ne 0 ]; then
+        log_error "Cannot verify package signature" ;
+        clean_up ;
+        exit 8 ;
+    else
+        log "Package signature was OK" ;
+    fi
+else
+    log_warning "Package security check disabled by user choice" ;
 fi
 log
 
@@ -974,7 +1036,7 @@ elif [ $UPDATEBOOTLOADER -ne 1 ]; then
 elif [ -z "$BOOT_DEVICE" ]; then
     log_error "Cannot perform boot loader check due to unavailability of boot device" ;
     clean_up ;
-    exit 9 ;
+    exit 12 ;
 else
     delta_file "$BOOT_DEVICE" "uboot.bin" ;
 
@@ -991,7 +1053,7 @@ else
         if [ $? -ne 0 ]; then
             log_error "Error while patching boot loader: the system could be BRICKED!" ;
             clean_up ;
-            exit 10 ;
+            exit 13 ;
         fi
 
         # Flush
@@ -1010,7 +1072,7 @@ else
             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                 log_error "Delta verification failed for boot loader: the system could be BRICKED!" ;
                 clean_up ;
-                exit 11 ;
+                exit 14 ;
             fi
         fi
     fi
@@ -1027,7 +1089,7 @@ for f in ${FILES[@]}; do
     if [ $? -ne 0 ]; then
         log_error "Error detected while processing boot files: cannot continue" ;
         clean_up ;
-        exit 12;
+        exit 15;
     fi
 done
 
@@ -1044,7 +1106,7 @@ for f in ${FILES[@]}; do
         if [ $? -ne 0 ]; then
             log_error "Error detected while processing data files: cannot continue" ;
             clean_up ;
-            exit 13;
+            exit 16;
         fi
     fi
 done
