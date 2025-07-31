@@ -61,6 +61,7 @@
                 "if run loadfit; " \
                 "then " \
                     "echo FIT image loaded successfully... booting...; " \
+                    "setenv bootargs ${bootargs} secure-boot; " \
                     "run fitboot; " \
                 "else " \
                     "if run loadimage; " \
