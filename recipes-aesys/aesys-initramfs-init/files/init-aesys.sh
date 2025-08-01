@@ -447,11 +447,15 @@ if [ ! -z "$SECUREBOOT" ]; then
         CHECK=0 ;
         while [ $CHECK -eq 0 ];
         do
-            cat /overlay/rootfs/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
+            if [ -s /overlay/rootfs/securefs.data ]; then
+                cat /overlay/rootfs/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
 
-            if [ ! $? -eq 0 ]; then
-                do_log "SecureFS files validation FAILED! (rootfs)" ;
-                do_panic ;
+                if [ ! $? -eq 0 ]; then
+                    do_log "SecureFS files validation FAILED! (rootfs)" ;
+                    do_panic ;
+                else
+                    CHECK=1 ;
+                fi
             else
                 CHECK=1 ;
             fi
@@ -505,11 +509,15 @@ if [ ! -z "$SECUREBOOT" ]; then
         CHECK=0 ;
         while [ $CHECK -eq 0 ];
         do
-            cat /overlay-persist-root-merge/data/.sys/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
+            if [ -s /overlay-persist-root-merge/data/.sys/securefs.data ]; then
+                cat /overlay-persist-root-merge/data/.sys/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
 
-            if [ ! $? -eq 0 ]; then
-                do_log "SecureFS files validation FAILED! (data)" ;
-                do_panic ;
+                if [ ! $? -eq 0 ]; then
+                    do_log "SecureFS files validation FAILED! (data)" ;
+                    do_panic ;
+                else
+                    CHECK=1 ;
+                fi
             else
                 CHECK=1 ;
             fi
