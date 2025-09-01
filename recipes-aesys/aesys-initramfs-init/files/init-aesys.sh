@@ -414,16 +414,16 @@ if [ ! -z "$SECUREBOOT" ]; then
     CHECK=0
     while [ $CHECK -eq 0 ];
     do
-        if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay/rootfs/securefs.data ] || [ ! -e /overlay/rootfs/securefs.data.sig ]; then
-            if [ -e /overlay-persist-root-merge/data/.sys/rootfs-securefs.skip ]; then
-                SKIPVERIFY=1 ;
-                CHECK=1 ;
-            else
+        if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ] || [ -e /overlay-persist-root-merge/data/.sys/rootfs-securefs.skip ]; then
+            SKIPVERIFY=1 ;
+            CHECK=1 ;
+        else
+            if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay/rootfs/securefs.data ] || [ ! -e /overlay/rootfs/securefs.data.sig ]; then
                 do_log "SecureFS files not available! (rootfs)" ;
                 do_panic ;
+            else
+                CHECK=1 ;    
             fi
-        else
-            CHECK=1 ;
         fi
     done
 
@@ -448,7 +448,7 @@ if [ ! -z "$SECUREBOOT" ]; then
         while [ $CHECK -eq 0 ];
         do
             if [ -s /overlay/rootfs/securefs.data ]; then
-                cat /overlay/rootfs/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
+                cat /overlay/rootfs/securefs.data | awk ' { print $1 " /overlay-persist-root-merge/"$2 } ' | sha256sum -c > /dev/null 2>&1 ;
 
                 if [ ! $? -eq 0 ]; then
                     do_log "SecureFS files validation FAILED! (rootfs)" ;
@@ -476,16 +476,16 @@ if [ ! -z "$SECUREBOOT" ]; then
     CHECK=0
     while [ $CHECK -eq 0 ];
     do
-        if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/data/.sys/securefs.data ] || [ ! -e /overlay-persist-root-merge/data/.sys/securefs.data.sig ]; then
-            if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ]; then
-                SKIPVERIFY=1 ;
-                CHECK=1 ;
-            else
+        if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ] || [ -e /overlay-persist-root-merge/data/.sys/data-securefs.skip ]; then
+            SKIPVERIFY=1 ;
+            CHECK=1 ;
+        else
+            if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/data/.sys/securefs.data ] || [ ! -e /overlay-persist-root-merge/data/.sys/securefs.data.sig ]; then
                 do_log "SecureFS files not available! (data)" ;
                 do_panic ;
+            else
+                CHECK=1 ;
             fi
-        else
-            CHECK=1 ;
         fi
     done
 
@@ -510,7 +510,7 @@ if [ ! -z "$SECUREBOOT" ]; then
         while [ $CHECK -eq 0 ];
         do
             if [ -s /overlay-persist-root-merge/data/.sys/securefs.data ]; then
-                cat /overlay-persist-root-merge/data/.sys/securefs.data | chroot /overlay-persist-root-merge sha256sum -c > /dev/null 2>&1 ;
+                cat /overlay-persist-root-merge/data/.sys/securefs.data | awk ' { print $1 " /overlay-persist-root-merge/data/"$2 } ' | sha256sum -c > /dev/null 2>&1 ;
 
                 if [ ! $? -eq 0 ]; then
                     do_log "SecureFS files validation FAILED! (data)" ;
@@ -531,6 +531,75 @@ if [ ! -z "$SECUREBOOT" ]; then
         # Log
         do_log "Filesystem (data) verification was skipped DUE TO REQUEST" ;
 
+    fi
+
+    # Check secure FS required files (app), if requested
+    if [ ! -z "$APP_ORIGIN" ]; then
+        
+        SKIPVERIFY=0
+        CHECK=0
+        while [ $CHECK -eq 0 ];
+        do
+            if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ] || [ -e /overlay-persist-root-merge/data/.sys/app-securefs.skip ]; then
+                SKIPVERIFY=1 ;
+                CHECK=1 ;
+            else
+                if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/app/securefs.data ] || [ ! -e /overlay-persist-root-merge/app/securefs.data.sig ]; then
+                    do_log "SecureFS files not available! (app)" ;
+                    do_panic ;
+                else
+                    CHECK=1 ;
+                fi
+            fi
+        done
+
+        if [ $SKIPVERIFY -eq 0 ]; then
+
+            # Validate secure FS signature
+            CHECK=0 ;
+            while [ $CHECK -eq 0 ];
+            do
+                openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /overlay-persist-root-merge/app/securefs.data.sig /overlay-persist-root-merge/app/securefs.data ;
+
+                if [ ! $? -eq 0 ]; then
+                    do_log "SecureFS signature verification FAILED! (app)" ;
+                    do_panic ;
+                else
+                    CHECK=1 ;
+                fi
+            done
+
+            # Validate indexed files
+            CHECK=0 ;
+            while [ $CHECK -eq 0 ];
+            do
+                if [ -s /overlay-persist-root-merge/app/securefs.data ]; then
+                    cat /overlay-persist-root-merge/app/securefs.data | awk ' { print $1 " /overlay-persist-root-merge/app/"$2 } ' | sha256sum -c > /dev/null 2>&1 ;
+
+                    if [ ! $? -eq 0 ]; then
+                        do_log "SecureFS files validation FAILED! (app)" ;
+                        do_panic ;
+                    else
+                        CHECK=1 ;
+                    fi
+                else
+                    CHECK=1 ;
+                fi
+            done
+
+            # Log
+            do_log "Filesystem (app) verification SUCCEEDED: filesystem is secure" ;
+
+        else
+
+            # Log
+            do_log "Filesystem (app) verification was skipped DUE TO REQUEST" ;
+
+        fi
+    else
+
+        # Log
+        do_log "Filesystem (app) verification was skipped because app filesystem was not mounted" ;
     fi
 else
 

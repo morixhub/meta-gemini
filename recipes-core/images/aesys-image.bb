@@ -92,7 +92,9 @@ aesys_image_customize_root() {
     mkdir -p ${IMAGE_ROOTFS}/data/etcrw
 
     # Disable securefs check by default
-    touch ${IMAGE_ROOTFS}/data/.sys/securefs.skip ;
+    touch ${IMAGE_ROOTFS}/data/.sys/rootfs-securefs.skip ;
+    touch ${IMAGE_ROOTFS}/data/.sys/data-securefs.skip ;
+    touch ${IMAGE_ROOTFS}/data/.sys/app-securefs.skip ;
 
     #######################################################
     # OS HARDENING BEGIN
