@@ -214,74 +214,80 @@ if [ -d "/data/.sys/.delta-tmp" ]; then
 fi
 
 # Clear temporary update files (if there, they are a "remaining" of a failed update)
-if [ -f "/data/.sys/$ROOTFSSQUASHFS.update.tmp" ]; then
-    rm -f "/data/.sys/$ROOTFSSQUASHFS.update.tmp" ;
-    do_log "Removed stale rootfs update file" ; 
+if [ -f "/data/.sys/rootfs.squashfs.update.tmp" ] || [ -f "/data/.sys/rootfs.squashfs.a.update.tmp" ] || [ -f "/data/.sys/rootfs.squashfs.b.update.tmp" ]; then
+    rm -f "/data/.sys/rootfs*.update.tmp" ;
+    do_log "Removed stale rootfs update file(s)" ; 
 fi
-if [ -f "/data/.sys/$APPSQUASHFS.update.tmp" ]; then
-    rm -f "/data/.sys/$APPSQUASHFS.update.tmp" ;
-    do_log "Removed stale app update file" ; 
+if [ -f "/data/.sys/app.squashfs.update.tmp" ] || [ -f "/data/.sys/app.squashfs.a.update.tmp" ] || [ -f "/data/.sys/app.squashfs.b.update.tmp" ]; then
+    rm -f "/data/.sys/app.squashfs*.update.tmp" ;
+    do_log "Removed stale app update file(s)" ; 
 fi
 
 # Update rootfs
-if [ -f "/data/.sys/$ROOTFSSQUASHFS.update" ]; then
-    
-    # Log
-    do_log "Updating rootfs..." ;
-
-    # Remount boot as R/W
-    mount -o remount,rw /boot ;
-
-    # Copy new file
-    TARGETDIGEST=$(sha256sum "/data/.sys/$ROOTFSSQUASHFS.update" 2>/dev/null | cut -d' ' -f1) ;
-    cp -f "/data/.sys/$ROOTFSSQUASHFS.update" "/boot/$ROOTFSSQUASHFS" ;
-    sync ;
-
-    # Remount boot as R/O
-    mount -o remount,ro /boot ;
-
-    # Verification
-    VERIFICATIONDIGEST=$(sha256sum "/boot/$ROOTFSSQUASHFS" 2>/dev/null | cut -d' ' -f1) ;
-
-    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-        # Error here: log and panic!
-        do_log "Update of rootfs failed: verification problem" ;
-        do_panic ;
-    else
-        # Remove update file
-        rm -f "/data/.sys/$ROOTFSSQUASHFS.update" ;
-
+ROOTFSUPDATES=("rootfs.squashfs" "rootfs.squashfs.a" "rootfs.squashfs.b") ;
+for UPDATE in ${ROOTFSUPDATES[@]}; do
+    if [ -f "/data/.sys/$UPDATE.update" ]; then
+        
         # Log
-        do_log "Rootfs update completed successfully" ;
+        do_log "Updating rootfs ($UPDATE)..." ;
+
+        # Remount boot as R/W
+        mount -o remount,rw /boot ;
+
+        # Copy new file
+        TARGETDIGEST=$(sha256sum "/data/.sys/$UPDATE.update" 2>/dev/null | cut -d' ' -f1) ;
+        cp -f "/data/.sys/$UPDATE.update" "/boot/$UPDATE" ;
+        sync ;
+
+        # Remount boot as R/O
+        mount -o remount,ro /boot ;
+
+        # Verification
+        VERIFICATIONDIGEST=$(sha256sum "/boot/$UPDATE" 2>/dev/null | cut -d' ' -f1) ;
+
+        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+            # Error here: log and panic!
+            do_log "Update of rootfs ($UPDATE) failed: verification problem" ;
+            do_panic ;
+        else
+            # Remove update file
+            rm -f "/data/.sys/$UPDATE.update" ;
+
+            # Log
+            do_log "Rootfs ($UPDATE) update completed successfully" ;
+        fi
     fi
-fi
+done
 
 # Update app.squashfs
-if [ -f "/data/.sys/$APPSQUASHFS.update" ]; then
-
-    # Log
-    do_log "Updating app..." ;
-
-    # Copy new file
-    TARGETDIGEST=$(sha256sum "/data/.sys/$APPSQUASHFS.update" 2>/dev/null | cut -d' ' -f1) ;
-    cp -f "/data/.sys/$APPSQUASHFS.update" "/data/.sys/$APPSQUASHFS" ;
-    sync ;
-
-    # Verification
-    VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$APPSQUASHFS" 2>/dev/null | cut -d' ' -f1) ;
-
-    if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
-        # Error here: log and panic!
-        do_log "Update of app failed" ;
-        do_panic ;
-    else
-        # Remove update file
-        rm -f "/data/.sys/$APPSQUASHFS.update" ;
+APPUPDATES=("app.squashfs" "app.squashfs.a" "app.squashfs.b");
+for UPDATE in ${APPUPDATES[@]}; do
+    if [ -f "/data/.sys/$UPDATE.update" ]; then
 
         # Log
-        do_log "App update completed successfully" ;
+        do_log "Updating app ($UPDATE)..." ;
+
+        # Copy new file
+        TARGETDIGEST=$(sha256sum "/data/.sys/$UPDATE.update" 2>/dev/null | cut -d' ' -f1) ;
+        cp -f "/data/.sys/$UPDATE.update" "/data/.sys/$UPDATE" ;
+        sync ;
+
+        # Verification
+        VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$UPDATE" 2>/dev/null | cut -d' ' -f1) ;
+
+        if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
+            # Error here: log and panic!
+            do_log "Update of app ($UPDATE) failed" ;
+            do_panic ;
+        else
+            # Remove update file
+            rm -f "/data/.sys/$UPDATE.update" ;
+
+            # Log
+            do_log "App ($UPDATE) update completed successfully" ;
+        fi
     fi
-fi
+done
 
 # Mount the app file system
 APP_ORIGIN=

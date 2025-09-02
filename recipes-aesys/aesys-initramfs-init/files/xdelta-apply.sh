@@ -170,9 +170,11 @@ delta_file () {
     # Determine if, depending on boot scheme, the file has to be processed
     BASEFILE= ;
     TARGETFILE= ;
+    WRITEFILE= ;
     if [ "$FILE" == "uboot.bin" ]; then
         BASEFILE="$FILE" ;
         TARGETFILE=$(basename "$UBOOTBIN") ;
+        WRITEFILE="$TARGETFILE" ;
         OTHERFOLDER=$(dirname "$UBOOTBIN") ;
     else
         if [ -z "${DB_HALF}" ]; then
@@ -185,10 +187,12 @@ delta_file () {
                 # (in this case they are updated by system start-up script
                 # since they might be in use, and so not directly updatable)
                 if [ "$FILE" == "rootfs.squashfs" ] || [ "$FILE" == "app.squashfs" ]; then
-                    TARGETFILE="$FILE.update.tmp" ;
+                    TARGETFILE="$FILE" ;
+                    WRITEFILE="$FILE.update.tmp" ;
                     OTHERFOLDER="$DATAFOLDER" ;
                 else
                     TARGETFILE="$FILE" ;
+                    WRITEFILE="$TARGETFILE" ;
                 fi
             fi
         elif [ "${DB_MODE}" == "partitions" ]; then
@@ -201,10 +205,18 @@ delta_file () {
                         log "+ Skipped: not current-half file while in dual (partitions-based) boot scheme" ;
                     else
                         BASEFILE="${FILE::-2}" ;
-                        if [ "${DB_HALF}" == "a" ]; then
-                            TARGETFILE="$BASEFILE.b" ;
+                        if [ ! -z "$DB_FORCED_SINGLE" ]; then
+                            TARGETFILE="$FILE" ;
+                            WRITEFILE="$FILE.update.tmp" ;
+                            OTHERFOLDER="$DATAFOLDER" ;
                         else
-                            TARGETFILE="$BASEFILE.a" ;
+                            if [ "${DB_HALF}" == "a" ]; then
+                                TARGETFILE="$BASEFILE.b" ;
+                                WRITEFILE="$TARGETFILE" ;
+                            else
+                                TARGETFILE="$BASEFILE.a" ;
+                                WRITEFILE="$TARGETFILE" ;
+                            fi
                         fi
                     fi
                 else
@@ -219,9 +231,12 @@ delta_file () {
                 # (in this case the file is updated by system start-up script
                 # since it might be in use, and so not directly updatable)
                 if [ "$FILE" == "app.squashfs" ]; then
-                    TARGETFILE="$FILE.update.tmp" ;
+                    TARGETFILE="$FILE" ;
+                    WRITEFILE="$FILE.update.tmp" ;
+                    OTHERFOLDER="$DATAFOLDER" ;
                 else
                     TARGETFILE="$FILE" ;
+                    WRITEFILE="$TARGETFILE" ;
                 fi
             fi
         else
@@ -233,22 +248,37 @@ delta_file () {
                 # since it might be in use, and so not directly updatable)
                 if [[ $FILE == "app.squashfs" ]]; then
                     BASEFILE="$FILE" ;
-                    TARGETFILE="$FILE.update.tmp" ;
+                    TARGETFILE="$FILE" ;
+                    WRITEFILE="$FILE.update.tmp" ;
+                    OTHERFOLDER="$DATAFOLDER" ;
                 else
                     log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
                 fi
             else
                 BASEFILE="${FILE::-2}" ;
-                if [ "${DB_HALF}" == "a" ]; then
-                    TARGETFILE="$BASEFILE.b" ;
+                if [ ! -z "$DB_FORCED_SINGLE" ]; then
+                    if [[ "$FILE" == rootfs.squashfs.* ]] || [[ "$FILE" == app.squashfs.* ]]; then
+                        TARGETFILE="$FILE" ;
+                        WRITEFILE="$FILE.update.tmp" ;
+                        OTHERFOLDER="$DATAFOLDER" ;
+                    else
+                        TARGETFILE="$BASEFILE.${DB_HALF}" ;
+                        WRITEFILE="$TARGETFILE" ;
+                    fi
                 else
-                    TARGETFILE="$BASEFILE.a" ;
+                    if [ "${DB_HALF}" == "a" ]; then
+                        TARGETFILE="$BASEFILE.b" ;
+                        WRITEFILE="$TARGETFILE" ;
+                    else
+                        TARGETFILE="$BASEFILE.a" ;
+                        WRITEFILE="$TARGETFILE" ;
+                    fi
                 fi
             fi
         fi
     fi
 
-    if [ ! -z "$TARGETFILE" ] && [ ! -z "$BASEFILE" ]; then
+    if [ ! -z "$WRITEFILE" ] && [ ! -z "$TARGETFILE" ] && [ ! -z "$BASEFILE" ]; then
 
         # Determine the folder for outputting the result
         if [ -z "$OUTPUTFOLDER" ]; then
@@ -294,8 +324,8 @@ delta_file () {
                 # Log
                 log "+ File needs update" ;
 
-                if [ -f "${WORKOUTPUT}/${TARGETFILE}" ]; then
-                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                if [ -f "${FOLDER}/${TARGETFILE}" ]; then
+                    VERIFICATIONDIGEST=$(sha256sum "${FOLDER}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
                     if [ "$TARGETDIGEST" == "$VERIFICATIONDIGEST" ]; then
                         log "+ Target file is already good: no need for further processing" ;
 
@@ -335,7 +365,7 @@ delta_file () {
                             fi
 
                             log "+ Applying delta..." ;
-                            get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" | xdelta3 -c -d -f -D -R -S djw -s "${EXFILE}" > "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null ;
+                            get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" | xdelta3 -c -d -f -D -R -S djw -s "${EXFILE}" > "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null ;
 
                             if [ $? -ne 0 ]; then
                                 log_error "Error while applying patch: cannot continue" ;
@@ -350,7 +380,7 @@ delta_file () {
                                 # Drop disk caches (for forcing the system to reload data from disk)
                                 echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
 
-                                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                 if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                     log_error "Delta verification failed: cannot continue" ;
                                     return -3 ;
@@ -358,8 +388,8 @@ delta_file () {
                             fi
 
                             # Finalize ".update.tmp" files to ".update"
-                            if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                                mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                            if [[ "$WRITEFILE" == *.update.tmp ]]; then
+                                mv "${WORKOUTPUT}/${WRITEFILE}" "${WORKOUTPUT}/${WRITEFILE::-4}" ;
                                 if [ $? -ne 0 ]; then
                                     log_error "Update file finalization failed: cannot continue" ;
                                     return -4 ;
@@ -400,7 +430,7 @@ delta_file () {
 
                                 # Apply delta
                                 log "+ Applying delta..."
-                                xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                                xdelta3 -d -f -D -R -S djw -s "${EXFILE}" "$DELTADIFF" "${WORKOUTPUT}/${WRITEFILE}" >/dev/null 2>/dev/null ;
 
                                 if [ $? -ne 0 ]; then
                                     if [ -f "$DELTADIFF" ]; then
@@ -422,7 +452,7 @@ delta_file () {
                                     # Drop disk caches (for forcing the system to reload data from disk)
                                     echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
 
-                                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                     if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                         log_error "Delta verification failed: cannot continue" ;
                                         return -7 ;
@@ -430,8 +460,8 @@ delta_file () {
                                 fi
 
                                 # Finalize ".update.tmp" files to ".update"
-                                if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                                    mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                                if [[ "$WRITEFILE" == *.update.tmp ]]; then
+                                    mv "${WORKOUTPUT}/${WRITEFILE}" "${WORKOUTPUT}/${WRITEFILE::-4}" ;
                                     if [ $? -ne 0 ]; then
                                         log_error "Update file finalization failed: cannot continue" ;
                                         return -8 ;
@@ -466,7 +496,7 @@ delta_file () {
                             fi
 
                             log "+ Applying target resource..."
-                            get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null ;
+                            get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null ;
 
                             if [ $? -ne 0 ]; then
                                 log_error "Error while applying target resource: cannot continue" ;
@@ -481,7 +511,7 @@ delta_file () {
                                 # Drop disk caches (for forcing the system to reload data from disk)
                                 echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
 
-                                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                 if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                     log_error "Delta verification failed: cannot continue" ;
                                     return -10 ;
@@ -489,8 +519,8 @@ delta_file () {
                             fi
 
                             # Finalize ".update.tmp" files to ".update"
-                            if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                                mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                            if [[ "$WRITEFILE" == *.update.tmp ]]; then
+                                mv "${WORKOUTPUT}/${WRITEFILE}" "${WORKOUTPUT}/${WRITEFILE::-4}" ;
                                 if [ $? -ne 0 ]; then
                                     log_error "Update file finalization failed: cannot continue" ;
                                     return -11 ;
@@ -527,7 +557,7 @@ delta_file () {
                                 # Apply delta
                                 log "+ Applying target resource..."
 
-                                cp -f "$RESOURCETARGET" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null;
+                                cp -f "$RESOURCETARGET" "${WORKOUTPUT}/${WRITEFILE}" >/dev/null 2>/dev/null;
 
                                 if [ $? -ne 0 ]; then
                                     if [ -f "$RESOURCETARGET" ]; then
@@ -549,7 +579,7 @@ delta_file () {
                                     # Drop disk caches (for forcing the system to reload data from disk)
                                     echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
 
-                                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                                    VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null | cut -d' ' -f1) ;
                                     if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                         log_error "Delta verification failed: cannot continue" ;
                                         return -14 ;
@@ -557,8 +587,8 @@ delta_file () {
                                 fi
 
                                 # Finalize ".update.tmp" files to ".update"
-                                if [[ "$TARGETFILE" == *.update.tmp ]]; then
-                                    mv "${WORKOUTPUT}/${TARGETFILE}" "${WORKOUTPUT}/${TARGETFILE::-4}" ;
+                                if [[ "$WRITEFILE" == *.update.tmp ]]; then
+                                    mv "${WORKOUTPUT}/${WRITEFILE}" "${WORKOUTPUT}/${WRITEFILE::-4}" ;
                                     if [ $? -ne 0 ]; then
                                         log_error "Update file finalization failed: cannot continue" ;
                                         return -15 ;
@@ -596,7 +626,7 @@ delta_file () {
         if [ $COPYFROMEXISTING -eq 1 ] && [ ! -z "${DB_HALF}" ] && [ "$BASEFILE" != "uboot.bin" ]; then
             if [ ! -z "DB_HALF" ]; then
 
-                diff -q "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                diff -q "${FOLDER}/${FILE}" "${FOLDER}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                 if [ $? -eq 0 ]; then
                     # Log
                     log "+ No update available and no need to copy from current half (target file is already good)" ;
@@ -614,7 +644,7 @@ delta_file () {
                         fi
 
                         # Copy file
-                        cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${TARGETFILE}" ;
+                        cp -f "${FOLDER}/${FILE}" "${WORKOUTPUT}/${WRITEFILE}" ;
 
                         # Check result
                         if [ $? -ne 0 ]; then
@@ -631,7 +661,7 @@ delta_file () {
                             echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
 
                             TARGETDIGEST=$(sha256sum "${FOLDER}/${FILE}" 2>/dev/null | cut -d' ' -f1) ;
-                            VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${TARGETFILE}" 2>/dev/null | cut -d' ' -f1) ;
+                            VERIFICATIONDIGEST=$(sha256sum "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null | cut -d' ' -f1) ;
                             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                                 log_error "Verification error while copying from current half: cannot continue" ;
                                 return -17 ;
@@ -916,6 +946,7 @@ log ;
 # Determine booting scheme
 DB_HALF= ;
 DB_MODE= ;
+DB_FORCED_SINGLE= ;
 DB_FORCED_ADDINFO= ;
 if [ ! -z "$FORCEDDUALBOOTSCHEME" ]; then
     DB_FORCED_ADDINFO="(forced by user)" ;
@@ -939,10 +970,14 @@ if [ ! -z "$FORCEDDUALBOOTSCHEME" ]; then
 else
     DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="` ;
     DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="` ;
+    DB_CMDLINE_FORCED_SINGLE=`echo ${KERNEL_CMDLINE} | grep "db_force_single"` ;
 
     if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
         DB_HALF=`echo $DB_CMDLINE_CURRENTHALF | sed -e 's/^.*db_active_half=//' -e 's/ .*$//'` ;
         DB_MODE=`echo $DB_CMDLINE_MODE | sed -e 's/^.*db_mode=//' -e 's/ .*$//'` ;
+        if [ ! -z "$DB_CMDLINE_FORCED_SINGLE" ]; then
+            DB_FORCED_SINGLE="(forced single boot)" ;
+        fi
     fi
 fi
 
@@ -951,7 +986,7 @@ BOOTFOLDEROTHER= ;
 if [ -z "$DB_HALF" ]; then
     log "Booting scheme: SINGLE boot $DB_FORCED_ADDINFO" ;
 elif [ "${DB_MODE}" == "partitions" ]; then
-    log "Booting scheme: DUAL boot (partitions-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
+    log "Booting scheme: DUAL boot (partitions-based, current half: ${DB_HALF^^}) $DB_FORCED_SINGLE $DB_FORCED_ADDINFO" ;
     BOOTFOLDEROTHER="${BOOTFOLDER}-inactive" ;
 
     if [ ! -d ${BOOTFOLDEROTHER} ]; then
@@ -972,7 +1007,7 @@ elif [ "${DB_MODE}" == "partitions" ]; then
         fi
     fi
 else
-    log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^}) $DB_FORCED_ADDINFO" ;
+    log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^}) $DB_FORCED_SINGLE $DB_FORCED_ADDINFO" ;
 fi
 log
 
@@ -1135,5 +1170,6 @@ clean_up ;
 
 # Manage exit status
 if [ $REBOOTPENDING -eq 1 ]; then
+    log "*** REBOOT PENDING FOR FINISHING UP THE UPDATE *** " ;
     exit 255;
 fi
