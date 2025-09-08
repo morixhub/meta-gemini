@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Terminate firstinit image, if any
+if [ -f "/var/run/firstinit.png.pid" ]; then
+    PID_UPDATE_PNG=$(cat "/var/run/firstinit.png.pid");
+    if [ ! -z "$PID_UPDATE_PNG" ]; then
+        kill $PID_UPDATE_PNG ;
+    fi
+fi
+
 # Kill service ifplugd (that, under some circumstances, can delay the system halt)
 systemctl kill --signal=SIGKILL ifplugd.service
 
@@ -23,7 +31,7 @@ if [ -x /app/stop-ui.sh ]; then
     else
         
         # Perform actual app stop
-        /app/stop-ui.sh > /var/run/app-shutdown-ui.log 2>&1 &
+        /app/stop-ui.sh > /var/run/app-shutdown-ui.log 2>&1
 
     fi
 fi
@@ -32,7 +40,7 @@ fi
 if [ -x /app/stop.sh ]; then
     mkdir -p /var/run ;
     echo "Stopping app..." >> /var/run/app-shutdown.log ;
-    /app/stop.sh > /var/run/app-shutdown.log 2>&1 &
+    /app/stop.sh > /var/run/app-shutdown.log 2>&1
 fi
 
 # Lazy-umount boot, var and data (for avoiding troubles with system shutdown)

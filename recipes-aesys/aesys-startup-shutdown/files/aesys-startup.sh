@@ -1,5 +1,14 @@
 #!/bin/bash
 
+FIRSTBOOT_SPLASH=0
+
+if [ -f "/data/.sys/firstinit.pending" ]; then
+    VIEWER=$(which weston-image) ;
+    if [ ! -z "$VIEWER" ] && [ -f "/sbin/firstinit.png" ]; then
+        FIRSTBOOT_SPLASH=1 ; 
+    fi
+fi
+
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
 BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..$//'`
@@ -7,15 +16,15 @@ BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..
 # Expose boot device as USB mass storage gadget
 modprobe g_mass_storage file=${BOOT_DEVICE} stall=0 removable=1 ro=1 iManufacturer="Aesys" iProduct="Aesys Mass Storage Gadget"
 
-# Launch /app/start.sh, if any
-if [ -x /app/start.sh ]; then
+# Launch /app/start.sh, if any (except during first boot!)
+if [ $FIRSTBOOT_SPLASH -eq 0 ] && [ -x /app/start.sh ]; then
     mkdir -p /var/run ;
     echo "Starting app..." >> /var/run/app-startup.log ;
-    /app/start.sh > /var/run/app-startup.log 2>&1 &
+    /app/start.sh > /var/run/app-startup.log 2>&1
 fi
 
-# Launch /app/start-ui.sh, if any
-if [ -x /app/start-ui.sh ]; then
+# Launch /app/start-ui.sh, if any (enter here also on first boot, because this part of code is used also for showing first boot splash screen)
+if [ $FIRSTBOOT_SPLASH -eq 1 ] || [ -x /app/start-ui.sh ]; then
     mkdir -p /var/run ;
     echo "Starting app-ui..." >> /var/run/app-startup-ui.log ;
 
@@ -90,6 +99,13 @@ if [ -x /app/start-ui.sh ]; then
         export WAYLAND_DISPLAY="$DISPLAY" ;
 
         # Perform actual app start
-        /app/start-ui.sh >> /var/run/app-startup-ui.log ;
+        if [ $FIRSTBOOT_SPLASH -eq 1 ]; then
+            weston-image "/sbin/firstinit.png" &
+            PID_UPDATE_PNG=$! ;
+            echo $PID_UPDATE_PNG > /var/run/firstinit.png.pid ;
+        else
+            /app/start-ui.sh >> /var/run/app-startup-ui.log 2>&1
+        fi
     fi
 fi
+

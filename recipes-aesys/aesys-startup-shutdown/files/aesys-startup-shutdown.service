@@ -1,9 +1,6 @@
 [Unit]
 Description=Aesys management of system startup/shutdown
 
-# Start only if first initialization has been completed
-ConditionPathExists=!/data/.sys/firstinit.pending
-
 [Service]
 Type=oneshot
 ExecStart=/sbin/aesys-startup.sh

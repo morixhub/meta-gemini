@@ -8,12 +8,14 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 RDEPENDS:${PN} += "bash"
 
 SRC_URI = " \
+    file://firstinit.png \
     file://aesys-startup.sh \
     file://aesys-shutdown.sh \
     file://aesys-startup-shutdown.service \
 "
 
 FILES:${PN} += " \
+    ${sbindir}/firstinit.png \
     ${sbindir}/aesys-startup.sh \
     ${sbindir}/aesys-shutdown.sh \
     ${systemd_unitdir}/system/aesys-startup-shutdown.service \
@@ -21,6 +23,7 @@ FILES:${PN} += " \
 
 do_install() {
     install -d ${D}/${sbindir}
+    install -m 0755 ${WORKDIR}/firstinit.png ${D}${sbindir}
     install -m 0755 ${WORKDIR}/aesys-startup.sh ${D}${sbindir}
     install -m 0755 ${WORKDIR}/aesys-shutdown.sh ${D}${sbindir}
 

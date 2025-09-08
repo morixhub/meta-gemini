@@ -916,7 +916,7 @@ fi
 
 # Pre-process settings depending on platform
 if [ "$PLATFORM" == "gemini" ]; then
-    if [ -f /data/.sys/unsecure-update.allowed ]; then
+    if [ -f /data/.sys/unsecure-update.allowed ] || [ -z "$SECURE_BOOT" ]; then
         ALLOWUNSECURE=1 ;
     fi
 
@@ -998,6 +998,7 @@ fi
 
 # Get kernel parameters
 KERNEL_CMDLINE=`cat /proc/cmdline` ;
+SECURE_BOOT=`echo ${KERNEL_CMDLINE} | grep -i "secure-boot"` ;
 
 # Determine boot device (only if platform is set, just for avoiding dramatic results on working stations)
 if [ ! -z "$PLATFORM" ]; then

@@ -8,3 +8,6 @@ IMAGE_FEATURES:remove = "tools-testapps"
 CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-fsl-tools-testapps"
 CORE_IMAGE_EXTRA_INSTALL:remove = "packagegroup-fsl-tools-benchmark"
 
+# Aesys TC images, by default, do not enable PXE boot
+IMAGE_FEATURES:append = " aesys-disable-pxe "
+
