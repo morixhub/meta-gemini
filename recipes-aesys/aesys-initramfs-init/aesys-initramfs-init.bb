@@ -11,7 +11,8 @@ SRC_URI = " \
     file://init-aesys.sh \
     file://overlayroot-commit.sh \
     file://xdelta-apply.sh \
-    file://dual-tool.sh \
+    file://dual-tool-clone.sh \
+    file://dual-tool-id.sh \
     file://SW_code_signer.ECC_PKI_AESYS.publickey.pem \
 "
 
@@ -19,7 +20,8 @@ FILES:${PN} += " \
     /init \
     /overlayroot-commit.sh \
     /xdelta-apply.sh \
-    /dual-tool.sh \
+    /dual-tool-clone.sh \
+    /dual-tool-id.sh \
     /securefs.publickey.pem \
 "
 
@@ -27,7 +29,8 @@ do_install() {
     install -m 0755 ${WORKDIR}/init-aesys.sh ${D}/init
     install -m 0555 ${WORKDIR}/overlayroot-commit.sh ${D}/overlayroot-commit.sh
     install -m 0555 ${WORKDIR}/xdelta-apply.sh ${D}/xdelta-apply.sh
-    install -m 0555 ${WORKDIR}/dual-tool.sh ${D}/dual-tool.sh
+    install -m 0555 ${WORKDIR}/dual-tool-clone.sh ${D}/dual-tool-clone.sh
+    install -m 0555 ${WORKDIR}/dual-tool-id.sh ${D}/dual-tool-id.sh
     install -m 0444 ${WORKDIR}/SW_code_signer.ECC_PKI_AESYS.publickey.pem ${D}/securefs.publickey.pem
 }
 

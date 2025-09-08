@@ -403,9 +403,14 @@ if [ -e /xdelta-apply.sh ]; then
     cp /xdelta-apply.sh /initram/xdelta-apply.sh ;
 fi
 
-# Make dual-tool.sh available, if requested
-if [ ! -z "$DB_HALF" ] && [ -e /dual-tool.sh ]; then
-    cp /dual-tool.sh /initram/dual-tool.sh ;
+# Make dual-tool-clone.sh and dual-tool-id.sh available, if requested
+if [ ! -z "$DB_HALF" ]; then
+    if [ -e /dual-tool-clone.sh ]; then
+        cp /dual-tool-clone.sh /initram/dual-tool-clone.sh ;
+    fi
+    if [ -e /dual-tool-id.sh ]; then
+        cp /dual-tool-id.sh /initram/dual-tool-id.sh ;
+    fi
 fi
 
 # Check secure FS required files

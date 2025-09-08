@@ -27,6 +27,11 @@ clean_up () {
         if [ ! -z "/boot-inactive" ] && [ -d "/boot-inactive" ]; then
             mount -o remount,ro "/boot-inactive" >/dev/null 2>/dev/null ;
         fi
+
+         # Restore initial kernel printk levels
+        if [ ! -z "$INITIAL_PRINT_LEVELS" ]; then
+            sysctl -w kernel.printk="$INITIAL_PRINT_LEVELS" >/dev/null 2>/dev/null;
+        fi
     fi
 }
 
@@ -58,7 +63,7 @@ process_file () {
             TARGETFOLDER="/boot-inactive" ;
         else
             if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
-                if [[ $FILE != *.${DB_HALF} ]]; then
+                if [[ $FILE != *."${DB_HALF}" ]]; then
                     log "+ Skipped: not current-half file while in dual (partitions-based) boot scheme" ;
                     return 0 ;
                 fi
@@ -74,7 +79,7 @@ process_file () {
             log "+ Skipped: not half-based file while in dual boot (files) scheme" ;
             return 0 ;
         else
-            if [[ $FILE != *.${DB_HALF} ]]; then
+            if [[ $FILE != *".${DB_HALF}" ]]; then
                 log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
                 return 0 ;
             fi
@@ -99,11 +104,28 @@ process_file () {
             return 1;
         else
             log "+ Syncing file..." ;
+
+            # Clear target half ID when the first file is being touched
+            if [ $CLEAREDID -eq 0 ]; then
+                CLEAREDID=1 ;
+                if [ -x "/initram/dual-tool-id.sh" ]; then
+                    /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+
+                    if [ $? -ne 0 ]; then
+                        log "# Cannot clear target half ID (error during operation)" ;
+                        return -1;
+                    fi
+                else
+                    log "# Cannot clear target half ID (no script available)" ;
+                fi
+            fi
+
+            # Copy file
             cp -f "${FOLDER}/${FILE}" "${TARGETFOLDER}/${TARGETFILE}" >/dev/null 2>/dev/null ;
 
             if [ $? -ne 0 ]; then
                 log "# Error while syncing files" ;
-                return -1;
+                return -2;
             fi
 
             # Flush
@@ -117,7 +139,7 @@ process_file () {
                 diff -q "${FOLDER}/${FILE}" "${TARGETFOLDER}/${TARGETFILE}" >/dev/null 2>/dev/null ;
                 if [ $? -ne 0 ]; then
                     log_error "Data verification failed: cannot continue" ;
-                    return -2 ;
+                    return -3 ;
                 fi
             fi
 
@@ -130,11 +152,12 @@ usage () {
     cat << EOF
 Usage: ${0##*/} [-sn]
 
-Tool for dual-boot management.
+Tool for cloning environments in dual-boot scenario.
 
-If invoken without parameters then only a compare is performed for determining if the
+If invoked without parameters then only a compare is performed for determining if the
 content of the dual boot halves equals or not.
 
+-h  Displays this help and exit
 -s  Synchronizes the active half onto the inactive half, if requested.
 -n  Do not verify data (fast but unsafe)
 
@@ -157,6 +180,7 @@ COMMANDNAME="$0" ;
 SCRIPTNAME=$(basename "$0") ;
 SYNC=0 ;
 SKIPVERIFICATION=0 ;
+CLEAREDID=0 ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -193,22 +217,19 @@ shift "$((OPTIND-1))" ;
 INITIAL_PRINT_LEVELS=$(sysctl kernel.printk | cut -d'=' -f2) ;
 sysctl -w kernel.printk="2 4 1 7" >/dev/null 2>/dev/null ;
 
-# Determine platform
-PLATFORM= ;
-KERNEL=$(uname -r) ;
-if [[ "$KERNEL" == *gemini* ]]; then
-    PLATFORM="gemini" ;
+# Check access to /data/.sys folder
+if [ ! -d "/data/.sys" ]; then
+    log_error "Cannot access the data partition: cannot continue" ;
+    exit 2;
 fi
 
 # Check access to /boot folder
-if [ -z "$BOOTFOLDER" ]; then
-    if [ $SYNC -eq 1 ]; then
-        mount -o remount,rw "/boot" >/dev/null 2>/dev/null ;
-        if [ $? -ne 0 ]; then
-            log_error "Cannot mount boot-folder as read-write" ;
-            clean_up ;
-            exit 2 ;
-        fi
+if [ $SYNC -eq 1 ]; then
+    mount -o remount,rw "/boot" >/dev/null 2>/dev/null ;
+    if [ $? -ne 0 ]; then
+        log_error "Cannot mount boot-folder as read-write" ;
+        clean_up ;
+        exit 3 ;
     fi
 fi
 
@@ -229,18 +250,17 @@ fi
 if [ -z "$DB_HALF" ] || [ -z "$DB_MODE" ]; then
     log_error "The system is not dual-boot based, or the current half cannot be determined. Cannot continue." ;
     clean_up ;
-    exit 3;
+    exit 4;
 fi
 
-# Dump detected booting scheme
-BOOTFOLDEROTHER= ;
+# Dump detected booting scheme and perform additional checks, if requested
 if [ "${DB_MODE}" == "partitions" ]; then
     log "Booting scheme: DUAL boot (partitions-based, current half: ${DB_HALF^^})" ;
 
     if [ ! -d "/boot-inactive" ]; then
         log_error "Cannot access the inactive-half boot partition: cannot continue" ;
         clean_up ;
-        exit 4;
+        exit 5;
     fi
 
     if [ $SYNC -eq 1 ]; then
@@ -248,13 +268,21 @@ if [ "${DB_MODE}" == "partitions" ]; then
         if [ $? -ne 0 ]; then
             log_error "Cannot mount inactive boot-folder as read-write" ;
             clean_up ;
-            exit 5 ;
+            exit 6 ;
         fi
     fi
 else
     log "Booting scheme: DUAL boot (files-based, current half: ${DB_HALF^^})" ;
 fi
 log
+
+# Determine target half
+TARGETHALF= ;
+if [[ "$DB_HALF" == "a" ]]; then
+    TARGETHALF="b" ;
+else
+    TARGETHALF="a" ;
+fi
 
 # Declare vars
 PENDINGCHANGES=0 ;
@@ -271,7 +299,7 @@ for f in ${FILES[@]}; do
     if [ $RES -lt 0 ] || [ $RES -gt 128 ]; then
         log_error "Error detected while processing boot files: cannot continue" ;
         clean_up ;
-        exit 6;
+        exit 7;
     elif [ $RES -gt 0 ]; then
         PENDINGCHANGES=1 ;
     fi
@@ -291,7 +319,7 @@ for f in ${FILES[@]}; do
     if [ $RES -lt 0 ] || [ $RES -gt 128 ]; then
         log_error "Error detected while processing data files: cannot continue" ;
         clean_up ;
-        exit 7;
+        exit 8;
     elif [ $RES -gt 0 ]; then
         PENDINGCHANGES=1 ;
     fi
@@ -304,6 +332,22 @@ clean_up ;
 # Manage exit status
 if [ $PENDINGCHANGES -eq 1 ]; then
     if [ $SYNC -eq 1 ]; then
+
+        # Synchonize half ID
+        log "Synchronizing target half ID..." ;
+        if [ -x "/initram/dual-tool-id.sh" ]; then
+            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -s ;
+
+            if [ $? -ne 0 ]; then
+                log_error "Cannot synchronize target half ID (error during operation)" ;
+                clean_up ;
+                exit 9 ;
+            fi
+        else
+            log_warning "Cannot synchronize target half ID (no script available)" ;
+        fi
+        log ;
+
         log "INACTIVE HALF WAS SYNCHRONIZED WITH ACTIVE HALF" ;
     else
         log "INACTIVE HALF NEEDS SYNCHRONIZATION" ;

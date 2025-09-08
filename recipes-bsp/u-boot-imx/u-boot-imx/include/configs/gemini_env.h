@@ -16,7 +16,7 @@
  command "pxe boot".
  */
 
-#define GEMINI_ENV \
+ #define GEMINI_ENV \
     "bootargs_extra=vt.global_cursor_default=0 vt.cur_default=1 consoleblank=0 fbcon=logo-count:1 fbcon=logo-pos:center fbcon=nodefer\0" \
     "pxeuuid="GEMINI_PXE_UUID"\0" \
     "bootcmd=run bsp_bootcmd\0" \
@@ -25,6 +25,25 @@
     "ramdisk_addr_r=0x43800000\0" \
     "loadinitrd=echo Attempting load of initrd (${initrd})...; " \
         "ext4load mmc ${mmcdev}:${mmcpart} ${initrd_addr} ${initrd}\0" \
+    "db_id_a_addr=0x47000000\0" \
+    "db_id_b_addr=0x47010000\0" \
+    "db_id_cmp_size=0x40\0" \
+    "db_swap_requested=echo Evaluating for dual-boot halves swap...; " \
+        "if env exists db_attempt_switch; then " \
+            "echo Detected attempt switch flag!; " \
+            "true; " \
+        "else " \
+            "if env exists db_last_half; then " \
+                "echo Last boot was not likely a success: evaluating dual-boot halves for swap eligibility...; " \
+                "if ext4load mmc ${mmcdev}:$dbv_dual_data_partition ${db_id_a_addr} .sys/a.id; then " \
+                    "if ext4load mmc ${mmcdev}:$dbv_dual_data_partition ${db_id_b_addr} .sys/b.id; then " \
+                        "cmp.b ${db_id_a_addr} ${db_id_b_addr} ${db_id_cmp_size}; " \
+                    "fi; " \
+                "fi; " \
+            "else " \
+                "false; " \
+            "fi; " \
+        "fi;\0" \
     "fitaddr=0x48000000\0" \
     "fitimage=fit.img\0" \
     "kernel_addr_r=0x48000000\0" \
@@ -53,31 +72,21 @@
         "if mmc rescan; " \
         "run mmcargs; " \
         "then " \
-            "if run loadbootscript; " \
+            "if run loadfit; " \
             "then " \
-                "echo bootscript available... running...; " \
-                "run bootscript; " \
+                "echo FIT image loaded successfully... booting...; " \
+                "setenv bootargs ${bootargs} secure-boot; " \
+                "run fitboot; " \
             "else " \
-                "if run loadfit; " \
+                "if run loadimage; " \
                 "then " \
-                    "echo FIT image loaded successfully... booting...; " \
-                    "setenv bootargs ${bootargs} secure-boot; " \
-                    "run fitboot; " \
+                    "echo Image available... continue booting...; " \
+                    "run mmcboot; " \
                 "else " \
-                    "if run loadimage; " \
-                    "then " \
-                        "echo Image available... continue booting...; " \
-                        "run mmcboot; " \
-                    "else " \
-                        "run pxeboot_nocheck; " \
-                    "fi; " \
+                    "run pxeboot_nocheck; " \
                 "fi; " \
             "fi; " \
         "fi\0" \
-    "loadbootscript=echo Attempting load of bootscript (${bsp_script})...; " \
-        "ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${bsp_script};\0" \
-    "bootscript=echo Running bootscript from mmc ...; " \
-        "source\0" \
     "loadimage=echo Attempting load of image (${image})...; " \
         "ext4load mmc ${mmcdev}:${mmcpart} ${loadaddr} ${image}\0" \
     "loadfdt=echo Attempting load of DT (${gemini_fdt_file})...; " \
@@ -86,12 +95,15 @@
         "dbv_dual=\"\" ; " \
         "dbv_dual_partitions=\"\" ; " \
         "dbv_dual_files=\"\" ; " \
+        "dbv_dual_data_partition=\"\" ; " \
         "if ext4ls mmc ${mmcdev}:3 ; then " \
             "dbv_dual=1 ; " \
             "dbv_dual_partitions=1 ; " \
+            "dbv_dual_data_partition=3 ; " \
         "elif test -e mmc ${mmcdev}:1 fit.img.a || test -e mmc ${mmcdev}:1 Image.a ; then " \
             "dbv_dual=1 ; " \
             "dbv_dual_files=1 ; " \
+            "dbv_dual_data_partition=2 ; " \
         "fi; " \
         "if test -n \"$dbv_dual\" ; then " \
             "if test -n \"$dbv_dual_partitions\" ; then " \
@@ -100,27 +112,31 @@
                 "echo DUAL BOOT MODE (files) ; " \
             "fi; " \
             "if test -n \"${db_force_single}\" ; then " \
-                "echo FORCING SINGLE BOOT from half A... ; " \
+                "echo FORCING SINGLE BOOT from dual-boot half A... ; " \
                 "setenv db_active_half a ; " \
                 "setenv db_last_half a ; " \
             "else " \
                 "if env exists db_active_half && test ${db_active_half} = b ; then " \
-                    "if env exists db_last_half ; then " \
-                        "echo Dual booting from half A... ; " \
+                    "if run db_swap_requested; then " \
+                        "echo Active dual-boot half switched (B->A) ; " \
+                        "echo Dual booting from dual-boot half A... ; " \
                         "setenv db_active_half a ; " \
                         "setenv db_last_half a ; " \
                     "else " \
-                        "echo Dual booting from half B... ; " \
+                        "echo Dual-boot halves were not swapped ; " \
+                        "echo Dual booting from dual-boot half B... ; " \
                         "setenv db_active_half b ; " \
                         "setenv db_last_half b ; " \
                     "fi; " \
                 "else " \
-                    "if env exists db_last_half ; then " \
-                        "echo Dual booting from half B... ; " \
+                    "if run db_swap_requested; then " \
+                        "echo Active dual-boot half switched (A->B) ; " \
+                        "echo Dual booting from dual-boot half B... ; " \
                         "setenv db_active_half b ; " \
                         "setenv db_last_half b ; " \
                     "else " \
-                        "echo Dual booting from half A... ; " \
+                        "echo Dual-boot halves were not swapped ; " \
+                        "echo Dual booting from dual-boot half A... ; " \
                         "setenv db_active_half a ; " \
                         "setenv db_last_half a ; " \
                     "fi; " \

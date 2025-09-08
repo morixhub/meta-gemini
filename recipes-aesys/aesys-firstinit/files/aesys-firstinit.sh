@@ -9,7 +9,11 @@ do_log() {
 # 1) SHOW SPLASH
 do_log "Performing first system initialization..."
 
-# 2) CREATE SELF-SIGNED X.509 CERTIFICATE FOR VNC
+# 2) SAMPLE ACTIVE HALF
+KERNEL_CMDLINE=`cat /proc/cmdline`
+DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
+
+# 3) CREATE SELF-SIGNED X.509 CERTIFICATE FOR VNC
 if [ -d '/etc/vnc/keys' ]; then
 
     # Log
@@ -40,7 +44,18 @@ if [ -d '/etc/vnc/keys' ]; then
     cd "${PREVDIR}" ;
 fi
 
-# 3) DISABLE FIRST INITIALIZATION
+# 4) INITIALIZE HALVES ID FILES
+if [ ! -z "${DB_CMDLINE}" ]; then
+    if [ -x /initram/dual-tool-id.sh ]; then
+        do_log "Synchronizing half "A" ID file..." ;
+        /initram/dual-tool-id.sh -b -t a -s ;
+
+        do_log "Synchronizing half "B" ID file..." ;
+        /initram/dual-tool-id.sh -b -t b -s ;
+    fi
+fi
+
+# 5) DISABLE FIRST INITIALIZATION
 # Remove trigger file
 if [ -e '/data/.sys/firstinit.pending' ]; then
 
@@ -49,9 +64,7 @@ if [ -e '/data/.sys/firstinit.pending' ]; then
     do_log "First initialization trigger file removed" ;
 fi
 
-# 4) FLAG THE BOOT AS SUCCESFULL, IN CASE OF DUAL-BOOT AWARE SYSTEMS
-KERNEL_CMDLINE=`cat /proc/cmdline`
-DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
+# 6) FLAG THE BOOT AS SUCCESFULL, IN CASE OF DUAL-BOOT AWARE SYSTEMS
 if [ ! -z "${DB_CMDLINE}" ]; then
     fw_setenv db_last_half
 fi

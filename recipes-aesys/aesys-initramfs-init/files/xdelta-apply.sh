@@ -364,6 +364,24 @@ delta_file () {
                                 REBOOTPENDING=1 ;
                             fi
 
+                            # Clear target half ID when the first file is being touched
+                            if [ "$PLATFORM" == "gemini" ]; then
+                                if [ $CLEAREDID -eq 0 ]; then
+                                    CLEAREDID=1 ;
+                                    if [ -x "/initram/dual-tool-id.sh" ]; then
+                                        /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+
+                                        if [ $? -ne 0 ]; then
+                                            log "# Cannot clear target half ID (error during operation)" ;
+                                            return -1;
+                                        fi
+                                    else
+                                        log "# Cannot clear target half ID (no script available)" ;
+                                    fi
+                                fi
+                            fi
+
+                            # Apply delta
                             log "+ Applying delta..." ;
                             get_asset "${PACKAGEFOLDER}/delta/${BASEFILE}/${EXDIGEST}.delta" | xdelta3 -c -d -f -D -R -S djw -s "${EXFILE}" > "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null ;
 
@@ -426,6 +444,23 @@ delta_file () {
                                 # Flag the system for changes
                                 if [ "$FILE" != "uboot.bin" ]; then
                                     REBOOTPENDING=1 ;
+                                fi
+
+                                # Clear target half ID when the first file is being touched
+                                if [ "$PLATFORM" == "gemini" ]; then
+                                    if [ $CLEAREDID -eq 0 ]; then
+                                        CLEAREDID=1 ;
+                                        if [ -x "/initram/dual-tool-id.sh" ]; then
+                                            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+
+                                            if [ $? -ne 0 ]; then
+                                                log "# Cannot clear target half ID (error during operation)" ;
+                                                return -1;
+                                            fi
+                                        else
+                                            log "# Cannot clear target half ID (no script available)" ;
+                                        fi
+                                    fi
                                 fi
 
                                 # Apply delta
@@ -495,6 +530,24 @@ delta_file () {
                                 REBOOTPENDING=1 ;
                             fi
 
+                            # Clear target half ID when the first file is being touched
+                            if [ "$PLATFORM" == "gemini" ]; then
+                                if [ $CLEAREDID -eq 0 ]; then
+                                    CLEAREDID=1 ;
+                                    if [ -x "/initram/dual-tool-id.sh" ]; then
+                                        /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+
+                                        if [ $? -ne 0 ]; then
+                                            log "# Cannot clear target half ID (error during operation)" ;
+                                            return -1;
+                                        fi
+                                    else
+                                        log "# Cannot clear target half ID (no script available)" ;
+                                    fi
+                                fi
+                            fi
+
+                            # Apply target resource
                             log "+ Applying target resource..."
                             get_asset "${PACKAGEFOLDER}/target/${BASEFILE}" > "${WORKOUTPUT}/${WRITEFILE}" 2>/dev/null ;
 
@@ -554,9 +607,25 @@ delta_file () {
                                     REBOOTPENDING=1 ;
                                 fi
 
-                                # Apply delta
-                                log "+ Applying target resource..."
+                                # Clear target half ID when the first file is being touched
+                                if [ "$PLATFORM" == "gemini" ]; then
+                                    if [ $CLEAREDID -eq 0 ]; then
+                                        CLEAREDID=1 ;
+                                        if [ -x "/initram/dual-tool-id.sh" ]; then
+                                            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
 
+                                            if [ $? -ne 0 ]; then
+                                                log "# Cannot clear target half ID (error during operation)" ;
+                                                return -1;
+                                            fi
+                                        else
+                                            log "# Cannot clear target half ID (no script available)" ;
+                                        fi
+                                    fi
+                                fi
+
+                                # Apply target resource
+                                log "+ Applying target resource..."
                                 cp -f "$RESOURCETARGET" "${WORKOUTPUT}/${WRITEFILE}" >/dev/null 2>/dev/null;
 
                                 if [ $? -ne 0 ]; then
@@ -641,6 +710,23 @@ delta_file () {
                         # Flag the system for changes
                         if [ "$FILE" != "uboot.bin" ]; then
                             REBOOTPENDING=1 ;
+                        fi
+
+                        # Clear target half ID when the first file is being touched
+                        if [ "$PLATFORM" == "gemini" ]; then
+                            if [ $CLEAREDID -eq 0 ]; then
+                                CLEAREDID=1 ;
+                                if [ -x "/initram/dual-tool-id.sh" ]; then
+                                    /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+
+                                    if [ $? -ne 0 ]; then
+                                        log "# Cannot clear target half ID (error during operation)" ;
+                                        return -1;
+                                    fi
+                                else
+                                    log "# Cannot clear target half ID (no script available)" ;
+                                fi
+                            fi
                         fi
 
                         # Copy file
@@ -743,6 +829,7 @@ FORCEDMAXRAM=-1 ;
 DOWNLOADPATCHES=0 ;
 ALLOWUNSECURE=0 ;
 VERIFICATIONKEY= ;
+CLEAREDID=0 ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -981,6 +1068,18 @@ else
     fi
 fi
 
+# Determine target half
+TARGETHALF= ;
+if [[ "$DB_HALF" == "a" ]]; then
+    if [ -z "$DB_FORCED_SINGLE" ]; then
+        TARGETHALF="b" ;
+    else
+        TARGETHALF="a" ;
+    fi
+else
+    TARGETHALF="a" ;
+fi
+
 # Dump detected booting scheme
 BOOTFOLDEROTHER= ;
 if [ -z "$DB_HALF" ]; then
@@ -1165,11 +1264,47 @@ if [ -f "$PACKAGEPOST" ] && [ $PACKAGEPOSTSIZE -ne 0 ]; then
     log ;
 fi
 
+# Synchonize half ID and flag the system for attempting half switch, if requested
+if [ $REBOOTPENDING -eq 1 ]; then
+    if [ "$PLATFORM" == "gemini" ]; then
+        if [ $SIMULATION -eq 1 ]; then
+            # Log
+            log "Synchronizing target half ID... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+        else
+            log "Synchronizing target half ID..." ;
+            if [ -x "/initram/dual-tool-id.sh" ]; then
+                /initram/dual-tool-id.sh -b -t ${TARGETHALF} -s ;
+
+                if [ $? -ne 0 ]; then
+                    log_error "Cannot synchronize target half ID (error during operation)" ;
+                    clean_up ;
+                    exit 9 ;
+                fi
+            else
+                log_warning "Cannot synchronize target half ID (no script available)" ;
+            fi
+
+            log "Flagging system for attempting half switching..." ;
+            fw_setenv db_attempt_switch 1 ;
+
+            if [ $? -ne 0 ]; then
+                log_error "Cannot flag the system for half switch" ;
+                clean_up ;
+                exit 10 ;
+            fi
+        fi
+    fi
+fi
+
 # Clean-up
 clean_up ;
 
 # Manage exit status
 if [ $REBOOTPENDING -eq 1 ]; then
-    log "*** REBOOT PENDING FOR FINISHING UP THE UPDATE *** " ;
+
+    if [ $SIMULATION -ne 1 ]; then
+        log "*** REBOOT PENDING FOR FINISHING UP THE UPDATE *** " ;
+    fi
+
     exit 255;
 fi
