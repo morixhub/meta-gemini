@@ -762,7 +762,7 @@ delta_file () {
 
 usage () {
     cat << EOF
-Usage: ${0##*/} [-hslnf] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] [ -r <max_ram_storage_size> ] <DELTA_PACKAGE>
+Usage: ${0##*/} [-heslnfx] [-m <mode>] [-b <boot_folder> ] [ -d <data_folder> ] [ -o <output_folder> ] [ -r <max_ram_storage_size> ] [ -y <path_to_pubkey> ] <DELTA_PACKAGE>
 
 Applies the delta package provided at <DELTA_PACKAGE> to system.
 
@@ -785,6 +785,9 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 "<boot_folder>-inactive", otherwise the script terminates with error.
 
 -h  Displays this help and exit
+-e  Path to the environment file (if any) to be sourced before applying the update package
+    (for GEMINI platform only, if not specified, then /data/.sys/xdelta.env is assumed, if
+    such a file does exist)
 -s  Simulation mode: do not actually any file on system
 -l  Download patches before applying them
 -n  Do not verify data (fast but unsafe)
@@ -795,8 +798,10 @@ the system expects to found the "inactive boot partition" to be mounted at posit
 -d  The folder containing non-boot assets (if not specified a guess is attempted based on platform)
 -o  The output folder (if not specified, then the same <boot_folder> and <data_folder> are going
     to be used, based on asset type)
--x  Allow unsecure update
--y  The path to the public key to be used for verification
+-x  Allow unsecure update (for GEMINI platform only, an unsecure update is assumed if secure-boot
+    is not enforced OR file /data/.sys/unsecure-update.allowed does exist)
+-y  The path to the public key to be used for verification (for GEMINI platform only, if not
+    specified, /data/.sys/securefs.publickey.pem is assumed)
 -r  For GEMINI platform only, it limits the maximum size of RAM to be used for assests storage
     (if not specified then half the available RAM is used at maximum)
 
@@ -830,6 +835,7 @@ DOWNLOADPATCHES=0 ;
 ALLOWUNSECURE=0 ;
 VERIFICATIONKEY= ;
 CLEAREDID=0 ;
+XDELTAENV= ;
 
 # Determine the script's directory
 SOURCE=${BASH_SOURCE[0]} ;
@@ -855,11 +861,14 @@ if [ -d "${HIST}" ]; then
 fi
 
 OPTIND=1 ;
-while getopts hslnfxm:b:d:o:r:y: opt; do
+while getopts heslnfxm:b:d:o:r:y: opt; do
     case $opt in
         h)
             usage ;
             exit 0 ;
+            ;;
+        e)
+            XDELTAENV="${OPTARG}" ;
             ;;
         s)
             SIMULATION=1 ;
@@ -916,18 +925,19 @@ fi
 
 # Pre-process settings depending on platform
 if [ "$PLATFORM" == "gemini" ]; then
-    if [ -f /data/.sys/unsecure-update.allowed ] || [ -z "$SECURE_BOOT" ]; then
+    if [ -f "/data/.sys/unsecure-update.allowed" ] || [ -z "$SECURE_BOOT" ]; then
         ALLOWUNSECURE=1 ;
     fi
 
     if [ -z "$VERIFICATIONKEY" ]; then
         VERIFICATIONKEY="/initram/securefs.publickey.pem" ;
     fi
-fi
 
-# Check command line parameters
-if [ -z "$BOOTFOLDER" ]; then
-    if [ "$PLATFORM" == "gemini" ]; then
+    if [ -z "$XDELTAENV" ] && [ -f "/data/.sys/xdelta.env" ]; then
+        XDELTAENV="/data/.sys/xdelta.env" ;
+    fi
+
+    if [ -z "$BOOTFOLDER" ]; then
         BOOTFOLDER="/boot" ;
 
         if [ $SIMULATION -ne 1 ]; then
@@ -942,6 +952,7 @@ if [ -z "$BOOTFOLDER" ]; then
     fi
 fi
 
+# Check command line parameters
 if [ ! -d "$BOOTFOLDER" ]; then
     log_error "Invalid or unspecified boot folder" ;
     clean_up ;
@@ -968,6 +979,16 @@ if [ $ALLOWUNSECURE -ne 1 ]; then
     fi;
 fi
 
+# Source XDELTA environment, if any
+if [ ! -z "$XDELTAENV" ]; then
+    source "$XDELTAENV" ;
+    if [ $? -ne 0 ]; then
+        log_error "GEMINI: process XDELTA environment" ;
+        clean_up ;
+        exit 6 ;
+    fi
+fi
+
 # Check the availability of index.ini in DELTA_PACKAGE_FOLDER
 PACKAGEFOLDER="$1" ;
 PACKAGEINDEX=$(mktemp) ;
@@ -977,7 +998,7 @@ PACKAGEINDEXSIZE=$(wc -c "$PACKAGEINDEX" 2>/dev/null | cut -d' ' -f1) ;
 if [ ! -f "$PACKAGEINDEX" ] || [ $PACKAGEINDEXSIZE -eq 0 ]; then
     log_error "Invalid or unspecified package folder" ;
     clean_up ;
-    exit 6 ;
+    exit 7 ;
 fi
 
 # Get pre.sh script from package
@@ -1053,7 +1074,7 @@ if [ ! -z "$FORCEDDUALBOOTSCHEME" ]; then
     else
         log_error "Invalid boot scheme partition force flag" ;
         clean_up ;
-        exit 9 ;
+        exit 8 ;
     fi
 else
     DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="` ;
@@ -1092,7 +1113,7 @@ elif [ "${DB_MODE}" == "partitions" ]; then
     if [ ! -d ${BOOTFOLDEROTHER} ]; then
         log_error "Cannot access the inactive-half boot partition: cannot continue" ;
         clean_up ;
-        exit 10;
+        exit 9;
     fi
 
     if [ $SIMULATION -ne 1 ]; then
@@ -1102,7 +1123,7 @@ elif [ "${DB_MODE}" == "partitions" ]; then
             if [ $? -ne 0 ]; then
                 log_error "GEMINI: Cannot mount inactive boot folder as read-write" ;
                 clean_up ;
-                exit 11 ;
+                exit 10 ;
             fi
         fi
     fi
@@ -1122,7 +1143,7 @@ if [ $ALLOWUNSECURE -ne 1 ]; then
     if [ ! -f "$PACKAGEINDEXSIG" ] || [ $PACKAGEINDEXSIGSIZE -eq 0 ]; then
         log_error "Cannot find package signature" ;
         clean_up ;
-        exit 7 ;
+        exit 11 ;
     fi
 
     # Package signature verification
@@ -1130,7 +1151,7 @@ if [ $ALLOWUNSECURE -ne 1 ]; then
     if [ $? -ne 0 ]; then
         log_error "Cannot verify package signature" ;
         clean_up ;
-        exit 8 ;
+        exit 12 ;
     else
         log "Package signature was OK" ;
     fi
@@ -1171,7 +1192,7 @@ elif [ $UPDATEBOOTLOADER -ne 1 ]; then
 elif [ -z "$BOOT_DEVICE" ]; then
     log_error "Cannot perform boot loader check due to unavailability of boot device" ;
     clean_up ;
-    exit 12 ;
+    exit 13 ;
 else
     delta_file "$BOOT_DEVICE" "uboot.bin" ;
 
@@ -1188,7 +1209,7 @@ else
         if [ $? -ne 0 ]; then
             log_error "Error while patching boot loader: the system could be BRICKED!" ;
             clean_up ;
-            exit 13 ;
+            exit 14 ;
         fi
 
         # Flush
@@ -1207,7 +1228,7 @@ else
             if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
                 log_error "Delta verification failed for boot loader: the system could be BRICKED!" ;
                 clean_up ;
-                exit 14 ;
+                exit 15 ;
             fi
         fi
     fi
@@ -1224,7 +1245,7 @@ for f in ${FILES[@]}; do
     if [ $? -ne 0 ]; then
         log_error "Error detected while processing boot files: cannot continue" ;
         clean_up ;
-        exit 15;
+        exit 16;
     fi
 done
 
@@ -1241,7 +1262,7 @@ for f in ${FILES[@]}; do
         if [ $? -ne 0 ]; then
             log_error "Error detected while processing data files: cannot continue" ;
             clean_up ;
-            exit 16;
+            exit 17;
         fi
     fi
 done
@@ -1279,7 +1300,7 @@ if [ $REBOOTPENDING -eq 1 ]; then
                 if [ $? -ne 0 ]; then
                     log_error "Cannot synchronize target half ID (error during operation)" ;
                     clean_up ;
-                    exit 9 ;
+                    exit 18 ;
                 fi
             else
                 log_warning "Cannot synchronize target half ID (no script available)" ;
@@ -1291,7 +1312,7 @@ if [ $REBOOTPENDING -eq 1 ]; then
             if [ $? -ne 0 ]; then
                 log_error "Cannot flag the system for half switch" ;
                 clean_up ;
-                exit 10 ;
+                exit 19 ;
             fi
         fi
     fi
