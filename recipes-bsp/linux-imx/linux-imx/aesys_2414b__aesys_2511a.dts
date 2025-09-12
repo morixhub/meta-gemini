@@ -7,29 +7,11 @@
 / {
     model = "AESYS 2414B+2511A";
     
-    reg_ad7997_1_vcc: regulator-ad7997-1-vcc {
-        compatible = "regulator-fixed";
-        regulator-name = "AD7997_1_VCC";
-        regulator-min-microvolt = <3300000>;
-        regulator-max-microvolt = <3300000>;
-        enable-active-high;
-        regulator-always-on;
-    };
-    
     reg_ad7997_1_vref: regulator-ad7997-1-vref {
         compatible = "regulator-fixed";
         regulator-name = "AD7997_1_VREF";
         regulator-min-microvolt = <2500000>;
         regulator-max-microvolt = <2500000>;
-        enable-active-high;
-        regulator-always-on;
-    };
-    
-    reg_ad7997_2_vcc: regulator-ad7997-2-vcc {
-        compatible = "regulator-fixed";
-        regulator-name = "AD7997_2_VCC";
-        regulator-min-microvolt = <3300000>;
-        regulator-max-microvolt = <3300000>;
         enable-active-high;
         regulator-always-on;
     };
@@ -68,16 +50,14 @@
     ad7997_1: ad799x@21 {
         compatible = "adi,ad7997";
         reg = <0x21>;
-        vcc-supply = <&reg_ad7997_1_vcc>;
-        vref-supply = <&reg_ad7997_1_vref>;
+        vcc-supply = <&reg_ad7997_1_vref>;
     };
     
     /* Analog Devices AD7997 ADC 2 */
     ad7997_2: ad799x@22 {
         compatible = "adi,ad7997";
         reg = <0x22>;
-        vcc-supply = <&reg_ad7997_2_vcc>;
-        vref-supply = <&reg_ad7997_2_vref>;
+        vcc-supply = <&reg_ad7997_2_vref>;
     };
 
     /* Power sensor TI INA230 */
