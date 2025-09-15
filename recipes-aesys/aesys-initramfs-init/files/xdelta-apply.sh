@@ -362,21 +362,21 @@ delta_file () {
                             # Flag the system for changes
                             if [ "$FILE" != "uboot.bin" ]; then
                                 REBOOTPENDING=1 ;
-                            fi
 
-                            # Clear target half ID when the first file is being touched
-                            if [ "$PLATFORM" == "gemini" ]; then
-                                if [ $CLEAREDID -eq 0 ]; then
-                                    CLEAREDID=1 ;
-                                    if [ -x "/initram/dual-tool-id.sh" ]; then
-                                        /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+                                # Clear target half ID when the first file is being touched
+                                if [ "$PLATFORM" == "gemini" ]; then
+                                    if [ $CLEAREDID -eq 0 ]; then
+                                        CLEAREDID=1 ;
+                                        if [ -x "/initram/dual-tool-id.sh" ]; then
+                                            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
 
-                                        if [ $? -ne 0 ]; then
-                                            log "# Cannot clear target half ID (error during operation)" ;
-                                            return -1;
+                                            if [ $? -ne 0 ]; then
+                                                log "# Cannot clear target half ID (error during operation)" ;
+                                                return -1;
+                                            fi
+                                        else
+                                            log "# Cannot clear target half ID (no script available)" ;
                                         fi
-                                    else
-                                        log "# Cannot clear target half ID (no script available)" ;
                                     fi
                                 fi
                             fi
@@ -444,21 +444,21 @@ delta_file () {
                                 # Flag the system for changes
                                 if [ "$FILE" != "uboot.bin" ]; then
                                     REBOOTPENDING=1 ;
-                                fi
 
-                                # Clear target half ID when the first file is being touched
-                                if [ "$PLATFORM" == "gemini" ]; then
-                                    if [ $CLEAREDID -eq 0 ]; then
-                                        CLEAREDID=1 ;
-                                        if [ -x "/initram/dual-tool-id.sh" ]; then
-                                            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+                                    # Clear target half ID when the first file is being touched
+                                    if [ "$PLATFORM" == "gemini" ]; then
+                                        if [ $CLEAREDID -eq 0 ]; then
+                                            CLEAREDID=1 ;
+                                            if [ -x "/initram/dual-tool-id.sh" ]; then
+                                                /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
 
-                                            if [ $? -ne 0 ]; then
-                                                log "# Cannot clear target half ID (error during operation)" ;
-                                                return -1;
+                                                if [ $? -ne 0 ]; then
+                                                    log "# Cannot clear target half ID (error during operation)" ;
+                                                    return -1;
+                                                fi
+                                            else
+                                                log "# Cannot clear target half ID (no script available)" ;
                                             fi
-                                        else
-                                            log "# Cannot clear target half ID (no script available)" ;
                                         fi
                                     fi
                                 fi
@@ -528,21 +528,21 @@ delta_file () {
                             # Flag the system for changes
                             if [ "$FILE" != "uboot.bin" ]; then
                                 REBOOTPENDING=1 ;
-                            fi
 
-                            # Clear target half ID when the first file is being touched
-                            if [ "$PLATFORM" == "gemini" ]; then
-                                if [ $CLEAREDID -eq 0 ]; then
-                                    CLEAREDID=1 ;
-                                    if [ -x "/initram/dual-tool-id.sh" ]; then
-                                        /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+                                # Clear target half ID when the first file is being touched
+                                if [ "$PLATFORM" == "gemini" ]; then
+                                    if [ $CLEAREDID -eq 0 ]; then
+                                        CLEAREDID=1 ;
+                                        if [ -x "/initram/dual-tool-id.sh" ]; then
+                                            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
 
-                                        if [ $? -ne 0 ]; then
-                                            log "# Cannot clear target half ID (error during operation)" ;
-                                            return -1;
+                                            if [ $? -ne 0 ]; then
+                                                log "# Cannot clear target half ID (error during operation)" ;
+                                                return -1;
+                                            fi
+                                        else
+                                            log "# Cannot clear target half ID (no script available)" ;
                                         fi
-                                    else
-                                        log "# Cannot clear target half ID (no script available)" ;
                                     fi
                                 fi
                             fi
@@ -605,21 +605,21 @@ delta_file () {
                                 # Flag the system for changes
                                 if [ "$FILE" != "uboot.bin" ]; then
                                     REBOOTPENDING=1 ;
-                                fi
 
-                                # Clear target half ID when the first file is being touched
-                                if [ "$PLATFORM" == "gemini" ]; then
-                                    if [ $CLEAREDID -eq 0 ]; then
-                                        CLEAREDID=1 ;
-                                        if [ -x "/initram/dual-tool-id.sh" ]; then
-                                            /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+                                    # Clear target half ID when the first file is being touched
+                                    if [ "$PLATFORM" == "gemini" ]; then
+                                        if [ $CLEAREDID -eq 0 ]; then
+                                            CLEAREDID=1 ;
+                                            if [ -x "/initram/dual-tool-id.sh" ]; then
+                                                /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
 
-                                            if [ $? -ne 0 ]; then
-                                                log "# Cannot clear target half ID (error during operation)" ;
-                                                return -1;
+                                                if [ $? -ne 0 ]; then
+                                                    log "# Cannot clear target half ID (error during operation)" ;
+                                                    return -1;
+                                                fi
+                                            else
+                                                log "# Cannot clear target half ID (no script available)" ;
                                             fi
-                                        else
-                                            log "# Cannot clear target half ID (no script available)" ;
                                         fi
                                     fi
                                 fi
@@ -710,21 +710,21 @@ delta_file () {
                         # Flag the system for changes
                         if [ "$FILE" != "uboot.bin" ]; then
                             REBOOTPENDING=1 ;
-                        fi
 
-                        # Clear target half ID when the first file is being touched
-                        if [ "$PLATFORM" == "gemini" ]; then
-                            if [ $CLEAREDID -eq 0 ]; then
-                                CLEAREDID=1 ;
-                                if [ -x "/initram/dual-tool-id.sh" ]; then
-                                    /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+                            # Clear target half ID when the first file is being touched
+                            if [ "$PLATFORM" == "gemini" ]; then
+                                if [ $CLEAREDID -eq 0 ]; then
+                                    CLEAREDID=1 ;
+                                    if [ -x "/initram/dual-tool-id.sh" ]; then
+                                        /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
 
-                                    if [ $? -ne 0 ]; then
-                                        log "# Cannot clear target half ID (error during operation)" ;
-                                        return -1;
+                                        if [ $? -ne 0 ]; then
+                                            log "# Cannot clear target half ID (error during operation)" ;
+                                            return -1;
+                                        fi
+                                    else
+                                        log "# Cannot clear target half ID (no script available)" ;
                                     fi
-                                else
-                                    log "# Cannot clear target half ID (no script available)" ;
                                 fi
                             fi
                         fi
@@ -1287,8 +1287,8 @@ if [ -f "$PACKAGEPOST" ] && [ $PACKAGEPOSTSIZE -ne 0 ]; then
 fi
 
 # Synchonize half ID and flag the system for attempting half switch, if requested
-if [ $REBOOTPENDING -eq 1 ]; then
-    if [ "$PLATFORM" == "gemini" ]; then
+if [ "$PLATFORM" == "gemini" ]; then
+    if [ $CLEAREDID -eq 1 ]; then
         if [ $SIMULATION -eq 1 ]; then
             # Log
             log "Synchronizing target half ID... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
