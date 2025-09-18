@@ -80,6 +80,17 @@
 	};
 };
 
+&usdhc1 {
+    pinctrl-0 = <&pinctrl_usdhc1 &pinctrl_wifi_ble>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz &pinctrl_wifi_ble>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz &pinctrl_wifi_ble>;
+    pinctrl-assert-gpios = <&gpio2 9 GPIO_ACTIVE_HIGH>;
+    post-power-on-delay-ms = <120>;
+    power-off-delay-us = <100000>;
+    max-frequency = <25000000>;
+    non-removable;
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_emmc_gpios &pinctrl_pin_hwrev_gpios &pinctrl_pin_gpios &pinctrl_pin_gpios_2415>;

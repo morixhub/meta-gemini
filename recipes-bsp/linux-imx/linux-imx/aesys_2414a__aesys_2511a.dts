@@ -70,6 +70,8 @@
 };
 
 &mipi_dsi_panel {
+    /delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-names;
     /delete-property/ reset-gpios;
     /delete-property/ power-gpios;
     /delete-property/ updn-gpios;

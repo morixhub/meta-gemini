@@ -3,6 +3,14 @@ source-directory /etc/network/interfaces.d
 allow-hotplug wired0
 allow-hotplug wired1
 
+allow-hotplug mlan0
+
 iface wired0 inet dhcp
 iface wired1 inet dhcp
+
+iface mlan0 inet dhcp
+    wireless_mode managed
+    wireless_essid any
+    wpa-driver nl80211
+    wpa-conf /data/etcrw/wpa_supplicant.conf
 
