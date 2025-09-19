@@ -91,6 +91,13 @@
     non-removable;
 };
 
+&uart4 {
+    bluetooth {
+        compatible = "nxp,88w8987-bt";
+        fw-init-baudrate = <115200>;
+    };
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_emmc_gpios &pinctrl_pin_hwrev_gpios &pinctrl_pin_gpios &pinctrl_pin_gpios_2415>;
@@ -100,7 +107,18 @@
 		MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06       0x00000006   	// AUDIO_nMUTE_CTRL
 		MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		 0x00000006		// USB_HUB_SOFT_RESET
 		MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08       0x00000006   	// LTE_nPWR_ON
-		MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09       0x00000006   	// WIFI_BLE_nRESET
+		>;
+	};
+
+    pinctrl_wifi_ble: pin_wifi_ble {
+        fsl,pins = <
+        MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09       0x00000006   	// WIFI_BLE_nRESET
+        >;
+    };
+
+	pinctrl_sound_wm8524: sound_wm8524_gpios {
+		fsl,pins = <
+		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
 		>;
 	};
 };

@@ -63,6 +63,13 @@
     non-removable;
 };
 
+&uart4 {
+    bluetooth {
+        compatible = "nxp,88w8987-bt";
+        fw-init-baudrate = <115200>;
+    };
+};
+
 &iomuxc {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_emmc_gpios &pinctrl_pin_hwrev_gpios &pinctrl_pin_gpios &pinctrl_pin_gpios_2415>;

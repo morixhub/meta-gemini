@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Flush all IP addresses on the given interface
+ip address flush dev $IFACE
+
+
