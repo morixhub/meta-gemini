@@ -150,7 +150,7 @@ process_file () {
 
 usage () {
     cat << EOF
-Usage: ${0##*/} [-sn]
+Usage: ${0##*/} [-hsn]
 
 Tool for cloning environments in dual-boot scenario.
 

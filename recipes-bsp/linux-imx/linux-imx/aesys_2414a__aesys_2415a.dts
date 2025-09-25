@@ -59,8 +59,12 @@
     pinctrl-assert-gpios = <&gpio2 9 GPIO_ACTIVE_HIGH>;
     post-power-on-delay-ms = <120>;
     power-off-delay-us = <100000>;
-    max-frequency = <25000000>;
-    non-removable;
+    cap-sd-highspeed;
+    cap-mmc-highspeed;
+    sd-uhs-sdr12;
+    sd-uhs-sdr25;
+    sd-uhs-sdr50;
+    sd-uhs-sdr104;
 };
 
 &uart4 {

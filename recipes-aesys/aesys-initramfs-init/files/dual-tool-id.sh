@@ -118,7 +118,7 @@ process_file () {
 
 usage () {
     cat << EOF
-Usage: ${0##*/} [-s] [-t <target>]
+Usage: ${0##*/} [-hcsbo] [-t <target>]
 
 Tool for generating dual-boot ID.
 
