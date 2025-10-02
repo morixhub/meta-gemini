@@ -66,7 +66,7 @@ IMAGE_INSTALL:append = " pulseaudio pulseaudio-server pulseaudio-misc pulseaudio
 IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-so-ver aesys-automount aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown "
+IMAGE_INSTALL:append = " aesys-so-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown "
 IMAGE_INSTALL:append:aesys-2414 = " aesys-greenpak-programmer "
 IMAGE_INSTALL:append:aesys-2414-2g = " aesys-greenpak-programmer "
 

@@ -9,6 +9,9 @@ IMAGE_FEATURES:remove = "debug-tweaks"
 IMAGE_FEATURES:append = " allow-root-login "
 EXTRA_USERS_PARAMS += "usermod -p '\$1\$FMup4eG7\$5kGXZnwbAA/kNnkqhHLaA1' root;" 
 
+# Make rootfs read-only (since it is going to be mounted from NFS RO)
+IMAGE_FEATURES:append = " read-only-rootfs "
+
 # Remove development tools from final image
 IMAGE_FEATURES:remove = "tools-sdk"
 
@@ -25,7 +28,7 @@ IMAGE_FEATURES:append = " ssh-server-openssh "
 #IMAGE_FEATURES:append = " splash "
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-persistent-nic-names "
+IMAGE_INSTALL:append = " aesys-so-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-startup-shutdown "
 
 # Add utils
 IMAGE_INSTALL:append = " glibc-utils "
@@ -34,6 +37,7 @@ IMAGE_INSTALL:append = " ifupdown init-ifupdown ifplugd "
 IMAGE_INSTALL:append = " dhcpcd dhcpcd-recheck "
 IMAGE_INSTALL:append = " dialog ncurses e2fsprogs e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-resize2fs parted dosfstools htop ethtool i2c-tools iperf3 util-linux minicom nano devmem2 libgpiod-tools spidev-test nmap tcpdump evtest memtester rsync zip unzip stress-ng strace screen bc "
 IMAGE_INSTALL:append = " coreutils "
+IMAGE_INSTALL:append = " nfs-utils-client "
 
 
 
