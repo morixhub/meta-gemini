@@ -33,7 +33,6 @@ inherit populate_sdk_qt6
 CONFLICT_DISTRO_FEATURES = "directfb"
 
 IMAGE_INSTALL += " \
-    curl \
     packagegroup-qt6-imx \
     tzdata \
     ${IMAGE_INSTALL_PKCS11TOOL} \

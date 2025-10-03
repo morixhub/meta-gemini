@@ -35,7 +35,7 @@ IMAGE_INSTALL:append = " glibc-utils "
 IMAGE_INSTALL:append = " u-boot-fw-utils "
 IMAGE_INSTALL:append = " ifupdown init-ifupdown ifplugd "
 IMAGE_INSTALL:append = " dhcpcd dhcpcd-recheck "
-IMAGE_INSTALL:append = " dialog ncurses e2fsprogs e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-resize2fs parted dosfstools htop ethtool i2c-tools iperf3 util-linux minicom nano devmem2 libgpiod-tools spidev-test nmap tcpdump evtest memtester rsync zip unzip stress-ng strace screen bc "
+IMAGE_INSTALL:append = " dialog ncurses e2fsprogs e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-resize2fs parted dosfstools htop ethtool i2c-tools iperf3 util-linux minicom nano devmem2 libgpiod-tools spidev-test nmap tcpdump evtest memtester rsync zip unzip stress-ng strace screen bc curl "
 IMAGE_INSTALL:append = " coreutils "
 IMAGE_INSTALL:append = " nfs-utils-client "
 
