@@ -9,48 +9,43 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 RDEPENDS:${PN} += "bash"
 
 SRC_URI = " \
-    file://aesys-2414-hw-wdog-enable.sh \
-    file://aesys-2414-hw-wdog-disable.sh \
+    file://aesys-2409a-hw-wdog-toggle.sh \
+    file://aesys-2409a-hw-wdog-refresh.sh \
     file://aesys-2414-hw-wdog-toggle.sh \
+    file://aesys-2414-hw-wdog-refresh.sh \
 "
 
 FILES:${PN}:aesys-2409a += " \
-    ${bindir}/hw-wdog-enable.sh \
-    ${bindir}/hw-wdog-disable.sh \
     ${bindir}/hw-wdog-toggle.sh \
+    ${bindir}/hw-wdog-refresh.sh \
 "
 
 do_install:aesys-2409a () {
     install -d ${D}${bindir}
-    install -m 0544 ${WORKDIR}/aesys-2409a-hw-wdog-enable.sh ${D}${bindir}/hw-wdog-enable.sh
-    install -m 0544 ${WORKDIR}/aesys-2409a-hw-wdog-disable.sh ${D}${bindir}/hw-wdog-disable.sh
     install -m 0544 ${WORKDIR}/aesys-2409a-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
+    install -m 0544 ${WORKDIR}/aesys-2409a-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
 
 FILES:${PN}:aesys-2414 += " \
-    ${bindir}/hw-wdog-enable.sh \
-    ${bindir}/hw-wdog-disable.sh \
     ${bindir}/hw-wdog-toggle.sh \
+    ${bindir}/hw-wdog-refresh.sh \
 "
 
 do_install:aesys-2414 () {
     install -d ${D}${bindir}
-    install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-enable.sh ${D}${bindir}/hw-wdog-enable.sh
-    install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-disable.sh ${D}${bindir}/hw-wdog-disable.sh
     install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
+    install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
 
 FILES:${PN}:aesys-2414-2g += " \
-    ${bindir}/hw-wdog-enable.sh \
-    ${bindir}/hw-wdog-disable.sh \
     ${bindir}/hw-wdog-toggle.sh \
+    ${bindir}/hw-wdog-refresh.sh \
 "
 
 do_install:aesys-2414-2g () {
     install -d ${D}${bindir}
-    install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-enable.sh ${D}${bindir}/hw-wdog-enable.sh
-    install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-disable.sh ${D}${bindir}/hw-wdog-disable.sh
     install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
+    install -m 0544 ${WORKDIR}/aesys-2414-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
 
 

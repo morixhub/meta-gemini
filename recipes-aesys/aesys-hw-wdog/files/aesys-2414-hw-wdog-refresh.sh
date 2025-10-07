@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# GPIO1_01 is used for toggling WDOG enabling
-WD_GPIO=$(( ((1-1)*32)+1 ))
+# GPIO5_22 is used for toggling WDOG status
+WD_GPIO=$(( ((5-1)*32)+22 ))
 
 # Export GPIO if requested
 if [ ! -d "/sys/class/gpio/gpio$WD_GPIO" ]; then
@@ -17,6 +17,11 @@ else
 	exit 1;
 fi
 
+if [ ! -f "/sys/class/gpio/gpio$WD_GPIO/value" ]; then
+    exit 2;
+fi
+
+# Toggle value (the WDOG is sensible on falling edge)
 echo 1 > "/sys/class/gpio/gpio$WD_GPIO/value"
-
-
+sleep 0.25
+echo 0 > "/sys/class/gpio/gpio$WD_GPIO/value"

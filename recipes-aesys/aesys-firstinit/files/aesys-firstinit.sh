@@ -5,15 +5,32 @@ do_log() {
 	logger "FIRSTINIT: $1"
 }
 
+disable_wdog() {
+    if [ -x "/usr/bin/hw-wdog-toggle.sh" ]; then
+        do_log "Disabling watchdog..." ;
+        /usr/bin/hw-wdog-toggle.sh disable ;
+    fi
+}
+
+restore_wdog() {
+    if [ -x "/usr/bin/hw-wdog-toggle.sh" ]; then
+        do_log "Restoring watchdog..." ;
+        /usr/bin/hw-wdog-toggle.sh default ;
+    fi
+}
+
 # PERFORM FIRST INITILIZATION
 # 1) SHOW SPLASH
 do_log "Performing first system initialization..."
 
-# 2) SAMPLE ACTIVE HALF
+# 2) DISABLE WDOG
+disable_wdog
+
+# 3) SAMPLE ACTIVE HALF
 KERNEL_CMDLINE=`cat /proc/cmdline`
 DB_CMDLINE=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 
-# 3) CREATE SELF-SIGNED X.509 CERTIFICATE FOR VNC
+# 4) CREATE SELF-SIGNED X.509 CERTIFICATE FOR VNC
 if [ -d '/etc/vnc/keys' ]; then
 
     # Log
@@ -44,7 +61,7 @@ if [ -d '/etc/vnc/keys' ]; then
     cd "${PREVDIR}" ;
 fi
 
-# 4) INITIALIZE HALVES ID FILES
+# 5) INITIALIZE HALVES ID FILES
 if [ ! -z "${DB_CMDLINE}" ]; then
     if [ -x /initram/dual-tool-id.sh ]; then
         do_log "Synchronizing half "A" ID file..." ;
@@ -55,7 +72,7 @@ if [ ! -z "${DB_CMDLINE}" ]; then
     fi
 fi
 
-# 5) DISABLE FIRST INITIALIZATION
+# 6) DISABLE FIRST INITIALIZATION
 # Remove trigger file
 if [ -e '/data/.sys/firstinit.pending' ]; then
 
@@ -64,13 +81,16 @@ if [ -e '/data/.sys/firstinit.pending' ]; then
     do_log "First initialization trigger file removed" ;
 fi
 
-# 6) FLAG THE BOOT AS SUCCESFULL, IN CASE OF DUAL-BOOT AWARE SYSTEMS
+# 7) FLAG THE BOOT AS SUCCESFULL, IN CASE OF DUAL-BOOT AWARE SYSTEMS
 if [ ! -z "${DB_CMDLINE}" ]; then
     fw_setenv db_last_half
 fi
 
-# 5) SHOW FINAL
+# 8) SHOW FINAL
 do_log "First initialization completed" ;
 
-# 6) COMMAND REBOOT
+# 9) RESTORE WDOG
+restore_wdog
+
+# 10) TRIGGER REBOOT
 reboot

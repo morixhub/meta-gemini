@@ -15,6 +15,20 @@ do_panic() {
 	ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:' ;
 }
 
+disable_wdog() {
+    if [ -x "/usr/bin/hw-wdog-toggle.sh" ]; then
+        do_log "Disabling watchdog..." ;
+        /usr/bin/hw-wdog-toggle.sh disable ;
+    fi
+}
+
+restore_wdog() {
+    if [ -x "/usr/bin/hw-wdog-toggle.sh" ]; then
+        do_log "Restoring watchdog..." ;
+        /usr/bin/hw-wdog-toggle.sh default ;
+    fi
+}
+
 # Log
 do_log "Starting..."
 
@@ -130,10 +144,16 @@ if [ $EARLY_SHELL_REQUESTED -eq 1 ]; then
 	# Log
 	do_log "Going to emergency (early) shell DUE TO REQUEST" ;
 
+    # Disable WDOG
+    disable_wdog ;
+
 	# ash complains about no controlling terminal available, so wipe-out all ash messages
 	# (lines starting with "ash:" dumped on stderr); the command line is tricky because
 	# for piping stderr to grep we have to swap stdout and stderr
 	ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:' ;
+
+    # Restore WDOG
+    restore_wdog ;
 fi
 
 # Enlarge data partition, if requested
@@ -151,6 +171,12 @@ if [ ! -f /data/.sys/datagrow.disabled ]; then
 
 		if [ ! -z "$EMPTY_SPACE" ]; then
 
+            # Log
+            do_log "Data partition growth is requested..." ;
+
+            # Disable WDOG
+            disable_wdog ;
+
 			# Log
 			do_log "Resizing data partition..." ;
 			
@@ -165,44 +191,76 @@ if [ ! -f /data/.sys/datagrow.disabled ]; then
 
 			# Recalculate the size of /data
 			DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+
+            # Restore WDOG
+            restore_wdog ;
 		fi
 	fi
 fi
 
 # Create persist file in data, if not already there...
-if [ ! -f /data/.sys/persist.bin ]; then
+REPEAT=1
+while [ $REPEAT -eq 1 ];
+do
+    if [ ! -f /data/.sys/persist.bin ]; then
 
-	# Log
-	do_log "Flagging the system for firstinit..." ;
+        # Log
+        do_log "Storage for persistent overlay has to be created..." ;
 
-	# If the persistence layer was not there, then we have to force again a first-initialization
-	touch /data/.sys/firstinit.pending ;
+        # Disable WDOG
+        disable_wdog ;
 
-	# Log
-	do_log "Creating storage file for persistence overlay..." ;
+        # Log
+        do_log "Flagging the system for firstinit..." ;
 
-	# Determine max size (as the half of the available space on /data)
-	MAX_SIZE=$(( DATA_SIZE / 2 )) ;
-	
-	# Create file
-	dd if=/dev/null of=/data/.sys/persist.bin bs=1 seek=$MAX_SIZE ;
+        # If the persistence layer was not there, then we have to force again a first-initialization
+        touch /data/.sys/firstinit.pending ;
 
-	# Log
-	do_log "Formatting storage file for persistence overlay..." ;
+        # Log
+        do_log "Creating storage file for persistence overlay..." ;
 
-	# Loop-load the file
-	LOOP_DEVICE=`losetup -f` ;
-	losetup -f /data/.sys/persist.bin ;
+        # Determine max size (as the half of the available space on /data)
+        MAX_SIZE=$(( DATA_SIZE / 2 )) ;
+        
+        # Create file
+        dd if=/dev/null of=/data/.sys/persist.bin bs=1 seek=$MAX_SIZE ;
 
-	# Create ext4 filesystem
-	mkfs.ext4 $LOOP_DEVICE ;
+        # Log
+        do_log "Formatting storage file for persistence overlay..." ;
 
-	# Release the loop
-	losetup -d $LOOP_DEVICE ;
-fi
+        # Loop-load the file
+        LOOP_DEVICE=`losetup -f` ;
+        losetup -f /data/.sys/persist.bin ;
 
-# Mount the persist file system
-mount -o loop,rw /data/.sys/persist.bin /persist
+        # Create ext4 filesystem
+        mkfs.ext4 $LOOP_DEVICE ;
+
+        # Release the loop
+        losetup -d $LOOP_DEVICE ;
+
+        # Restore WDOG
+        restore_wdog ;
+    fi
+
+    # Mount the persist file system
+    mount -o loop,rw /data/.sys/persist.bin /persist
+
+    # Mount return value is 32 in case of mounting errors
+    if [ $? -eq 32 ]; then
+        if [ -e /data/.sys/persist.fix ]; then
+            # Remove existing (probably damaged) persist storage...
+            rm -rf /data/.sys/persist.bin ;
+            # ... and let the loop repeat for generating a new one
+        else
+            # Error here: log and panic!
+            do_log "An error occurred while mounting the persistent storage: cannot continue" ;
+            do_panic ;
+        fi
+    else
+        # Break the loop
+        REPEAT=0 ;
+    fi
+done
 
 # Mount initram filesystem
 mount -t tmpfs -o mode=0755,nodev,nosuid,strictatime tmpfs /initram
@@ -231,6 +289,9 @@ for UPDATE in ${ROOTFSUPDATES[@]}; do
         # Log
         do_log "Updating rootfs ($UPDATE)..." ;
 
+        # Disable WDOG
+        disable_wdog ;
+
         # Remount boot as R/W
         mount -o remount,rw /boot ;
 
@@ -256,6 +317,9 @@ for UPDATE in ${ROOTFSUPDATES[@]}; do
             # Log
             do_log "Rootfs ($UPDATE) update completed successfully" ;
         fi
+
+        # Restore WDOG
+        restore_wdog ;
     fi
 done
 
@@ -266,6 +330,9 @@ for UPDATE in ${APPUPDATES[@]}; do
 
         # Log
         do_log "Updating app ($UPDATE)..." ;
+
+        # Disable WDOG
+        disable_wdog ;
 
         # Copy new file
         TARGETDIGEST=$(sha256sum "/data/.sys/$UPDATE.update" 2>/dev/null | cut -d' ' -f1) ;
@@ -286,6 +353,9 @@ for UPDATE in ${APPUPDATES[@]}; do
             # Log
             do_log "App ($UPDATE) update completed successfully" ;
         fi
+
+        # Restore WDOG
+        restore_wdog ;
     fi
 done
 
@@ -706,6 +776,9 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
 		# Log
 		do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
 
+        # Disable WDOG
+        disable_wdog ;
+
 		# ash complains about no controlling terminal available, so wipe-out all ash messages
 		# (lines starting with "ash:" dumped on stderr); the command line is tricky because
 		# for piping stderr to grep we have to swap stdout and stderr; further we have to
@@ -716,6 +789,9 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
         else
     		chroot /overlay-ram-merge sh -c "ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:'" ;
         fi
+
+        # Restore WDOG
+        restore_wdog ;
 	fi
 
 else
@@ -745,12 +821,18 @@ else
 		# Log
 		do_log "Going to emergency shell due to request... Type ENTER to get the prompt" ;
 
+        # Disable WDOG
+        disable_wdog ;
+
 		# ash complains about no controlling terminal available, so wipe-out all ash messages
 		# (lines starting with "ash:" dumped on stderr); the command line is tricky because
 		# for piping stderr to grep we have to swap stdout and stderr; further we have to
 		# invoke an intermediate shell for doing that, because otherwise redirection will
 		# occur for chroot, and not for ash
 		chroot /overlay-persist-root-merge sh -c "ash 3>&2 2>&1 1>&3 3>&- | grep -v -e '^ash:'" ;
+
+        # Restore WDOG
+        restore_wdog ;
 	fi
 fi
 
