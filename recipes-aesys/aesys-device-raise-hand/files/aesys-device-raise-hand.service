@@ -1,0 +1,10 @@
+[Unit]
+Description=Aesys device raise-hand service
+
+[Service]
+Type=simple
+ExecStart=/sbin/raise-hand.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=default.target

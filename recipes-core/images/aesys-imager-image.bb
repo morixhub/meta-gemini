@@ -28,7 +28,7 @@ IMAGE_FEATURES:append = " ssh-server-openssh "
 #IMAGE_FEATURES:append = " splash "
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-so-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-startup-shutdown "
+IMAGE_INSTALL:append = " aesys-device-raise-hand aesys-so-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-startup-shutdown "
 
 # Add utils
 IMAGE_INSTALL:append = " glibc-utils "

@@ -107,12 +107,17 @@ if [ ! -z ${OTHERBOOT_PART} ]; then
 	sleep 1 ;
 fi
 
-# Mount relevant file systems
+# Heal and mount relevant file systems
+e2fsck -p ${BOOT_PART} ;
 mount -t ext4 -o ro ${BOOT_PART} /boot
+
+e2fsck -p ${DATA_PART} ;
 mount -t ext4 -o rw ${DATA_PART} /data
 
 if [ ! -z ${OTHERBOOT_PART} ]; then
     mkdir -p /boot-inactive ;
+
+    e2fsck -p ${OTHERBOOT_PART} ;
     mount -t ext4 -o ro ${OTHERBOOT_PART} /boot-inactive ;
 fi
 
@@ -242,13 +247,30 @@ do
         restore_wdog ;
     fi
 
-    # Mount the persist file system
-    mount -o loop,rw /data/.sys/persist.bin /persist
+    PERSIST_BIN_ERROR=0 ;
 
-    # Mount return value is 32 in case of mounting errors
-    if [ $? -eq 32 ]; then
-        if [ -e /data/.sys/persist.fix ]; then
-            # Remove existing (probably damaged) persist storage...
+    # Loop-load the file
+    LOOP_DEVICE=`losetup -f` ;
+    losetup -f /data/.sys/persist.bin ;
+    RET=$? ;
+    
+    if [ $RET -ne 0 ] && [ $RET -ne 1 ]; then
+        PERSIST_BIN_ERROR=1 ;
+    else
+        # Mount the persist file system
+        mount -o rw $LOOP_DEVICE /persist ;
+        RET=$? ;
+
+        if [ $RET -ne 0 ]; then
+            losetup -d $LOOP_DEVICE ;
+            PERSIST_BIN_ERROR=1 ;
+        fi
+    fi
+
+    # Check for errors
+    if [ $PERSIST_BIN_ERROR -ne 0 ]; then
+        if [ -e /data/.sys/persist.autofix ]; then
+            # Remove existing (probably damaged) persistent storage...
             rm -rf /data/.sys/persist.bin ;
             # ... and let the loop repeat for generating a new one
         else
