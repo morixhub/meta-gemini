@@ -1,0 +1,182 @@
+diff --git a/cmd/pxe.c b/cmd/pxe.c
+index 21134eb7a30..bb794bd8bfa 100644
+--- a/cmd/pxe.c
++++ b/cmd/pxe.c
+@@ -137,42 +137,48 @@ int pxe_get(ulong pxefile_addr_r, char **bootdirp, ulong *sizep, bool use_ipv6)
+ 	struct pxe_context ctx;
+ 	int i;
+ 
+-	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
+-			  env_get("bootfile"), use_ipv6))
+-		return -ENOMEM;
+-
+-	if (IS_ENABLED(CONFIG_BOOTP_PXE_DHCP_OPTION) &&
+-	    pxelinux_configfile && !use_ipv6) {
+-		if (pxe_dhcp_option_path(&ctx, pxefile_addr_r) > 0)
+-			goto done;
+-
+-		goto error_exit;
+-	}
+-
+-	if (IS_ENABLED(CONFIG_DHCP6_PXE_DHCP_OPTION) &&
+-	    pxelinux_configfile && use_ipv6) {
+-		if (pxe_dhcp_option_path(&ctx, pxefile_addr_r) > 0)
+-			goto done;
+-
+-		goto error_exit;
+-	}
+-
+-	/*
+-	 * Keep trying paths until we successfully get a file we're looking
+-	 * for.
+-	 */
+-	if (pxe_uuid_path(&ctx, pxefile_addr_r) > 0 ||
+-	    pxe_mac_path(&ctx, pxefile_addr_r) > 0 ||
+-	    pxe_ipaddr_paths(&ctx, pxefile_addr_r) > 0)
+-		goto done;
+-
+-	i = 0;
+-	while (pxe_default_paths[i]) {
+-		if (get_pxelinux_path(&ctx, pxe_default_paths[i],
+-				      pxefile_addr_r) > 0)
+-			goto done;
+-		i++;
+-	}
++    if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
++                env_get("bootfile"), use_ipv6))
++            return -ENOMEM;
++
++    if (IS_ENABLED(CONFIG_BOOTP_PXE_DHCP_OPTION) &&
++        pxelinux_configfile && !use_ipv6) {
++        if (pxe_dhcp_option_path(&ctx, pxefile_addr_r) > 0)
++            goto done;
++
++        goto error_exit;
++    }
++
++    if (IS_ENABLED(CONFIG_DHCP6_PXE_DHCP_OPTION) &&
++        pxelinux_configfile && use_ipv6) {
++        if (pxe_dhcp_option_path(&ctx, pxefile_addr_r) > 0)
++            goto done;
++
++        goto error_exit;
++    }
++
++    if (env_get_yesno("pxe_quick") <= 0) {
++
++        /*
++        * Keep trying paths until we successfully get a file we're looking
++        * for.
++        */
++        if (pxe_uuid_path(&ctx, pxefile_addr_r) > 0 ||
++            pxe_mac_path(&ctx, pxefile_addr_r) > 0 ||
++            pxe_ipaddr_paths(&ctx, pxefile_addr_r) > 0)
++            goto done;
++
++        i = 0;
++        while (pxe_default_paths[i]) {
++            if (get_pxelinux_path(&ctx, pxe_default_paths[i],
++                        pxefile_addr_r) > 0)
++                goto done;
++            i++;
++        }
++    } else {
++        if (pxe_uuid_path(&ctx, pxefile_addr_r) > 0)
++            goto done;
++    }
+ 
+ error_exit:
+ 	pxe_destroy_ctx(&ctx);
+diff --git a/net/arp.c b/net/arp.c
+index 37848ad32fb..91ddfb45c4e 100644
+--- a/net/arp.c
++++ b/net/arp.c
+@@ -26,9 +26,14 @@ ulong		arp_wait_timer_start;
+ int		arp_wait_try;
+ uchar	       *arp_tx_packet; /* THE ARP transmit packet */
+ static uchar	arp_tx_packet_buf[PKTSIZE_ALIGN + PKTALIGN];
++ulong arp_timeout;
++int arp_retry_count;
+ 
+ void arp_init(void)
+ {
++    char* str_arp_timeout;
++    char* str_arp_retry_count;
++
+ 	/* XXX problem with bss workaround */
+ 	arp_wait_packet_ethaddr = NULL;
+ 	net_arp_wait_packet_ip.s_addr = 0;
+@@ -36,6 +41,30 @@ void arp_init(void)
+ 	arp_wait_tx_packet_size = 0;
+ 	arp_tx_packet = &arp_tx_packet_buf[0] + (PKTALIGN - 1);
+ 	arp_tx_packet -= (ulong)arp_tx_packet % PKTALIGN;
++
++    /* Initialize ARP timeout */
++    str_arp_timeout = env_get("arptimeout");
++    if(str_arp_timeout) {
++        arp_timeout = simple_strtoul(str_arp_timeout, NULL, 0);
++        if(arp_timeout < 1000) {
++            printf("ARP timeout (%ld ms) too low, set min = 1000 ms\n", arp_timeout);
++            arp_timeout = 1000;
++        }
++    }
++    if(arp_timeout <= 0)
++        arp_timeout = CONFIG_ARP_TIMEOUT;
++
++    /* Initialize ARP retry count */
++    str_arp_retry_count = env_get("arpretrycount");
++    if(str_arp_retry_count) {
++        arp_retry_count = simple_strtol(str_arp_retry_count, NULL, 0);
++        if(arp_retry_count < 0) {
++            printf("ARP retry count max (%d) negative, set to 0\n", arp_retry_count);
++            arp_retry_count = 0;
++        }
++    }
++    if(arp_retry_count <= 0)
++        arp_retry_count = CONFIG_NET_RETRY_COUNT;
+ }
+ 
+ void arp_raw_request(struct in_addr source_ip, const uchar *target_ethaddr,
+@@ -95,12 +124,18 @@ int arp_timeout_check(void)
+ 	t = get_timer(0);
+ 
+ 	/* check for arp timeout */
+-	if ((t - arp_wait_timer_start) > CONFIG_ARP_TIMEOUT) {
++	if ((t - arp_wait_timer_start) > arp_timeout) {
+ 		arp_wait_try++;
+ 
+-		if (arp_wait_try >= CONFIG_NET_RETRY_COUNT) {
++		if (arp_wait_try >= arp_retry_count) {
+ 			puts("\nARP Retry count exceeded; starting again\n");
+-			arp_wait_try = 0;
++
++            /* no arp request pending now */
++            arp_wait_try = 0;
++			net_arp_wait_packet_ip.s_addr = 0;
++			arp_wait_tx_packet_size = 0;
++			arp_wait_packet_ethaddr = NULL;
++
+ 			net_set_state(NETLOOP_FAIL);
+ 		} else {
+ 			arp_wait_timer_start = t;
+@@ -212,6 +247,7 @@ void arp_receive(struct ethernet_hdr *et, struct ip_udp_hdr *ip, int len)
+ 			net_send_packet(net_tx_packet, arp_wait_tx_packet_size);
+ 
+ 			/* no arp request pending now */
++            arp_wait_try = 0;
+ 			net_arp_wait_packet_ip.s_addr = 0;
+ 			arp_wait_tx_packet_size = 0;
+ 			arp_wait_packet_ethaddr = NULL;
+diff --git a/net/tftp.c b/net/tftp.c
+index 2e335413492..870b43a73ef 100644
+--- a/net/tftp.c
++++ b/net/tftp.c
+@@ -805,7 +805,7 @@ void tftp_start(enum proto_t protocol)
+ 			tftp_timeout_count_max = simple_strtol(ep, NULL, 10);
+ 
+ 		if (tftp_timeout_count_max < 0) {
+-			printf("TFTP timeout count max (%d ms) negative, set to 0\n",
++			printf("TFTP timeout count max (%d) negative, set to 0\n",
+ 			       tftp_timeout_count_max);
+ 			tftp_timeout_count_max = 0;
+ 		}

@@ -6,6 +6,10 @@
 #define GEMINI_ENVVAR_FORCED_BOARD_ID "gemini_board_forced_boardid"
 #define GEMINI_ENVVAR_HWDETECT_BOOTARGS "gemini_hw_detect_bootargs"
 
+#define GEMINI_STATIC_IPADDR "192.168.79.1"
+#define GEMINI_STATIC_NETMASK "192.168.79.1"
+#define GEMINI_STATIC_SERVERIP "192.168.79.253"
+
 /*
  ATTENTION: kernel_addr_r is used by "pxe boot" for loading the kernel, but for "pxe boot" FIT images are treated
  exactly as kernel images, so kernel_addr_r must take FIT image loading into consideration, so it is clever
@@ -186,24 +190,67 @@
         "elif test -e mmc ${mmcdev}:2 .sys/pxe.disabled || test -e mmc ${mmcdev}:3 .sys/pxe.disabled ; then " \
             "echo PXE disabled (by file-system); " \
         "else " \
-            "echo Attempting PXE...; " \
-            "dhcp; " \
+            "setenv ipaddr ${static_ipaddr} ; " \
+            "setenv netmask ${static_netmask} ; " \
+            "setenv serverip ${static_serverip} ; " \
+            "echo Attempting PXE from full static configuration (ipaddr=${ipaddr}, netmask=${netmask}, serverip=${serverip})...; " \
             "if pxe get; then " \
                 "echo PXE server found: attempting boot from PXE...; " \
                 "pxe boot; " \
-                "echo Boot from PXE server failed: attempting other boot sources...; " \
+                "echo Boot from PXE server failed from static configuration: attempting with DHCP and static server...; " \
             "else " \
-                "echo Cannot find PXE server: attempting other boot sources...; " \
+                "echo Cannot find PXE server from static configuration: attempting with DHCP and with static server...; " \
+            "fi; " \
+            "echo Attempting PXE with DHCP and static server (serverip=${static_serverip})...; " \
+            "setenv autoload no ; " \
+            "if dhcp; then " \
+                "setenv serverip ${static_serverip} ; " \
+                "if pxe get; then " \
+                    "echo PXE server found: attempting boot from PXE...; " \
+                    "pxe boot; " \
+                    "echo Boot from PXE server failed: attempting with full DHCP...; " \
+                "else " \
+                    "echo Cannot find PXE server: attempting with full DHCP...; " \
+                "fi; " \
+            "else " \
+                "echo Cannot obtain valid DHCP lease: attempting with full DHCP...; " \
+            "fi; " \
+            "echo Attempting PXE from DHCP...; " \
+            "setenv autoload no ; " \
+            "if dhcp; then " \
+                "if pxe get; then " \
+                    "echo PXE server found: attempting boot from PXE...; " \
+                    "pxe boot; " \
+                    "echo Boot from PXE server failed: attempting other boot sources...; " \
+                "else " \
+                    "echo Cannot find PXE server: attempting other boot sources...; " \
+                "fi; " \
+            "else " \
+                "echo Cannot obtain valid DHCP lease: attempting other boot sources...; " \
             "fi; " \
         "fi\0" \
     "pxeboot_nocheck=echo Booting from PXE...; " \
-        "dhcp; " \
-        "if pxe get; then " \
-            "echo PXE server found: attempting boot from PXE...; " \
-            "pxe boot; " \
-            "echo Boot from PXE server failed; " \
+        "setenv autoload no ; " \
+        "if dhcp; then " \
+            "if pxe get; then " \
+                "echo PXE server found: attempting boot from PXE...; " \
+                "pxe boot; " \
+                "echo Boot from PXE server failed; " \
+            "else " \
+                "echo Cannot find PXE server: boot failed;" \
+            "fi; " \
         "else " \
-            "echo Cannot find PXE server: boot failed; " \
-        "fi\0"
+            "echo Cannot obtain valid DHCP lease: boot failed; " \
+        "fi\0" \
+    "autoload=no\0" \
+    "pxe_quick=yes\0" \
+    "bootpretryperiod=5000\0" \
+    "arptimeout=1000\0" \
+    "arpretrycount=3\0" \
+    "tftptimeout=2000\0" \
+    "tftptimeoutcountmax=3\0" \
+    "static_ipaddr="GEMINI_STATIC_IPADDR"\0" \
+    "static_netmask="GEMINI_STATIC_NETMASK"\0" \
+    "static_serverip="GEMINI_STATIC_SERVERIP"\0"
 
 #endif
