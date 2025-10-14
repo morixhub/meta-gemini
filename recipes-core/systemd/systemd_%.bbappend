@@ -12,7 +12,7 @@ do_install:append(){
 
     # Configure systemd-resolved for having a bind mount on /data for drop-in files
     install -m 0755 -d ${D}${sysconfdir}/systemd/resolved.conf.d/
-    sed -i -e "/^\[Service\]/a ExecStartPre=+/bin/mkdir -m 755 -p /data/etcrw/systemd/resolved.conf.d /etc/systemd/resolved.conf.d" ${D}${systemd_unitdir}/system/systemd-resolved.service
+    sed -i -e "/^\[Service\]/a ExecStartPre=-/bin/mkdir -m 755 -p /data/etcrw/systemd/resolved.conf.d /etc/systemd/resolved.conf.d" ${D}${systemd_unitdir}/system/systemd-resolved.service
     sed -i -e "/^\[Service\]/a BindPaths=-/data/etcrw/systemd/resolved.conf.d:/etc/systemd/resolved.conf.d" ${D}${systemd_unitdir}/system/systemd-resolved.service
 
     # Adjust journald.conf for OS hardening purposes

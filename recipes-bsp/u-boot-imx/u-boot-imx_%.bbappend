@@ -8,6 +8,7 @@ SRC_URI += " file://0004-FIT-Support-For-BootM.patch"
 SRC_URI += " file://0005-Fixed-FEC-RMII-Support.patch"
 SRC_URI += " file://0006-Dump-CPU-TripPoints.patch"
 SRC_URI += " file://0007-Introduced-PXEQuick-Option-And-ARP-Timeout-Configurability.patch"
+SRC_URI += " file://0008-PXE-Resolve-EnvVariables-In-Kernel-Config-Name.patch"
 
 # Copy additional stuff to working copy after patching
 COPYSOURCE := "${THISDIR}/${PN}"

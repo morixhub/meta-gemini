@@ -1,0 +1,25 @@
+diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
+index 83bc1677856..49aabcdb46a 100644
+--- a/boot/pxe_utils.c
++++ b/boot/pxe_utils.c
+@@ -1171,6 +1171,7 @@ static int parse_label_kernel(char **c, struct pxe_label *label)
+ {
+ 	char *s;
+ 	int err;
++    char configname[CONFIG_SYS_CBSIZE];
+ 
+ 	err = parse_sliteral(c, &label->kernel);
+ 	if (err < 0)
+@@ -1185,7 +1186,11 @@ static int parse_label_kernel(char **c, struct pxe_label *label)
+ 	if (!s)
+ 		return 1;
+ 
+-	label->config = strdup(s);
++    cli_simple_process_macros(s, configname,
++                    sizeof(configname));
++    printf("config name: %s\n", configname);
++
++	label->config = strdup(configname);
+ 	if (!label->config)
+ 		return -ENOMEM;
+ 

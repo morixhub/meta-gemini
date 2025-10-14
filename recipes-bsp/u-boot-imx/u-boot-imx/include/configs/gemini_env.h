@@ -190,6 +190,7 @@
         "elif test -e mmc ${mmcdev}:2 .sys/pxe.disabled || test -e mmc ${mmcdev}:3 .sys/pxe.disabled ; then " \
             "echo PXE disabled (by file-system); " \
         "else " \
+            "setenv gemini_fit_conf $gemini_fit_conf ; " \
             "setenv ipaddr ${static_ipaddr} ; " \
             "setenv netmask ${static_netmask} ; " \
             "setenv serverip ${static_serverip} ; " \
@@ -228,6 +229,7 @@
             "else " \
                 "echo Cannot obtain valid DHCP lease: attempting other boot sources...; " \
             "fi; " \
+            "setenv gemini_fit_conf ; " \
         "fi\0" \
     "pxeboot_nocheck=echo Booting from PXE...; " \
         "setenv autoload no ; " \
