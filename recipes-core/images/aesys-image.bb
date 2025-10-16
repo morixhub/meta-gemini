@@ -8,6 +8,8 @@ inherit populate_sdk_base
 IMAGE_FEATURES[validitems] += " aesys-development-ip "
 IMAGE_FEATURES[validitems] += " aesys-disable-overlayroot "
 IMAGE_FEATURES[validitems] += " aesys-disable-pxe "
+IMAGE_FEATURES[validitems] += " aesys-disable-static-pxe "
+IMAGE_FEATURES[validitems] += " aesys-disable-mixed-pxe "
 
 # Remove nfs-client (because it implies rpcbind, which we want to get rid of, for OS hardening purposes)
 IMAGE_FEATURES:remove = "nfs-client"
@@ -17,6 +19,10 @@ IMAGE_FEATURES:remove = "nfs-client"
 IMAGE_FEATURES:remove = "debug-tweaks"
 IMAGE_FEATURES:append = " allow-root-login "
 EXTRA_USERS_PARAMS += "usermod -p '\$1\$FMup4eG7\$5kGXZnwbAA/kNnkqhHLaA1' root;" 
+
+# Static and mixed PXE disabled by default on Aesys base images
+IMAGE_FEATURES:append = " aesys-disable-static-pxe "
+IMAGE_FEATURES:append = " aesys-disable-mixed-pxe "
 
 # Remove development tools from final image
 IMAGE_FEATURES:remove = "tools-sdk"
@@ -81,6 +87,8 @@ ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys
 
 # If requested, then inject the file for forcing disabled PXE
 ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-disable-pxe', " aesys_disable_pxe; ", "", d)}'
+ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-disable-static-pxe', " aesys_disable_static_pxe; ", "", d)}'
+ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-disable-mixed-pxe', " aesys_disable_mixed_pxe; ", "", d)}'
 
 # Root FS customization
 aesys_image_customize_root() {
@@ -182,5 +190,17 @@ aesys_disable_pxe () {
 
     mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
     touch ${IMAGE_ROOTFS}/data/.sys/pxe.disabled ;
+}
+
+aesys_disable_static_pxe () {
+
+    mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
+    touch ${IMAGE_ROOTFS}/data/.sys/pxe.static.disabled ;
+}
+
+aesys_disable_mixed_pxe () {
+
+    mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
+    touch ${IMAGE_ROOTFS}/data/.sys/pxe.mixed.disabled ;
 }
 

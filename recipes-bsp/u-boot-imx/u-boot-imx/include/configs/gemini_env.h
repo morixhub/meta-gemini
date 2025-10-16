@@ -191,30 +191,42 @@
             "echo PXE disabled (by file-system); " \
         "else " \
             "setenv gemini_fit_conf $gemini_fit_conf ; " \
-            "setenv ipaddr ${static_ipaddr} ; " \
-            "setenv netmask ${static_netmask} ; " \
-            "setenv serverip ${static_serverip} ; " \
-            "echo Attempting PXE from full static configuration (ipaddr=${ipaddr}, netmask=${netmask}, serverip=${serverip})...; " \
-            "if pxe get; then " \
-                "echo PXE server found: attempting boot from PXE...; " \
-                "pxe boot; " \
-                "echo Boot from PXE server failed from static configuration: attempting with DHCP and static server...; " \
+            "if env exists pxe_static_disabled && itest $pxe_static_disabled == 1; then " \
+                "echo Static network configuration PXE disabled (by environment); " \
+            "elif test -e mmc ${mmcdev}:2 .sys/pxe.static.disabled || test -e mmc ${mmcdev}:3 .sys/pxe.static.disabled ; then " \
+                "echo Static network configuration PXE disabled (by file-system); " \
             "else " \
-                "echo Cannot find PXE server from static configuration: attempting with DHCP and with static server...; " \
-            "fi; " \
-            "echo Attempting PXE with DHCP and static server (serverip=${static_serverip})...; " \
-            "setenv autoload no ; " \
-            "if dhcp; then " \
+                "setenv ipaddr ${static_ipaddr} ; " \
+                "setenv netmask ${static_netmask} ; " \
                 "setenv serverip ${static_serverip} ; " \
+                "echo Attempting PXE from full static configuration (ipaddr=${ipaddr}, netmask=${netmask}, serverip=${serverip})...; " \
                 "if pxe get; then " \
                     "echo PXE server found: attempting boot from PXE...; " \
                     "pxe boot; " \
-                    "echo Boot from PXE server failed: attempting with full DHCP...; " \
+                    "echo Boot from PXE server failed from static configuration: attempting with DHCP and static server...; " \
                 "else " \
-                    "echo Cannot find PXE server: attempting with full DHCP...; " \
+                    "echo Cannot find PXE server from static configuration: attempting with DHCP and with static server...; " \
                 "fi; " \
+            "fi; " \
+            "if env exists pxe_mixed_disabled && itest $pxe_mixed_disabled == 1; then " \
+                "echo Mixed network configuration PXE disabled (by environment); " \
+            "elif test -e mmc ${mmcdev}:2 .sys/pxe.mixed.disabled || test -e mmc ${mmcdev}:3 .sys/pxe.mixed.disabled ; then " \
+                "echo Mixed network configuration PXE disabled (by file-system); " \
             "else " \
-                "echo Cannot obtain valid DHCP lease: attempting with full DHCP...; " \
+                "echo Attempting PXE with DHCP and static server (serverip=${static_serverip})...; " \
+                "setenv autoload no ; " \
+                "if dhcp; then " \
+                    "setenv serverip ${static_serverip} ; " \
+                    "if pxe get; then " \
+                        "echo PXE server found: attempting boot from PXE...; " \
+                        "pxe boot; " \
+                        "echo Boot from PXE server failed: attempting with full DHCP...; " \
+                    "else " \
+                        "echo Cannot find PXE server: attempting with full DHCP...; " \
+                    "fi; " \
+                "else " \
+                    "echo Cannot obtain valid DHCP lease: attempting with full DHCP...; " \
+                "fi; " \
             "fi; " \
             "echo Attempting PXE from DHCP...; " \
             "setenv autoload no ; " \
