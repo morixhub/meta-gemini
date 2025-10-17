@@ -30,11 +30,8 @@ IMAGE_FEATURES:remove = "tools-sdk"
 # Normalize image name
 IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
 
-# Remove unused "tar.zst" format
-IMAGE_FSTYPES:remove = "tar.zst"
-
-# Add squashfs type
-IMAGE_FSTYPES:append = " squashfs "
+# Set the desired image formats
+IMAGE_FSTYPES="wic.bmap wic.zst squashfs"
 
 # Add features
 IMAGE_FEATURES:append = " ssh-server-openssh "
@@ -203,4 +200,3 @@ aesys_disable_mixed_pxe () {
     mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
     touch ${IMAGE_ROOTFS}/data/.sys/pxe.mixed.disabled ;
 }
-

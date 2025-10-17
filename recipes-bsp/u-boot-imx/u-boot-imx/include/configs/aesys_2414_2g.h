@@ -7,7 +7,7 @@
 #define __AESYS_2414_2G_H
 
 // Remember to define GEMINI_PXE_UUID before including "gemini_env.h"
-#define GEMINI_PXE_UUID "pxeuuid-aesys-2414-2g"
+#define GEMINI_PXE_UUID "00000000-2414-0000-2222-000000000000"
 
 #include <linux/sizes.h>
 #include <linux/stringify.h>

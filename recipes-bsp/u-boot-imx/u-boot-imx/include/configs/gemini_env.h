@@ -256,6 +256,7 @@
         "else " \
             "echo Cannot obtain valid DHCP lease: boot failed; " \
         "fi\0" \
+    "quiet_part=yes\0" \
     "autoload=no\0" \
     "pxe_quick=yes\0" \
     "bootpretryperiod=5000\0" \

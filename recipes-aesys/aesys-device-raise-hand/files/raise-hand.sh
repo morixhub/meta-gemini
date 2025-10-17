@@ -28,13 +28,13 @@ do
     fi
 
     # Get HW/IP address from wired0
-    HW_ADDR=$(ifconfig wired0 | grep "HWaddr" | awk ' { print $NF } ')
-    IP_ADDR=$(ifconfig wired0 | grep "inet addr:" | awk ' { print $2 } ' | cut -d':' -f2)
+    HW_ADDR=$(ifconfig wired0 | grep "ether " | awk ' { print $2 } ')
+    IP_ADDR=$(ifconfig wired0 | grep "inet " | awk ' { print $2 } ')
 
     # If not available, then attempt to use wired1
     if [ -z "$HW_ADDR" ] || [ -z "$IP_ADDR" ]; then
-        HW_ADDR=$(ifconfig wired1 | grep "HWaddr" | awk ' { print $NF } ')
-        IP_ADDR=$(ifconfig wired1 | grep "inet addr:" | awk ' { print $2 } ' | cut -d':' -f2)
+        HW_ADDR=$(ifconfig wired1 | grep "ether " | awk ' { print $2 } ')
+        IP_ADDR=$(ifconfig wired1 | grep "inet " | awk ' { print $2 } ')
     fi
 
     # Raise the device hand! :)

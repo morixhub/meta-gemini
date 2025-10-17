@@ -1,0 +1,40 @@
+diff --git a/arch/arm/mach-imx/spl.c b/arch/arm/mach-imx/spl.c
+index 68f3e156b32..1f60a8861ca 100644
+--- a/arch/arm/mach-imx/spl.c
++++ b/arch/arm/mach-imx/spl.c
+@@ -456,7 +456,6 @@ int board_handle_rdc_config(void *fdt_addr, const char *config_name, void *dst_a
+ 
+ 	node = fdt_node_offset_by_compatible(fdt_addr, -1, "imx8m,mcu_rdc");
+ 	if (node < 0) {
+-		printf("Failed to find node!, err: %d!\n", node);
+ 		ret = -1;
+ 		goto exit;
+ 	}
+diff --git a/disk/part.c b/disk/part.c
+index 36b88205eca..409c56590eb 100644
+--- a/disk/part.c
++++ b/disk/part.c
+@@ -633,7 +633,8 @@ int blk_get_device_part_str(const char *ifname, const char *dev_part_str,
+ 	if (part != PART_AUTO) {
+ 		ret = part_get_info(*desc, part, info);
+ 		if (ret) {
+-			printf("** Invalid partition %d **\n", part);
++            if(!env_get("quiet_part"))
++			    printf("** Invalid partition %d **\n", part);
+ 			goto cleanup;
+ 		}
+ 	} else {
+@@ -800,9 +801,10 @@ int part_get_info_by_dev_and_name_or_num(const char *dev_iface,
+ 	 */
+ 	ret = blk_get_device_part_str(dev_iface, dev_part_str, desc, part_info,
+ 				      allow_whole_dev);
+-	if (ret < 0)
+-		printf("Couldn't find partition %s %s\n",
+-		       dev_iface, dev_part_str);
++	if (ret < 0) {
++        if(!env_get("quiet_part"))
++		    printf("Couldn't find partition %s %s\n", dev_iface, dev_part_str);
++    }
+ 	return ret;
+ }
+ 
