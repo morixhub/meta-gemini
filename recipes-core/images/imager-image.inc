@@ -4,7 +4,7 @@
 IMAGE_FEATURES:append = " read-only-rootfs "
 
 # Select "tar.zst" format
-IMAGE_FSTYPES="tar.zst"
+IMAGE_FSTYPES:append = " tar.zst "
 
 # Install utility packages
 IMAGE_INSTALL:append = " nfs-utils-client "

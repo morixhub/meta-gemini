@@ -264,6 +264,8 @@
     "arpretrycount=3\0" \
     "tftptimeout=2000\0" \
     "tftptimeoutcountmax=3\0" \
+    "pxe_static_disabled=1\0" \
+    "pxe_mixed_disabled=1\0" \
     "static_ipaddr="GEMINI_STATIC_IPADDR"\0" \
     "static_netmask="GEMINI_STATIC_NETMASK"\0" \
     "static_serverip="GEMINI_STATIC_SERVERIP"\0"
