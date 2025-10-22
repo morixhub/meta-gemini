@@ -98,12 +98,20 @@ aesys_image_customize_root() {
     mkdir -p ${IMAGE_ROOTFS}/data/.sys ;
 
     # Create writable configuration dir
-    mkdir -p ${IMAGE_ROOTFS}/data/etcrw
+    mkdir -p ${IMAGE_ROOTFS}/data/etcrw ;
+
+    # Create app dir
+    mkdir -p ${IMAGE_ROOTFS}/app ;
 
     # Disable securefs check by default
     touch ${IMAGE_ROOTFS}/data/.sys/rootfs-securefs.skip ;
     touch ${IMAGE_ROOTFS}/data/.sys/data-securefs.skip ;
     touch ${IMAGE_ROOTFS}/data/.sys/app-securefs.skip ;
+
+    # Set image name
+    mkdir -p ${IMAGE_ROOTFS}/etc ;
+    echo ${IMAGE_BASENAME} > ${IMAGE_ROOTFS}/etc/image-ver ;
+    chmod 0444 ${IMAGE_ROOTFS}/etc/image-ver ;
 
     #######################################################
     # OS HARDENING BEGIN

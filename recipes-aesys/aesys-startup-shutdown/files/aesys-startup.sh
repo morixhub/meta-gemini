@@ -16,6 +16,16 @@ BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..
 # Expose boot device as USB mass storage gadget
 modprobe g_mass_storage file=${BOOT_DEVICE} stall=0 removable=1 ro=1 iManufacturer="Aesys" iProduct="Aesys Mass Storage Gadget"
 
+# Mount app.squashfs on imager images
+if [ -f "/etc/image-ver" ]; then
+    IMAGEVER=$(cat "/etc/image-ver") ;
+    if [[ "$IMAGEVER" == *"-imager-"* ]]; then
+        if [ -f "/data/.sys/app.squashfs" ]; then
+            mount -t squashfs /data/.sys/app.squashfs /app ;
+        fi
+    fi
+fi
+
 # Launch /app/start.sh, if any (except during first boot!)
 if [ $FIRSTBOOT_SPLASH -eq 0 ] && [ -x /app/start.sh ]; then
     mkdir -p /var/run ;
