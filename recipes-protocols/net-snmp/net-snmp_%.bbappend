@@ -79,6 +79,9 @@ FILES:${PN} += "\
 PACKAGECONFIG[blumenthal] = "--enable-blumenthal-aes, --disable-blumenthal-aes"
 PACKAGECONFIG:append = " blumenthal"
 
+# Custom package configuration (enable MTLS support)
+PACKAGECONFIG[mtls] = '--with-security-modules=tsm --with-transports="TLSTCP DTLSUDP", '
+PACKAGECONFIG:append = " mtls"
 
 do_install:append(){
     
