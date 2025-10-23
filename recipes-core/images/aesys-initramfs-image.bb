@@ -6,6 +6,10 @@ PACKAGE_INSTALL = "${VIRTUAL-RUNTIME_base-utils} util-linux-lsblk udev base-pass
 IMAGE_FEATURES = ""
 
 export IMAGE_BASENAME = "${MLPREFIX}aesys-initramfs"
+
+# Don't allow the initramfs to contain a kernel
+PACKAGE_EXCLUDE = "kernel-image-*"
+
 IMAGE_NAME_SUFFIX ?= ""
 IMAGE_LINGUAS = ""
 
