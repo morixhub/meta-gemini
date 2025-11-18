@@ -29,7 +29,7 @@ aesys_imager_image_customize_root() {
     openssl genrsa -out cakey.pem 2048 ;
 
     # ...and CA certificate
-    openssl req -new -x509 -nodes -days 365000 -key cakey.pem -subj '/C=IT/ST=Italy/L=Seriate(BG)/CN=aesys.com' -out cacert.pem ;
+    openssl req -new -x509 -nodes -days 14600 -key cakey.pem -subj '/C=IT/ST=Italy/L=Seriate(BG)/CN=aesys.com' -out cacert.pem ;
 
     # Generate private key for VNC...
     openssl genrsa -out tls.key 2048 ;
@@ -38,7 +38,7 @@ aesys_imager_image_customize_root() {
     openssl req -new -key tls.key -out tls.csr -subj '/C=IT/ST=Italy/L=Seriate(BG)/CN=*.aesys.com' ;
 
     # ...and the correspondent certificate
-    openssl x509 -req -days 365000 -in tls.csr -out tls.crt -CA cacert.pem -CAkey cakey.pem
+    openssl x509 -req -days 14600 -in tls.csr -out tls.crt -CA cacert.pem -CAkey cakey.pem
 
     # Restore previous directory
     cd "${PREVDIR}" ;

@@ -1,7 +1,20 @@
 #!/bin/bash
 
-FIRSTBOOT_SPLASH=0
+disable_wdog() {
+    if [ -x "/usr/bin/hw-wdog-toggle.sh" ]; then
+        echo "Disabling watchdog..." ;
+        /usr/bin/hw-wdog-toggle.sh disable ;
+    fi
+}
 
+restore_wdog() {
+    if [ -x "/usr/bin/hw-wdog-toggle.sh" ]; then
+        echo "Restoring watchdog..." ;
+        /usr/bin/hw-wdog-toggle.sh default ;
+    fi
+}
+
+FIRSTBOOT_SPLASH=0
 if [ -f "/data/.sys/firstinit.pending" ]; then
     VIEWER=$(which weston-image) ;
     if [ ! -z "$VIEWER" ] && [ -f "/sbin/firstinit.png" ]; then
@@ -15,6 +28,13 @@ BOOT_DEVICE=`cat /proc/cmdline | sed -e 's/^.*root=//' -e 's/ .*$//' | sed 's/..
 
 # Expose boot device as USB mass storage gadget
 modprobe g_mass_storage file=${BOOT_DEVICE} stall=0 removable=1 ro=1 iManufacturer="Aesys" iProduct="Aesys Mass Storage Gadget"
+
+# Disable WDOG if no app.squashfs is there
+ls "/data/.sys/app.squashfs"* >/dev/null 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "NO VALID APP DETECTED: HW WDOG TO BE TURNED OFF" ;
+    disable_wdog ;
+fi
 
 # Mount app.squashfs on imager images
 if [ -f "/etc/image-ver" ]; then
