@@ -15,16 +15,16 @@ fi
 # Infinite loop
 while true
 do
-    # Check if the export aesys_srv is mounted
-    MNT=$(mount | grep -i "on /tmp/media/aesys_srv ") ;
+    # Check if the the netboot tools export is mounted
+    MNT=$(mount | grep -i "on /run/netboot/tools ") ;
     if [ -z "$MNT" ]; then
         # If there the mount is not there; so prepare the directory, if requested...
-        if [ ! -d "/tmp/media/aesys_srv" ]; then
-            mkdir -p "/tmp/media/aesys_srv" ;
+        if [ ! -d "/run/netboot/tools" ]; then
+            mkdir -p "/run/netboot/tools" ;
         fi
 
-        # ...and attempt to mount the aesys_srv export via netboot server's NFS
-        mount -t nfs "$NETBOOT_SERVER_IP:/media/aesys_srv_export" "/tmp/media/aesys_srv" ;
+        # ...and attempt to mount the export via netboot server's NFS
+        mount -t nfs "$NETBOOT_SERVER_IP:/mnt/data/netboot/tools" "/run/netboot/tools" ;
     fi
 
     # Get HW/IP address from wired0
