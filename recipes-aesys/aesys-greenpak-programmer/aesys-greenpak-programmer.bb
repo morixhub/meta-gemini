@@ -7,7 +7,6 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRCREV = "a5a69f29e18f24d4e2685563b296d22fe043f0ca"
 
 SRC_URI = "git://github.com/morixhub/greenpak-programmer.git;protocol=https;branch=main"
-SRC_URI[sha256sum] = "c53e263b4d16473373c5b7f19a5ccfdec0fd9603b13b5760a8129c38ba3dc7a3"
 
 
 FILES:${PN} += " \
