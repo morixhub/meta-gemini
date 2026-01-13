@@ -1,0 +1,135 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+
+/dts-v1/;
+
+#include "aesys_2414_2g.dtsi"
+
+/ {
+
+	model = "AESYS 2414B+2415B";
+	
+    reg_sound_1p8_vddd: regulator-sound-1p8-vddd {
+        compatible = "regulator-fixed";
+        regulator-always-on;
+        regulator-min-microvolt = <1800000>;
+        regulator-max-microvolt = <1800000>;
+        regulator-name = "SOUND_1P8_VDDD";
+	};
+
+    reg_sound_3p3_vdda: regulator-sound-3p3-vdda {
+        compatible = "regulator-fixed";
+        regulator-always-on;
+        regulator-min-microvolt = <3300000>;
+        regulator-max-microvolt = <3300000>;
+        regulator-name = "SOUND_3P3_VDDA";
+	};
+
+    reg_sound_3p3_vddio: regulator-sound-3p3-vddio {
+        compatible = "regulator-fixed";
+        regulator-always-on;
+        regulator-min-microvolt = <3300000>;
+        regulator-max-microvolt = <3300000>;
+        regulator-name = "SOUND_3P3_VDDIO";
+	};
+
+    sound-sgtl5000 {
+        #address-cells = <1>;
+	    #size-cells = <0>;
+
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "SGTL5000-Card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,bitclock-master = <&cpu_dai>;
+		simple-audio-card,frame-master = <&cpu_dai>;
+		simple-audio-card,widgets = "Headphone", "Headphone Jack",
+                                    "Lineout", "Lineout Jack";
+		simple-audio-card,routing = "Headphone Jack", "HP_OUT",
+                                    "Lineout Jack", "LINE_OUT";
+        status = "okay";
+
+		cpu_dai: simple-audio-card,cpu {
+			sound-dai = <&sai1>;
+		};
+
+		codec_dai: simple-audio-card,codec {
+			sound-dai = <&i2c_sgtl5000>;
+            clocks = <&sai1 1>;
+		};
+	};
+};
+
+&i2c5 {
+	i2c_temp: temp@48 {
+		compatible = "ti,tmp1075";
+		reg = <0x48>;
+	};
+
+	i2c_adc: adc@4d {
+		compatible = "microchip,mcp3221";
+		reg = <0x4d>;
+	};
+
+    i2c_sgtl5000: sgtl5000 {
+        #sound-dai-cells = <0>;
+		compatible = "fsl,sgtl5000";
+		reg = <0x0a>;
+		clocks = <&sai1 1>;
+        VDDD-supply = <&reg_sound_1p8_vddd>;
+        VDDA-supply = <&reg_sound_3p3_vdda>;
+        VDDIO-supply = <&reg_sound_3p3_vddio>;
+	};
+
+    i2c_ioexp: ioexp@20 {
+        #gpio-cells = <2>;
+        compatible = "microchip,mcp23008";
+        reg = <0x20>;
+        gpio-controller;
+    };
+};
+
+&usdhc1 {
+    pinctrl-0 = <&pinctrl_usdhc1 &pinctrl_wifi_ble>;
+	pinctrl-1 = <&pinctrl_usdhc1_100mhz &pinctrl_wifi_ble>;
+	pinctrl-2 = <&pinctrl_usdhc1_200mhz &pinctrl_wifi_ble>;
+    pinctrl-assert-gpios = <&gpio2 9 GPIO_ACTIVE_HIGH>;
+    post-power-on-delay-ms = <120>;
+    power-off-delay-us = <100000>;
+    cap-sd-highspeed;
+    cap-mmc-highspeed;
+    sd-uhs-sdr12;
+    sd-uhs-sdr25;
+    sd-uhs-sdr50;
+    sd-uhs-ddr50;
+};
+
+&uart4 {
+    bluetooth {
+        compatible = "nxp,88w8987-bt";
+        fw-init-baudrate = <115200>;
+    };
+};
+
+&iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_emmc_gpios &pinctrl_pin_hwrev_gpios &pinctrl_pin_gpios &pinctrl_pin_gpios_2415>;
+
+	pinctrl_pin_gpios_2415: pin_gpios_2415 {
+		fsl,pins = <
+		MX8MP_IOMUXC_SD1_DATA4__GPIO2_IO06       0x00000006   	// AUDIO_nMUTE_CTRL
+		MX8MP_IOMUXC_SD1_DATA5__GPIO2_IO07		 0x00000006		// USB_HUB_SOFT_RESET
+		MX8MP_IOMUXC_SD1_DATA6__GPIO2_IO08       0x00000006   	// LTE_nPWR_ON
+		>;
+	};
+
+    pinctrl_wifi_ble: pin_wifi_ble {
+        fsl,pins = <
+        MX8MP_IOMUXC_SD1_DATA7__GPIO2_IO09       0x00000006   	// WIFI_BLE_nRESET
+        >;
+    };
+
+	pinctrl_sound_wm8524: sound_wm8524_gpios {
+		fsl,pins = <
+		MX8MP_IOMUXC_SAI1_RXFS__GPIO4_IO00		0x00000006		// AUDIO_nMUTE
+		>;
+	};
+};

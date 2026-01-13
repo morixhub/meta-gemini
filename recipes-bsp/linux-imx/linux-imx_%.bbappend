@@ -68,6 +68,9 @@ do_after_patch() {
 	cp "${COPYSOURCE}/aesys_2414a__aesys_2415a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
     cp "${COPYSOURCE}/aesys_2414b__aesys_2415a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
+    # AESYS 2415B
+    cp "${COPYSOURCE}/aesys_2414b__aesys_2415b.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
+
 	# AESYS 2501A
 	cp "${COPYSOURCE}/aesys_2414a__aesys_2501a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
