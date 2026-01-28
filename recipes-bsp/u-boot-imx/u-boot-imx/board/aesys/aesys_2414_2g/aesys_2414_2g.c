@@ -82,6 +82,7 @@ static struct hwrev_t const hwrevs[] = {
 	{ "0000_0010", "aesys_2414b__aesys_2415a" },
     { "0000_0011", "aesys_2414b__aesys_2501b" },
     { "0000_0100", "aesys_2414b__aesys_2415b" },
+    { "0000_0101", "aesys_2414b__aesys_2511a" },
 };
 
 #ifdef CONFIG_NAND_MXS

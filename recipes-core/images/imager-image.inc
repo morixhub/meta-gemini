@@ -17,7 +17,9 @@ ROOTFS_POSTPROCESS_COMMAND += " aesys_imager_image_customize_root; "
 
 aesys_imager_image_customize_root() {
 
+    ########################################################
     # Generate VNC keys
+
     # Save previous directory
     PREVDIR=`pwd` ;
 
@@ -42,6 +44,13 @@ aesys_imager_image_customize_root() {
 
     # Restore previous directory
     cd "${PREVDIR}" ;
+
+
+    ########################################################
+    # Add a static IP address on second network adapter (wired1)
+
+    sed -i -e '/iface wired1/d' -e '$ a iface wired1 inet static\n\taddress 192.168.1.1\n\tnetmask 255.255.255.0\n' "${IMAGE_ROOTFS}/etc/network/interfaces"
+
 }
 
 
