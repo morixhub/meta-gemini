@@ -50,15 +50,6 @@ aesys_imager_image_customize_root() {
     # Add a static IP address on second network adapter (wired1)
 
     sed -i -e '/iface wired1/d' -e '$ a iface wired1 inet static\n\taddress 192.168.1.1\n\tnetmask 255.255.255.0\n' "${IMAGE_ROOTFS}/etc/network/interfaces" ;
-
-
-    ########################################################
-    # Ensure that Weston has been configured with a kiosk-shell (used for HW testing)
-
-    KIOSK=$(cat "${IMAGE_ROOTFS}/etc/xdg/weston/weston.ini" | grep -v "#" | grep -i "shell=kiosk-shell.so") ;
-    if [ -z "$KIOSK" ]; then
-        sed -i -e "/^\[core\]/a shell=kiosk-shell.so" "${IMAGE_ROOTFS}/etc/xdg/weston/weston.ini" ;
-    fi
 }
 
 

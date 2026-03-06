@@ -1,0 +1,85 @@
+diff --git a/clients/image.c b/clients/image.c
+index 63a5cefb..fa8dd847 100644
+--- a/clients/image.c
++++ b/clients/image.c
+@@ -357,11 +357,14 @@ close_handler(void *data)
+ 
+ static struct image *
+ image_create(struct display *display, const char *filename,
+-	     int *image_counter)
++	     int *image_counter, int fullscreen)
+ {
+ 	struct image *image;
+ 	char *b, *copy, title[512];
+ 
++	if(filename[0]=='-')
++		return NULL;
++
+ 	image = zalloc(sizeof *image);
+ 	if (image == NULL)
+ 		return image;
+@@ -380,6 +383,7 @@ image_create(struct display *display, const char *filename,
+ 		return NULL;
+ 	}
+ 
++	image->fullscreen = fullscreen;
+ 	image->window = window_create(display);
+ 	image->widget = window_frame_create(image->window, image);
+ 	window_set_title(image->window, title);
+@@ -389,6 +393,8 @@ image_create(struct display *display, const char *filename,
+ 	*image_counter += 1;
+ 	image->initialized = false;
+ 
++	window_set_fullscreen(image->window, image->fullscreen);
++
+ 	window_set_user_data(image->window, image);
+ 	widget_set_redraw_handler(image->widget, redraw_handler);
+ 	widget_set_resize_handler(image->widget, resize_handler);
+@@ -407,15 +413,35 @@ image_create(struct display *display, const char *filename,
+ 	return image;
+ }
+ 
++int show_help(char *cmd)
++{
++	printf("Usage: %s [-f|--fullscreen] [-h|--help] image1 [image2 [image3 ...]]\n", cmd);
++	return 0;
++}
++
+ int
+ main(int argc, char *argv[])
+ {
+ 	struct display *d;
+ 	int i;
+ 	int image_counter = 0;
+-
+-	if (argc <= 1 || argv[1][0]=='-') {
+-		printf("Usage: %s image...\n", argv[0]);
++	int fullscreen = 0;
++	int help = 0;
++	int switches_counter = 0;
++
++	for (i = 1; i < argc; i++) {
++                if(strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
++                        fullscreen = 1;
++			switches_counter++;
++		}
++		else if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
++			help = 1;
++			switches_counter++;
++		}
++        }
++
++	if((argc - switches_counter) <= 1 || help == 1) {
++		show_help(argv[0]);
+ 		return 1;
+ 	}
+ 
+@@ -427,7 +453,7 @@ main(int argc, char *argv[])
+ 	}
+ 
+ 	for (i = 1; i < argc; i++)
+-		image_create(d, argv[i], &image_counter);
++		image_create(d, argv[i], &image_counter, fullscreen);
+ 
+ 	if (image_counter > 0)
+ 		display_run(d);
