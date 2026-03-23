@@ -61,18 +61,25 @@
     power-off-delay-us = <100000>;
     cap-sd-highspeed;
     cap-mmc-highspeed;
+
+    sd-uhs-sdr12;
+    max-frequency = <25000000>;
+    
+    /* LIMITED TO SDR12 (25 MHz)
     sd-uhs-sdr12;
     sd-uhs-sdr25;
     sd-uhs-sdr50;
     sd-uhs-sdr104;
+    */
 };
 
+/* BT FUNCTION WAS REMOVED
 &uart4 {
     bluetooth {
         compatible = "nxp,88w8987-bt";
         fw-init-baudrate = <115200>;
     };
-};
+}; */
 
 &iomuxc {
 	pinctrl-names = "default";
