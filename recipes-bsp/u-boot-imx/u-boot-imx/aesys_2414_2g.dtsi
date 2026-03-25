@@ -428,7 +428,7 @@
 	pinctrl-0 = <&pinctrl_sai1>;
 	assigned-clocks = <&clk IMX8MP_CLK_SAI1>;
 	assigned-clock-parents = <&clk IMX8MP_AUDIO_PLL2_OUT>;
-	assigned-clock-rates = <22579200>;
+	assigned-clock-rates = <11289600>;
 	fsl,sai-mclk-direction-output;
 	status = "okay";
 };
