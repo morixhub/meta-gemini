@@ -103,13 +103,12 @@ aesys_image_customization () {
     # Create writable configuration dir
     mkdir -p ${IMAGE_ROOTFS}/data/etcrw ;
 
-    # Create app dir
-    mkdir -p ${IMAGE_ROOTFS}/app ;
+    # Introduce link requested for ReadSpeaker TTS to work
+    # (it may be dangling if TTS is not actually available at runtime)
+    ln -s -r ${IMAGE_ROOTFS}/tts/cfg/vtpath.ini ${IMAGE_ROOTFS}/etc/vtpath.ini ;
 
     # Disable securefs check by default
-    touch ${IMAGE_ROOTFS}/data/.sys/rootfs-securefs.skip ;
-    touch ${IMAGE_ROOTFS}/data/.sys/data-securefs.skip ;
-    touch ${IMAGE_ROOTFS}/data/.sys/app-securefs.skip ;
+    touch ${IMAGE_ROOTFS}/data/.sys/securefs.skip ;
 
     # Set image name
     mkdir -p ${IMAGE_ROOTFS}/etc ;

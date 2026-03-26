@@ -42,7 +42,6 @@ mkdir -p /initram
 mkdir -p /rootfs
 mkdir -p /boot
 mkdir -p /persist
-mkdir -p /app
 mkdir -p /data
 
 # Mount aux filesystems
@@ -52,7 +51,6 @@ mount -t devtmpfs dev /dev
 
 # Declare file name
 ROOTFSSQUASHFS=rootfs.squashfs
-APPSQUASHFS=app.squashfs
 
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
@@ -64,7 +62,6 @@ SECUREBOOT=`echo ${KERNEL_CMDLINE} | grep "secure-boot"`
 DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="`
 DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}"
-DB_APPSQUASHFS="${APPSQUASHFS}"
 DB_HALF=
 DB_MODE=
 if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
@@ -90,7 +87,6 @@ if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
 
 		DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}.${DB_HALF}" ;
 	fi
-	DB_APPSQUASHFS="${APPSQUASHFS}.${DB_HALF}" ;
 else
 	BOOT_PART=${BOOT_DEVICE}p1 ;
 	DATA_PART=${BOOT_DEVICE}p2 ;
@@ -294,16 +290,12 @@ if [ -d "/data/.sys/.delta-tmp" ]; then
 fi
 
 # Clear temporary update files (if there, they are a "remaining" of a failed update)
-if [ -f "/data/.sys/rootfs.squashfs.update.tmp" ] || [ -f "/data/.sys/rootfs.squashfs.a.update.tmp" ] || [ -f "/data/.sys/rootfs.squashfs.b.update.tmp" ]; then
-    rm -f "/data/.sys/rootfs*.update.tmp" ;
-    do_log "Removed stale rootfs update file(s)" ; 
-fi
-if [ -f "/data/.sys/app.squashfs.update.tmp" ] || [ -f "/data/.sys/app.squashfs.a.update.tmp" ] || [ -f "/data/.sys/app.squashfs.b.update.tmp" ]; then
-    rm -f "/data/.sys/app.squashfs*.update.tmp" ;
-    do_log "Removed stale app update file(s)" ; 
+if stat "/data/.sys/"*".update.tmp" 1>/dev/null 2>&1; then
+    rm -fv "/data/.sys/"*".update.tmp" ;
+    do_log "Removed stale update file(s)" ; 
 fi
 
-# Update rootfs
+# Update rootfs (needs special treating since it is in boot partition)
 ROOTFSUPDATES=("rootfs.squashfs" "rootfs.squashfs.a" "rootfs.squashfs.b") ;
 for UPDATE in ${ROOTFSUPDATES[@]}; do
     if [ -f "/data/.sys/$UPDATE.update" ]; then
@@ -345,35 +337,39 @@ for UPDATE in ${ROOTFSUPDATES[@]}; do
     fi
 done
 
-# Update app.squashfs
-APPUPDATES=("app.squashfs" "app.squashfs.a" "app.squashfs.b");
-for UPDATE in ${APPUPDATES[@]}; do
-    if [ -f "/data/.sys/$UPDATE.update" ]; then
+# Update extra
+shopt -s nullglob
+UPDATES=("/data/.sys/"*".update")
+shopt -u nullglob
+UPDATE=
+for UPDATE in "${UPDATES[@]}"; do
+    BN_UPDATE=$(basename -s ".update" "$UPDATE") ;
+    if [ -f "/data/.sys/$BN_UPDATE.update" ]; then
 
         # Log
-        do_log "Updating app ($UPDATE)..." ;
+        do_log "Updating $BN_UPDATE..." ;
 
         # Disable WDOG
         disable_wdog ;
 
         # Copy new file
-        TARGETDIGEST=$(sha256sum "/data/.sys/$UPDATE.update" 2>/dev/null | cut -d' ' -f1) ;
-        cp -f "/data/.sys/$UPDATE.update" "/data/.sys/$UPDATE" ;
+        TARGETDIGEST=$(sha256sum "/data/.sys/$BN_UPDATE.update" 2>/dev/null | cut -d' ' -f1) ;
+        cp -f "/data/.sys/$BN_UPDATE.update" "/data/.sys/$BN_UPDATE" ;
         sync ;
 
         # Verification
-        VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$UPDATE" 2>/dev/null | cut -d' ' -f1) ;
+        VERIFICATIONDIGEST=$(sha256sum "/data/.sys/$BN_UPDATE" 2>/dev/null | cut -d' ' -f1) ;
 
         if [ "$TARGETDIGEST" != "$VERIFICATIONDIGEST" ]; then
             # Error here: log and panic!
-            do_log "Update of app ($UPDATE) failed" ;
+            do_log "Update of $BN_UPDATE failed" ;
             do_panic ;
         else
             # Remove update file
-            rm -f "/data/.sys/$UPDATE.update" ;
+            rm -f "/data/.sys/$BN_UPDATE.update" ;
 
             # Log
-            do_log "App ($UPDATE) update completed successfully" ;
+            do_log "Update of $BN_UPDATE completed successfully" ;
         fi
 
         # Restore WDOG
@@ -381,37 +377,75 @@ for UPDATE in ${APPUPDATES[@]}; do
     fi
 done
 
-# Mount the app file system
-APP_ORIGIN=
-if [ -f /data/.sys/${DB_APPSQUASHFS} ]; then
-	APP_ORIGIN=${DB_APPSQUASHFS} ;
+# Log
+do_log "Detecting extra filesystems..." ;
 
-    # Save info about /app
-    echo "/data/.sys/${DB_APPSQUASHFS}" > /initram/app.mount ;
+# Mount extra filesystems
+EXTRA_ORIGINS=()
+EXTRA_MOUNTS=()
+shopt -s nullglob
+EXTRAS=("/data/.sys/"*".squashfs"*)
+shopt -u nullglob
+EXTRA_BASENAMES=()
+for EXTRA in "${EXTRAS[@]}"; do
+    EXTRA_BN=$EXTRA
+    EXTRA_BN=$(basename "$EXTRA_BN") ;
+    EXTRA_BN=$(basename -s ".a" "$EXTRA_BN") ;
+    EXTRA_BN=$(basename -s ".b" "$EXTRA_BN") ;
+    EXTRA_BN=$(basename -s ".squashfs" "$EXTRA_BN") ;
 
-	# Log
-	do_log "Mounting app filesystem..." ;
+    if [[ ! " ${EXTRA_BASENAMES[*]} " =~ [[:space:]]"$EXTRA_BN"[[:space:]] ]]; then
+        # Collect filesystem base name
+        EXTRA_BASENAMES+=("$EXTRA_BN") ;
 
-	# Mount
-	mount -t squashfs -o ro /data/.sys/${DB_APPSQUASHFS} /app ;
-elif [ -f /data/.sys/${APPSQUASHFS} ]; then
-	APP_ORIGIN=${APPSQUASHFS} ;
-
-    # Save info about /app
-    echo "/data/.sys/${APPSQUASHFS}" > /initram/app.mount ;
-
-	# Log
-	do_log "Mounting app (failsafe, not dual-bool) filesystem..." ;
-
-	# Mount
-	mount -t squashfs -o ro /data/.sys/${APPSQUASHFS} /app ;
-else
-	# Log
-	do_log "app filesystem not found" ;
-fi
+        # Log
+	    do_log "Detected extra filesystem ${EXTRA_BN}" ;
+    fi
+done
 
 # Log
-do_log "Mounting filesystems..." ;
+do_log "Mounting extra filesystems..." ;
+
+EXTRA_BN=
+for EXTRA_BN in ${EXTRA_BASENAMES[@]}; do
+    if [ ! -z "$DB_HALF" ] && [ -f "/data/.sys/${EXTRA_BN}.squashfs.${DB_HALF}" ]; then
+
+        # Collect extra origin/mount
+        EXTRA_ORIGINS+=("${EXTRA_BN}.squashfs.${DB_HALF}") ;
+        EXTRA_MOUNTS+=("${EXTRA_BN}") ;
+
+        # Save info about origin
+        echo "/data/.sys/${EXTRA_BN}.squashfs.${DB_HALF}" > "/initram/${EXTRA_BN}.mount" ;
+
+        # Log
+        do_log "Mounting filesystem ${EXTRA_BN}..." ;
+
+        # Mount
+        mkdir -p "/${EXTRA_BN}" ;
+	    mount -t squashfs -o ro "/data/.sys/${EXTRA_BN}.squashfs.${DB_HALF}" "/${EXTRA_BN}" ;
+    elif [ -f "/data/.sys/${EXTRA_BN}.squashfs" ]; then
+
+        # Collect extra origin/mount
+        EXTRA_ORIGINS+=("${EXTRA_BN}.squashfs") ;
+        EXTRA_MOUNTS+=("${EXTRA_BN}") ;
+
+        # Save info about origin
+        echo "/data/.sys/${EXTRA_BN}.squashfs" > "/initram/${EXTRA_BN}.mount" ;
+
+        # Log
+        do_log "Mounting filesystem ${EXTRA_BN}..." ;
+
+        # Mount
+        mkdir -p "/${EXTRA_BN}" ;
+	    mount -t squashfs -o ro "/data/.sys/${EXTRA_BN}.squashfs" "/${EXTRA_BN}" ;
+    else
+        # Log
+	    do_log "Cannot mount filesystem ${EXTRA_BN}" ;
+    fi
+done
+
+# Log
+do_log "Mounting stock filesystems..." ;
 
 # Set U-Boot environment to /initram
 echo "${BOOT_DEVICE} 0x700000 0x4000" > /initram/fw_env.config
@@ -458,7 +492,7 @@ mount -t overlay -o lowerdir=/overlay/rootfs,upperdir=/overlay/persist/upper,wor
 mkdir -p /overlay-persist-root-merge/var
 mount --move /overlay-ram-var-merge /overlay-persist-root-merge/var
 
-# Move boot, app and data mount points over persist overlay
+# Move relevant mount points over persist overlay
 mkdir -p /overlay-persist-root-merge/boot
 mount --move /boot /overlay-persist-root-merge/boot
 
@@ -470,10 +504,10 @@ fi
 mkdir -p /overlay-persist-root-merge/data
 mount --move /data /overlay-persist-root-merge/data
 
-if [ ! -z "$APP_ORIGIN" ]; then
-	mkdir -p /overlay-persist-root-merge/app ;
-	mount --move /app /overlay-persist-root-merge/app ;
-fi
+for EXTRA_MOUNT in "${EXTRA_MOUNTS[@]}"; do
+    mkdir -p "/overlay-persist-root-merge/${EXTRA_MOUNT}" ;
+	mount --move "/${EXTRA_MOUNT}" "/overlay-persist-root-merge/${EXTRA_MOUNT}" ;
+done
 
 # Determine if overlayroot is requested
 # Overlay can be explicitly disabled by file /data/.sys/overlayroot.disabled or
@@ -484,7 +518,7 @@ if [ -e /overlay-persist-root-merge/data/.sys/overlayroot.disabled ] || [ -e /ov
 	OVERLAYROOT_ENABLED=0 ;
 fi
 
-# Make APP signature key available to other applications
+# Make application-level signature key available to other applications
 # (do it anyway, even if the SecureFS is going to be skipped by request afterward)
 if [ -e /securefs.publickey.pem ]; then
 	cp /securefs.publickey.pem /initram/securefs.publickey.pem ;
@@ -507,7 +541,7 @@ fi
 
 # Check secure FS required files
 # ATTENTION: only if in secure-boot mode (that is: the system booted from fit.img)
-if [ ! -z "$SECUREBOOT" ]; then
+if [ ! -z "$SECUREBOOT" ] || [ -e /overlay-persist-root-merge/data/.sys/securefs.force ]; then
 
     # Log
     do_log "Checking for SecureFS..." ;
@@ -636,19 +670,20 @@ if [ ! -z "$SECUREBOOT" ]; then
 
     fi
 
-    # Check secure FS required files (app), if requested
-    if [ ! -z "$APP_ORIGIN" ]; then
-        
+    # Check secure FS required files for extra filesystems, if requested
+    EXTRA_MOUNT=
+    for EXTRA_MOUNT in "${EXTRA_MOUNTS[@]}"; do
+
         SKIPVERIFY=0
         CHECK=0
         while [ $CHECK -eq 0 ];
         do
-            if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ] || [ -e /overlay-persist-root-merge/data/.sys/app-securefs.skip ]; then
+            if [ -e /overlay-persist-root-merge/data/.sys/securefs.skip ] || [ -e "/overlay-persist-root-merge/data/.sys/${EXTRA_MOUNT}-securefs.skip" ]; then
                 SKIPVERIFY=1 ;
                 CHECK=1 ;
             else
-                if [ ! -e /initram/securefs.publickey.pem ] || [ ! -e /overlay-persist-root-merge/app/securefs.data ] || [ ! -e /overlay-persist-root-merge/app/securefs.data.sig ]; then
-                    do_log "SecureFS files not available! (app)" ;
+                if [ ! -e "/initram/securefs.publickey.pem" ] || [ ! -e "/overlay-persist-root-merge/${EXTRA_MOUNT}/securefs.data" ] || [ ! -e "/overlay-persist-root-merge/${EXTRA_MOUNT}/securefs.data.sig" ]; then
+                    do_log "SecureFS files not available! (${EXTRA_MOUNT})" ;
                     do_panic ;
                 else
                     CHECK=1 ;
@@ -662,10 +697,10 @@ if [ ! -z "$SECUREBOOT" ]; then
             CHECK=0 ;
             while [ $CHECK -eq 0 ];
             do
-                openssl dgst -sha256 -keyform PEM -verify /initram/securefs.publickey.pem -signature /overlay-persist-root-merge/app/securefs.data.sig /overlay-persist-root-merge/app/securefs.data ;
+                openssl dgst -sha256 -keyform PEM -verify "/initram/securefs.publickey.pem" -signature "/overlay-persist-root-merge/${EXTRA_MOUNT}/securefs.data.sig" "/overlay-persist-root-merge/${EXTRA_MOUNT}/securefs.data" ;
 
                 if [ ! $? -eq 0 ]; then
-                    do_log "SecureFS signature verification FAILED! (app)" ;
+                    do_log "SecureFS signature verification FAILED! (${EXTRA_MOUNT})" ;
                     do_panic ;
                 else
                     CHECK=1 ;
@@ -676,11 +711,11 @@ if [ ! -z "$SECUREBOOT" ]; then
             CHECK=0 ;
             while [ $CHECK -eq 0 ];
             do
-                if [ -s /overlay-persist-root-merge/app/securefs.data ]; then
-                    cat /overlay-persist-root-merge/app/securefs.data | awk ' { print $1 " /overlay-persist-root-merge/app/"$2 } ' | sha256sum -c > /dev/null 2>&1 ;
+                if [ -s "/overlay-persist-root-merge/${EXTRA_MOUNT}/securefs.data" ]; then
+                    cat "/overlay-persist-root-merge/${EXTRA_MOUNT}/securefs.data" | awk -v EM="${EXTRA_MOUNT}" ' { print $1 " /overlay-persist-root-merge/"EM"/"$2 } ' | sha256sum -c > /dev/null 2>&1 ;
 
                     if [ ! $? -eq 0 ]; then
-                        do_log "SecureFS files validation FAILED! (app)" ;
+                        do_log "SecureFS files validation FAILED! (${EXTRA_MOUNT})" ;
                         do_panic ;
                     else
                         CHECK=1 ;
@@ -691,19 +726,15 @@ if [ ! -z "$SECUREBOOT" ]; then
             done
 
             # Log
-            do_log "Filesystem (app) verification SUCCEEDED: filesystem is secure" ;
+            do_log "Filesystem verification SUCCEEDED for ${EXTRA_MOUNT}: filesystem is secure" ;
 
         else
 
             # Log
-            do_log "Filesystem (app) verification was skipped DUE TO REQUEST" ;
+            do_log "Filesystem verification for ${EXTRA_MOUNT} was skipped DUE TO REQUEST" ;
 
         fi
-    else
-
-        # Log
-        do_log "Filesystem (app) verification was skipped because app filesystem was not mounted" ;
-    fi
+    done
 else
 
     # Log
@@ -771,9 +802,10 @@ if [ $OVERLAYROOT_ENABLED -eq 1 ]; then
         mount --move /overlay-persist-root-merge/boot-inactive /overlay-ram-merge/boot-inactive ;
     fi
 
-	if [ ! -z "$APP_ORIGIN" ]; then
-		mount --move /overlay-persist-root-merge/app /overlay-ram-merge/app
-	fi
+    EXTRA_MOUNT=
+    for EXTRA_MOUNT in "${EXTRA_MOUNTS[@]}"; do
+        mount --move "/overlay-persist-root-merge/${EXTRA_MOUNT}" "/overlay-ram-merge/${EXTRA_MOUNT}" ;
+    done
 
 	# Move system mounts to new root
 	mount --move /proc /overlay-ram-merge/proc
