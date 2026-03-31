@@ -55,37 +55,37 @@ process_file () {
     if [ "${DB_MODE}" == "partitions" ]; then
         if [[ "$FOLDER" == *"boot"* ]]; then
             if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
-                log "+ Skipped: half-based file while in dual boot (partitions) scheme" ;
+                log "- Skipped: half-based file while in dual boot (partitions-based) scheme" ;
                 return 0 ;
             fi
         else
             if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
                 if [[ $FILE != *."${TARGETHALF}" ]]; then
-                    log "+ Skipped: not target-half file while in dual (partitions-based) boot scheme" ;
+                    log "- Skipped: not target-half file while in dual boot (partitions-based) scheme" ;
                     return 0 ;
                 fi
             else
-                log "+ Skipped: non half-based file while in dual boot (partitions) scheme" ;
+                log "- Skipped: non half-based file while in dual boot (partitions-based) scheme" ;
                 return 0 ;
             fi
         fi
     else
         if [[ "$FILE" != *".a" ]] && [[ "$FILE" != *".b" ]]; then
-            log "+ Skipped: not half-based file while in dual boot (files) scheme" ;
+            log "- Skipped: not half-based file while in dual boot (files-based) scheme" ;
             return 0 ;
         else
             if [[ $FILE != *".${TARGETHALF}" ]]; then
-                log "+ Skipped: not target-half file while in dual (files-based) boot scheme" ;
+                log "- Skipped: not target-half file while in dual boot (files-based) scheme" ;
                 return 0 ;
             fi
         fi
     fi
 
-    # Compare source and target (managing update files, which may appear in dual boot scenario forced to work as single boot)
-    FILEDIGEST="" ;
+    # Manage .update files
     FILETARGET="" ;
-    if [[ "$FILE" == rootfs.squashfs.* ]] || [[ "$FILE" == app.squashfs.* ]]; then
+    if [[ "$FILE" == *.squashfs.* ]]; then
         if [ -f "/data/.sys/$FILE.update" ]; then
+            log "! Considering file /data/.sys/$FILE.update..." ;
             FOLDER="/data/.sys" ;
             FILETARGET="$FILE.update" ;
         else
@@ -95,6 +95,8 @@ process_file () {
         FILETARGET="$FILE";
     fi
 
+    # Compare source and target (managing update files, which may appear in dual boot scenario forced to work as single boot)
+    FILEDIGEST="" ;
     if [ ! -f "${FOLDER}/${FILETARGET}" ]; then
         FILEDIGEST="(missing)";
     else

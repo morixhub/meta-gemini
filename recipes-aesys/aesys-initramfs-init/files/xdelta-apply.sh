@@ -179,14 +179,14 @@ delta_file () {
     else
         if [ -z "${DB_HALF}" ]; then
             if [[ $FILE == *.a ]] || [[ $FILE == *.b ]]; then
-                log "+ Skipped: half-based file while in single boot scheme" ;
+                log "- Skipped: half-based file while in single boot scheme" ;
             else
                 BASEFILE="$FILE" ;
 
                 # Special treatment for non-boot assets, if in single boot partition mode
                 # (in this case they are updated by system start-up script
                 # since they might be in use, and so not directly updatable)
-                if [ "$FILE" == "rootfs.squashfs" ] || [ "$FILE" == "app.squashfs" ]; then
+                if [ "$FILE" == *".squashfs" ]; then
                     TARGETFILE="$FILE" ;
                     WRITEFILE="$FILE.update.tmp" ;
                     OTHERFOLDER="$DATAFOLDER" ;
@@ -197,12 +197,11 @@ delta_file () {
             fi
         elif [ "${DB_MODE}" == "partitions" ]; then
             if [[ $FILE == *.a ]] || [[ $FILE == *.b ]]; then
-                # In dual boot (partitions-based) mode the app.squashfs is the
-                # only file that is managed anyway via .a and .b, and this
-                # fact has to be managed
-                if [[ $FILE == app.squashfs.* ]]; then
+                # In dual boot (partitions-based) squashfs files must be managed
+                # via .a and .b
+                if [[ $FILE == *".squashfs."* ]]; then
                     if [[ $FILE != *.${DB_HALF} ]]; then
-                        log "+ Skipped: not current-half file while in dual (partitions-based) boot scheme" ;
+                        log "- Skipped: not current-half file while in dual boot (partitions-based) scheme" ;
                     else
                         BASEFILE="${FILE::-2}" ;
                         if [ ! -z "$DB_FORCED_SINGLE" ]; then
@@ -220,17 +219,17 @@ delta_file () {
                         fi
                     fi
                 else
-                    log "+ Skipped: half-based file while in dual (partitions-based) boot scheme" ;
+                    log "- Skipped: half-based file while in dual boot (partitions-based) scheme" ;
                 fi
             else
                 BASEFILE="$FILE" ;
 
-                # Special treatment for app.squashfs while in dual-boot (partitions-based),
-                # for handing the case when /app was mount from failsafe app.squashfs
-                # and not from the app.squashfs.<current_half>
+                # Special treatment for squashfs files while in dual-boot (partitions-based),
+                # for handing the case when the extra file-system was mounted from failsafe squashfs
+                # and not from the current half's squashfs
                 # (in this case the file is updated by system start-up script
                 # since it might be in use, and so not directly updatable)
-                if [ "$FILE" == "app.squashfs" ]; then
+                if [ "$FILE" == *".squashfs" ]; then
                     TARGETFILE="$FILE" ;
                     WRITEFILE="$FILE.update.tmp" ;
                     OTHERFOLDER="$DATAFOLDER" ;
@@ -241,23 +240,23 @@ delta_file () {
             fi
         else
             if [[ $FILE != *.${DB_HALF} ]]; then
-                # Special treatment for app.squashfs while in dual-boot (files-based),
-                # for handing the case when /app was mount from failsafe app.squashfs
-                # and not from the app.squashfs.<current_half>
+                # Special treatment for squashfs files while in dual-boot (files-based),
+                # for handing the case when the extra file-system was mounted from failsafe squashfs
+                # and not from the current half's squashfs
                 # (in this case the file is updated by system start-up script
                 # since it might be in use, and so not directly updatable)
-                if [[ $FILE == "app.squashfs" ]]; then
+                if [[ $FILE == *".squashfs" ]]; then
                     BASEFILE="$FILE" ;
                     TARGETFILE="$FILE" ;
                     WRITEFILE="$FILE.update.tmp" ;
                     OTHERFOLDER="$DATAFOLDER" ;
                 else
-                    log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
+                    log "- Skipped: not current-half file while in dual boot (files-based) scheme" ;
                 fi
             else
                 BASEFILE="${FILE::-2}" ;
                 if [ ! -z "$DB_FORCED_SINGLE" ]; then
-                    if [[ "$FILE" == rootfs.squashfs.* ]] || [[ "$FILE" == app.squashfs.* ]]; then
+                    if [[ "$FILE" == *".squashfs"* ]]; then
                         TARGETFILE="$FILE" ;
                         WRITEFILE="$FILE.update.tmp" ;
                         OTHERFOLDER="$DATAFOLDER" ;
@@ -355,6 +354,9 @@ delta_file () {
                     if [ $DOWNLOADPATCHES -eq 0 ]; then
                         if [ $SIMULATION -eq 1 ]; then
                             log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                            if [ "$FILE" != "uboot.bin" ]; then
+                                REBOOTPENDING=1 ;
+                            fi
 
                             # If here we can assume that delta can be successfully applied and verified
                             USE_RESOURCE=0 ;
@@ -434,6 +436,9 @@ delta_file () {
                         if [ $? -eq 0 ] && [ -f "$DELTADIFF" ] && [ $DELTADIFFSIZE -ne 0 ]; then
                             if [ $SIMULATION -eq 1 ]; then
                                 log "+ Applying delta... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                                if [ "$FILE" != "uboot.bin" ]; then
+                                    REBOOTPENDING=1 ;
+                                fi
                                 if [ -f "$DELTADIFF" ]; then
                                     rm -rf "$DELTADIFF" ;
                                 fi
@@ -524,6 +529,9 @@ delta_file () {
 
                         if [ $SIMULATION -eq 1 ]; then
                             log "+ Applying target resource... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                            if [ "$FILE" != "uboot.bin" ]; then
+                                REBOOTPENDING=1 ;
+                            fi
                         else
                             # Flag the system for changes
                             if [ "$FILE" != "uboot.bin" ]; then
@@ -597,7 +605,9 @@ delta_file () {
                         if [ $? -eq 0 ] && [ -f "$RESOURCETARGET" ] && [ $RESOURCETARGETSIZE -ne 0 ]; then
                             if [ $SIMULATION -eq 1 ]; then
                                 log "+ Applying target resource... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
-
+                                if [ "$FILE" != "uboot.bin" ]; then
+                                    REBOOTPENDING=1 ;
+                                fi
                                 if [ -f "$RESOURCETARGET" ]; then
                                     rm -rf "$RESOURCETARGET" ;
                                 fi
@@ -703,6 +713,9 @@ delta_file () {
                     if [ $SIMULATION -eq 1 ]; then
                         # Log
                         log "+ No update available: copying from current half... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+                        if [ "$FILE" != "uboot.bin" ]; then
+                            REBOOTPENDING=1 ;
+                        fi
                     else
                         # Log
                         log "+ No update available: copying from current half..." ;
@@ -1169,6 +1182,7 @@ if [ -f "$PACKAGEPRE" ] && [ $PACKAGEPRESIZE -ne 0 ]; then
     if [ $SIMULATION -eq 1 ]; then
         # Log
         log "Executing pre.sh script... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+        REBOOTPENDING=1 ;
     else
         # Log
         log "Executing pre.sh script..." ;
@@ -1273,6 +1287,7 @@ if [ -f "$PACKAGEPOST" ] && [ $PACKAGEPOSTSIZE -ne 0 ]; then
     if [ $SIMULATION -eq 1 ]; then
         # Log
         log "Executing post.sh script... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+        REBOOTPENDING=1 ;
     else
         # Log
         log "Executing post.sh script..." ;
@@ -1286,12 +1301,13 @@ if [ -f "$PACKAGEPOST" ] && [ $PACKAGEPOSTSIZE -ne 0 ]; then
     log ;
 fi
 
-# Synchonize half ID and flag the system for attempting half switch, if requested
+# Synchonize half ID, if requested
 if [ "$PLATFORM" == "gemini" ]; then
     if [ $CLEAREDID -eq 1 ]; then
         if [ $SIMULATION -eq 1 ]; then
             # Log
             log "Synchronizing target half ID... (ACTUALLY PREVENTED BY SIMULATION MODE)" ;
+            REBOOTPENDING=1 ;
         else
             log "Synchronizing target half ID..." ;
             if [ -x "/initram/dual-tool-id.sh" ]; then
@@ -1305,15 +1321,6 @@ if [ "$PLATFORM" == "gemini" ]; then
             else
                 log_warning "Cannot synchronize target half ID (no script available)" ;
             fi
-
-            log "Flagging system for attempting half switching..." ;
-            fw_setenv db_attempt_switch 1 ;
-
-            if [ $? -ne 0 ]; then
-                log_error "Cannot flag the system for half switch" ;
-                clean_up ;
-                exit 19 ;
-            fi
         fi
     fi
 fi
@@ -1324,8 +1331,30 @@ clean_up ;
 # Manage exit status
 if [ $REBOOTPENDING -eq 1 ]; then
 
-    if [ $SIMULATION -ne 1 ]; then
+    if [ $SIMULATION -eq 1 ]; then
+
+        log ;
+        log "Changes detected to be applied on system, but skipped due to SIMULATION MODE" ;
+        log ;
+
+    else
+
+        # Flag the system for attempting half switch, if requested
+        if [ "$PLATFORM" == "gemini" ]; then
+
+            log "Flagging system for attempting half switching..." ;
+            fw_setenv db_attempt_switch 1 ;
+
+            if [ $? -ne 0 ]; then
+                log_error "Cannot flag the system for half switch" ;
+                clean_up ;
+                exit 19 ;
+            fi
+        fi
+
+        log ;
         log "*** REBOOT PENDING FOR FINISHING UP THE UPDATE *** " ;
+        log ;
     fi
 
     exit 255;

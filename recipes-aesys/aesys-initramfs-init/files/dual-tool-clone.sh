@@ -35,13 +35,12 @@ clean_up () {
     fi
 }
 
-
 process_file () {
     FOLDER="${1}" ;
     FILE="${2}" ;
 
     # Log
-    log "Processing file ${FILE}..."
+    log "Processing file ${FILE}..." ;
 
     # Determine target file and folder
     TARGETFOLDER= ;
@@ -57,18 +56,18 @@ process_file () {
     if [ "${DB_MODE}" == "partitions" ]; then
         if [[ "$FOLDER" == *"boot"* ]]; then
             if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
-                log "+ Skipped: half-based file while in dual boot (partitions) scheme" ;
+                log "- Skipped: half-based file while in dual boot (partitions-based) scheme" ;
                 return 0 ;
             fi
             TARGETFOLDER="/boot-inactive" ;
         else
             if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
                 if [[ $FILE != *."${DB_HALF}" ]]; then
-                    log "+ Skipped: not current-half file while in dual (partitions-based) boot scheme" ;
+                    log "- Skipped: not current-half file while in dual boot (partitions-based) scheme" ;
                     return 0 ;
                 fi
             else
-                log "+ Skipped: non half-based file while in dual boot (partitions) scheme" ;
+                log "- Skipped: non half-based file while in dual boot (partitions-based) scheme" ;
                 return 0 ;
             fi
             TARGETFOLDER="$FOLDER" ;
@@ -76,22 +75,49 @@ process_file () {
     else
         TARGETFOLDER="$FOLDER" ;
         if [[ "$FILE" != *".a" ]] && [[ "$FILE" != *".b" ]]; then
-            log "+ Skipped: not half-based file while in dual boot (files) scheme" ;
+            log "- Skipped: not half-based file while in dual boot (files-based) scheme" ;
             return 0 ;
         else
             if [[ $FILE != *".${DB_HALF}" ]]; then
-                log "+ Skipped: not current-half file while in dual (files-based) boot scheme" ;
+                log "- Skipped: not current-half file while in dual boot (files-based) scheme" ;
                 return 0 ;
             fi
         fi
     fi
 
+    # Manage .update files
+    PROC_SOURCEFILE="" ;
+    if [[ "$FILE" == *.squashfs.* ]]; then
+        if [ -f "/data/.sys/$FILE.update" ]; then
+            log "! Considering source file /data/.sys/$FILE.update..." ;
+            FOLDER="/data/.sys" ;
+            PROC_SOURCEFILE="$FILE.update" ;
+        else
+            PROC_SOURCEFILE="$FILE";
+        fi
+    else
+        PROC_SOURCEFILE="$FILE";
+    fi
+
+    PROC_TARGETFILE=""
+    if [[ "$FILE" == *.squashfs.* ]]; then
+        if [ -f "/data/.sys/$TARGETFILE.update" ]; then
+            log "! Considering target file /data/.sys/$TARGETFILE.update..." ;
+            TARGETFOLDER="/data/.sys" ;
+            PROC_TARGETFILE="$TARGETFILE.update" ;
+        else
+            PROC_TARGETFILE="$TARGETFILE";
+        fi
+    else
+        PROC_TARGETFILE="$TARGETFILE";
+    fi
+
     # Compare source and target
     COMPARE=0 ;
-    if [ ! -f "${TARGETFOLDER}/${TARGETFILE}" ]; then
+    if [ ! -f "${TARGETFOLDER}/${PROC_TARGETFILE}" ]; then
         COMPARE=1 ;
     else
-        diff -q "${FOLDER}/${FILE}" "${TARGETFOLDER}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+        diff -q "${FOLDER}/${PROC_SOURCEFILE}" "${TARGETFOLDER}/${PROC_TARGETFILE}" >/dev/null 2>/dev/null ;
         COMPARE=$? ;
     fi
 
@@ -121,10 +147,10 @@ process_file () {
             fi
 
             # Copy file
-            cp -f "${FOLDER}/${FILE}" "${TARGETFOLDER}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+            cp -f "${FOLDER}/${PROC_SOURCEFILE}" "${TARGETFOLDER}/${PROC_TARGETFILE}" >/dev/null 2>/dev/null ;
 
             if [ $? -ne 0 ]; then
-                log "# Error while syncing files" ;
+                log "# Error while syncing file" ;
                 return -2;
             fi
 
@@ -136,12 +162,109 @@ process_file () {
                 # Drop disk caches (for forcing the system to reload data from disk)
                 echo 3 > /proc/sys/vm/drop_caches 2>/dev/null ;
 
-                diff -q "${FOLDER}/${FILE}" "${TARGETFOLDER}/${TARGETFILE}" >/dev/null 2>/dev/null ;
+                diff -q "${FOLDER}/${PROC_SOURCEFILE}" "${TARGETFOLDER}/${PROC_TARGETFILE}" >/dev/null 2>/dev/null ;
                 if [ $? -ne 0 ]; then
                     log_error "Data verification failed: cannot continue" ;
                     return -3 ;
                 fi
             fi
+
+            return 1;
+        fi
+    fi
+}
+
+purge_file () {
+    FOLDER="${1}" ;
+    FILE="${2}" ;
+
+    # Log
+    log "Checking file ${FILE}..." ;
+
+    # Determine target file and folder
+    TARGETFOLDER= ;
+    TARGETFILE= ;
+    if [[ "$FILE" == *".a" ]]; then
+        TARGETFILE="${FILE::-2}.b" ;
+    elif [[ "$FILE" == *".b" ]]; then
+        TARGETFILE="${FILE::-2}.a" ;
+    else
+        TARGETFILE="${FILE}" ;
+    fi
+
+    if [ "${DB_MODE}" == "partitions" ]; then
+        if [[ "$FOLDER" == *"boot"* ]]; then
+            if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
+                log "- Skipped: half-based file while in dual boot (partitions-based) scheme" ;
+                return 0 ;
+            fi
+            TARGETFOLDER="/boot" ;
+        else
+            if [[ "$FILE" == *".a" ]] || [[ "$FILE" == *".b" ]]; then
+                if [[ $FILE != *".${TARGETHALF}" ]]; then
+                    log "- Skipped: not inactive-half file while in dual boot (partitions-based) scheme" ;
+                    return 0 ;
+                fi
+            else
+                log "- Skipped: non half-based file while in dual boot (partitions-based) scheme" ;
+                return 0 ;
+            fi
+            TARGETFOLDER="$FOLDER" ;
+        fi
+    else
+        TARGETFOLDER="$FOLDER" ;
+        if [[ "$FILE" != *".a" ]] && [[ "$FILE" != *".b" ]]; then
+            log "- Skipped: not half-based file while in dual boot (files-based) scheme" ;
+            return 0 ;
+        else
+            if [[ $FILE != *".${TARGETHALF}" ]]; then
+                log "- Skipped: not inactive-half file while in dual boot (files-based) scheme" ;
+                return 0 ;
+            fi
+        fi
+    fi
+
+    # Determine if purge is needed (also considering .update files)
+    PURGE=0 ;
+    if [ ! -e "${TARGETFOLDER}/${TARGETFILE}" ] && [ ! -e "${TARGETFOLDER}/${TARGETFILE}.update" ]; then
+        PURGE=1 ;
+    fi
+
+    # Process comparing
+    if [ $PURGE -eq 0 ]; then
+        return 0 ;
+    else
+        if [ $SYNC -eq 0 ]; then
+            log "+ File needs purge" ;
+            return 1;
+        else
+            log "+ Purging file..." ;
+
+            # Clear target half ID when the first file is being touched
+            if [ $CLEAREDID -eq 0 ]; then
+                CLEAREDID=1 ;
+                if [ -x "/initram/dual-tool-id.sh" ]; then
+                    /initram/dual-tool-id.sh -b -t ${TARGETHALF} -c ;
+
+                    if [ $? -ne 0 ]; then
+                        log "# Cannot clear target half ID (error during operation)" ;
+                        return -1;
+                    fi
+                else
+                    log "# Cannot clear target half ID (no script available)" ;
+                fi
+            fi
+
+            # Copy file
+            rm -f "${FOLDER}/${FILE}" >/dev/null 2>/dev/null ;
+
+            if [ $? -ne 0 ]; then
+                log "# Error while purging file" ;
+                return -2;
+            fi
+
+            # Flush
+            sync ;
 
             return 1;
         fi
@@ -287,6 +410,9 @@ fi
 # Declare vars
 PENDINGCHANGES=0 ;
 
+# Log
+log "STEP #1: management of files synchronization..." ;
+
 # Determine the list of files in boot folder to be updated
 FILES=( $(ls -1p "/boot" | grep -v "/") ) ;
 for f in ${FILES[@]}; do
@@ -325,9 +451,63 @@ for f in ${FILES[@]}; do
     fi
 done
 log ;
+log ;
+
+# Log
+log "STEP #2: check for files purging..." ;
+
+# Determine the list of files in boot folder to be possibly purged
+PURGESOURCEFOLDER=
+if [ "${DB_MODE}" == "partitions" ]; then
+    PURGESOURCEFOLDER="/boot-inactive" ;
+else
+    PURGESOURCEFOLDER="/boot" ;
+fi
+
+FILES=( $(ls -1p "$PURGESOURCEFOLDER" | grep -v "/") ) ;
+for f in ${FILES[@]}; do
+
+    # Apply delta to current file, if any
+    purge_file "$PURGESOURCEFOLDER" "$(basename ${f})" ;
+
+    # Check result
+    RES=$? ;
+    if [ $RES -lt 0 ] || [ $RES -gt 128 ]; then
+        log_error "Error detected while purging boot files: cannot continue" ;
+        clean_up ;
+        exit 9;
+    elif [ $RES -gt 0 ]; then
+        PENDINGCHANGES=1 ;
+    fi
+done
+log ;
+
+# Determine the list of files in data folder to be updated
+# (all .squashfs* files, for also handling .squashfs.a and .squashfs.b)
+FILES=( $(ls -1p "/data/.sys"/*.squashfs* 2>/dev/null) ) ;
+for f in ${FILES[@]}; do
+
+    # Apply delta to current file, if any
+    purge_file "/data/.sys" "$(basename ${f})" ;
+
+    # Check result
+    RES=$? ;
+    if [ $RES -lt 0 ] || [ $RES -gt 128 ]; then
+        log_error "Error detected while purging data files: cannot continue" ;
+        clean_up ;
+        exit 10;
+    elif [ $RES -gt 0 ]; then
+        PENDINGCHANGES=1 ;
+    fi
+done
+log ;
+log ;
 
 # Clean-up
 clean_up ;
+
+# Log
+log "STEP #3: finalizing..." ;
 
 # Manage exit status
 if [ $PENDINGCHANGES -eq 1 ]; then
@@ -341,7 +521,7 @@ if [ $PENDINGCHANGES -eq 1 ]; then
             if [ $? -ne 0 ]; then
                 log_error "Cannot synchronize target half ID (error during operation)" ;
                 clean_up ;
-                exit 9 ;
+                exit 11 ;
             fi
         else
             log_warning "Cannot synchronize target half ID (no script available)" ;
