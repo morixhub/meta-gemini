@@ -39,7 +39,7 @@ function isInterfaceDenied() {
 function reach_dhcp_server_on_interface() {
 	local interface=${NIC}
 	# nmap command to find a DHCP server on an interface
-	local nmap_command="nmap --script broadcast-dhcp-discover -e ${interface}"
+	local nmap_command="nmap --script broadcast-dhcp-discover-from-any -e ${interface}"
 
 	# exit code 0 = router, 1 = no router
 	local response=$(${nmap_command} 2>/dev/null | grep Response) 

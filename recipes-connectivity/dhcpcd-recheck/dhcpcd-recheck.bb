@@ -11,21 +11,26 @@ SRC_URI += " \
     file://dhcp-recheck.sh \
     file://dhcp-recheck.service \
     file://dhcp-recheck.timer \
+    file://broadcast-dhcp-discover-from-any.nse \
 "
 
 FILES:${PN} += " \
     ${sbindir}/dhcp-recheck.sh \
     ${systemd_unitdir}/system/dhcp-recheck.service \
     ${systemd_unitdir}/system/dhcp-recheck.timer \
+    ${datadir}/nmap/scripts/broadcast-dhcp-discover-from-any.nse \
 "
 
 do_install() {
     install -d ${D}/${sbindir}
     install -m 0755 ${WORKDIR}/dhcp-recheck.sh ${D}${sbindir}
 
-    install -d ${D}${systemd_unitdir}/system/
+    install -d ${D}${systemd_unitdir}/system
     install -m 0644 ${WORKDIR}/dhcp-recheck.service ${D}${systemd_unitdir}/system
     install -m 0644 ${WORKDIR}/dhcp-recheck.timer ${D}${systemd_unitdir}/system
+
+    install -d ${D}${datadir}/nmap/scripts
+    install -m 0644 ${WORKDIR}/broadcast-dhcp-discover-from-any.nse ${D}${datadir}/nmap/scripts
 }
 
 NATIVE_SYSTEMD_SUPPORT = "1"
