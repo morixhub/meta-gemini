@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# GPIO5_22 is used for toggling WDOG status
+# GPIO5_22 is used for refreshing WDOG
 WD_GPIO=$(( ((5-1)*32)+22 ))
 
 # Export GPIO if requested

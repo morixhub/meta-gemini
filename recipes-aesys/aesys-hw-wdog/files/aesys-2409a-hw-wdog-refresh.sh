@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# GPIO1_06 is used for toggling WDOG status
+# GPIO1_06 is used for refreshing WDOG
 WD_GPIO=$(( ((1-1)*32)+6 ))
 
 # Export GPIO if requested

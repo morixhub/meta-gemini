@@ -45,7 +45,7 @@ if [ "$OP" != "enable" ] && [ "$OP" != "disable" ] && [ "$OP" != "default" ]; th
     exit 1;
 fi
 
-# GPIO1_01 is used for toggling WDOG enabling
+# GPIO1_01 is used for toggling WDOG
 WD_GPIO=$(( ((1-1)*32)+1 ))
 
 # Export GPIO if requested

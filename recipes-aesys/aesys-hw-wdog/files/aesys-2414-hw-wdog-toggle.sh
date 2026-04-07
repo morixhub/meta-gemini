@@ -45,7 +45,7 @@ if [ "$OP" != "enable" ] && [ "$OP" != "disable" ] && [ "$OP" != "default" ]; th
     exit 1;
 fi
 
-# GPIO5_25 is used for toggling WDOG enabling
+# GPIO5_25 is used for toggling WDOG
 WD_GPIO=$(( ((5-1)*32)+25 ))
 
 # Export GPIO if requested
