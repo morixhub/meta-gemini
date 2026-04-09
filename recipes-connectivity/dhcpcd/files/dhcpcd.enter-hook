@@ -8,3 +8,8 @@ fi
 # Get rid of the static profile associated with the interface being initialized, if any
 rm -rf "/tmp/static_"$interface >/dev/null 2>&1
 
+# Refresh dhcpcd configuration file
+if [ -x /usr/bin/refresh_dhcpcd_conf.sh ]; then
+    /usr/bin/refresh_dhcpcd_conf.sh ;
+fi
+
