@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# If a static profile is assigned to the interface, then write a proper file
 if [ "$reason" = "STATIC" ]; then
-	if [ ! -z "$profile" ];
-	then
+    # If a static profile is assigned to the interface, then write a proper file
+	if [ ! -z "$profile" ];	then
         echo $profile >> "/tmp/static_"$interface ;
 	fi
 elif [ "$reason" = "BOUND" ]; then
-    # Update data about last received interface configuration
+    # If a new address is being bound, then update data about last received interface configuration
     mkdir -p /data/.sys/dhcpcd ;
     echo "static ip_address="$new_ip_address > "/data/.sys/dhcpcd/last_"$interface ;
     echo "static subnet_mask="$new_subnet_mask >> "/data/.sys/dhcpcd/last_"$interface ;
@@ -17,18 +16,20 @@ elif [ "$reason" = "BOUND" ]; then
     if [ -x /usr/bin/refresh_dhcpcd_conf.sh ]; then
         /usr/bin/refresh_dhcpcd_conf.sh ;
     fi
+
+    # Update routers
+    if [ -f /var/run/gw.$interface ]; then
+        rm /var/run/gw.$interface ;
+    fi
+    for i in $new_routers ; do
+        echo $i > /var/run/gw.$interface ;
+    done
+
+    # Trigger custom routing script, if any
+    if [ -x /etc/network/if-up.d/custom-routing ]; then
+        IFACE=$interface /etc/network/if-up.d/custom-routing ;
+    fi
 fi
 
-# Update routers
-if [ -f /var/run/gw.$interface ]; then
-	rm /var/run/gw.$interface ;
-fi
-for i in $new_routers ; do
-	echo $i > /var/run/gw.$interface ;
-done
 
-# Trigger custom routing script, if any
-if [ -x /etc/network/if-up.d/custom-routing ]; then
-	IFACE=$interface /etc/network/if-up.d/custom-routing ;
-fi
 
