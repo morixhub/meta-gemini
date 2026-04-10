@@ -10,11 +10,13 @@ function prepare_if() {
     fi
 
     FOUND=0 ;
+    PROFILE= ;
     if [ $FOUND -eq 0 ]; then
         if [ "${MODE}" == "last" ] || [ "${MODE}" == "last-or-static" ]; then
             if [ -f "/data/.sys/dhcpcd/last_${IFACE}" ]; then
+                PROFILE="last" ;
                 echo >> /etc/dhcpcd.conf ;
-                echo "profile fallback_profile_${IFACE}" >> /etc/dhcpcd.conf ;
+                echo "profile fallback_profile_${IFACE}_${PROFILE}" >> /etc/dhcpcd.conf ;
                 cat "/data/.sys/dhcpcd/last_${IFACE}" >> /etc/dhcpcd.conf ;
 
                 FOUND=1 ;
@@ -25,8 +27,9 @@ function prepare_if() {
     if [ $FOUND -eq 0 ]; then
         if [ "${MODE}" == "static" ] || [ "${MODE}" == "last-or-static" ]; then
             if [ -f "/data/.sys/dhcpcd/static_${IFACE}" ]; then
+                PROFILE="static" ;
                 echo >> /etc/dhcpcd.conf ;
-                echo "profile fallback_profile_${IFACE}" >> /etc/dhcpcd.conf ;
+                echo "profile fallback_profile_${IFACE}_${PROFILE}" >> /etc/dhcpcd.conf ;
                 cat "/data/.sys/dhcpcd/static_${IFACE}" >> /etc/dhcpcd.conf ;
 
                 FOUND=1 ;
@@ -37,7 +40,7 @@ function prepare_if() {
     if [ $FOUND -eq 1 ]; then
         echo >> /etc/dhcpcd.conf ;
         echo "interface ${IFACE}" >> /etc/dhcpcd.conf ;
-        echo "fallback fallback_profile_${IFACE}" >> /etc/dhcpcd.conf ;
+        echo "fallback fallback_profile_${IFACE}_${PROFILE}" >> /etc/dhcpcd.conf ;
     fi
 }
 

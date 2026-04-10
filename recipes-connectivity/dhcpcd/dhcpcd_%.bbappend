@@ -36,6 +36,11 @@ do_install:append() {
     echo "# AESYS customization" >> ${D}/${sysconfdir}/dhcpcd.conf
 
     echo >> ${D}/${sysconfdir}/dhcpcd.conf
+    echo "# Toggle following lines for enabling dhcpcd debugging" >> ${D}/${sysconfdir}/dhcpcd.conf
+    echo "#debug" >> ${D}/${sysconfdir}/dhcpcd.conf
+    echo "#logfile /tmp/dhdpcd.log" >> ${D}/${sysconfdir}/dhcpcd.conf
+
+    echo >> ${D}/${sysconfdir}/dhcpcd.conf
     echo "hostname" >> echo >> ${D}/${sysconfdir}/dhcpcd.conf
 
     echo >> ${D}/${sysconfdir}/dhcpcd.conf
