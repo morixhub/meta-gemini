@@ -1,3 +1,11 @@
+Subject: [PATCH] weston-image to fullscreen
+
+Added capability to weston-image for forcing fullscreen
+
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
 diff --git a/clients/image.c b/clients/image.c
 index 63a5cefb..fa8dd847 100644
 --- a/clients/image.c

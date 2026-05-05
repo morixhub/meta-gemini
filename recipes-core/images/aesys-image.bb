@@ -57,7 +57,7 @@ IMAGE_INSTALL:append = " avahi-daemon libavahi-core libavahi-common libavahi-cli
 IMAGE_INSTALL:append = " libpam nss-pam-ldapd pam-radius "
 
 # Add unionfs-fuse packages
-IMAGE_INSTALL:append = " unionfs-fuse "
+# IMAGE_INSTALL:append = " unionfs-fuse "
 
 # Add coreutils
 IMAGE_INSTALL:append = " coreutils "
@@ -69,7 +69,10 @@ IMAGE_INSTALL:append = " pulseaudio pulseaudio-server pulseaudio-misc pulseaudio
 IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-so-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown aesys-ca-certificates "
+AESYS_MACHINE_BASED_PACKAGES="aesys-hw-wdog aesys-persistent-nic-names"
+AESYS_MACHINE_BASED_PACKAGES:genericx86-64=""
+
+IMAGE_INSTALL:append = " ${AESYS_MACHINE_BASED_PACKAGES} aesys-so-ver aesys-automount aesys-firstinit aesys-startup-shutdown aesys-ca-certificates "
 IMAGE_INSTALL:append:aesys-2414 = " aesys-greenpak-programmer "
 IMAGE_INSTALL:append:aesys-2414-2g = " aesys-greenpak-programmer "
 
@@ -183,8 +186,8 @@ aesys_image_customization () {
 aesys_rootfs_customization () {
 
     # Enable bash customization for root user
-    cp ${IMAGE_ROOTFS}/etc/skel/.bashrc ${IMAGE_ROOTFS}/root/ ;
-    cp ${IMAGE_ROOTFS}/etc/skel/.profile ${IMAGE_ROOTFS}/root/ ;
+    cp ${IMAGE_ROOTFS}/etc/skel/.bashrc ${IMAGE_ROOTFS}${ROOT_HOME}/ ;
+    cp ${IMAGE_ROOTFS}/etc/skel/.profile ${IMAGE_ROOTFS}${ROOT_HOME}/ ;
 }
 
 # Managing of development IP address

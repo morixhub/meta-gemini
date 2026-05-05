@@ -1,3 +1,11 @@
+Subject: [PATCH] weston-screenshot to stdout
+
+Added to weston-screenshot the capability to send its output to stdout
+
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
 diff --git a/clients/screenshot.c b/clients/screenshot.c
 index a160406b..1ec83010 100644
 --- a/clients/screenshot.c

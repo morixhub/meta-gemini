@@ -26,7 +26,10 @@ IMAGE_INSTALL += " \
 # THE REMAINING PART OF THIS RECIPE IS TAKEN DIRECTLY FROM imx-image-full RECIPE FROM NXP
 # (sources/meta-imx/meta-imx-sdk/dynamic-layers/qt6-layer/recipes-fsl/images/imx-image-full.bb)
 
-require recipes-fsl/images/imx-image-multimedia.bb
+BASE_IMAGE="recipes-fsl/images/imx-image-multimedia.bb"
+BASE_IMAGE:genericx86-64="recipes-graphics/images/core-image-weston.bb"
+
+require ${BASE_IMAGE}
 
 inherit populate_sdk_qt6
 
@@ -37,6 +40,8 @@ IMAGE_INSTALL += " \
     tzdata \
     ${IMAGE_INSTALL_PKCS11TOOL} \
 "
+
+IMAGE_INSTALL:remove:genericx86-64 = "packagegroup-qt6-imx"
 
 IMAGE_INSTALL_PKCS11TOOL = ""
 IMAGE_INSTALL_PKCS11TOOL:mx8-nxp-bsp = "opensc pkcs11-provider"
