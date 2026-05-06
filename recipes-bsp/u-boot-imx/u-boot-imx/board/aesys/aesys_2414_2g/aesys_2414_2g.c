@@ -489,8 +489,19 @@ static int setup_eqos(void)
 #if CONFIG_IS_ENABLED(NET)
 int board_phy_config(struct phy_device *phydev)
 {
+	int val;
+
 	if (phydev->drv->config)
 		phydev->drv->config(phydev);
+
+    /* Disable advertisement of 1000T */
+    phy_write(phydev, MDIO_DEVAD_NONE, MII_CTRL1000, 0x0000);
+
+    /* Restart auto-negotiation */
+    val = phy_read(phydev, MDIO_DEVAD_NONE, MII_BMCR);
+    val |= (BMCR_ANENABLE | BMCR_ANRESTART);
+    phy_write(phydev, MDIO_DEVAD_NONE, MII_BMCR, val);
+    
 	return 0;
 }
 #endif
