@@ -1,0 +1,6 @@
+bootloader --ptable gpt
+
+part /boot --source bootimg-partition --ondisk sda --label aesys-boot --active --align 1024 --fstype=vfat --part-type 0xEF
+part /data --source rootfs --rootfs-dir=${IMAGE_ROOTFS}/data --ondisk sda --fstype=ext4 --label aesys-data --align 1024 --fixed-size 64M
+
+

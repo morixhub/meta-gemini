@@ -39,6 +39,9 @@ IMAGE_FEATURES:append = " ssh-server-openssh "
 # Add psplash (removed now)
 #IMAGE_FEATURES:append = " splash "
 
+# Add support for U-Boot
+IMAGE_INSTALL:append:genericx86-64 = " u-boot "
+
 # Add support for NXP Wi-Fi (IW416)
 IMAGE_INSTALL:append:aesys-2414 = " nxp-wlan-sdk moal-auto-startup "
 IMAGE_INSTALL:append:aesys-2414-2g = " nxp-wlan-sdk moal-auto-startup "

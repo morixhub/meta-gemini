@@ -1,3 +1,7 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
 diff --git a/drivers/rtc/rtc-pcf85063.c b/drivers/rtc/rtc-pcf85063.c
 index fdbc07f14036..cdb56cdb4305 100644
 --- a/drivers/rtc/rtc-pcf85063.c

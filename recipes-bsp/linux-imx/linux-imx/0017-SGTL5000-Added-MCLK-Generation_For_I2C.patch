@@ -1,3 +1,7 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
 diff --git a/sound/soc/codecs/sgtl5000.c b/sound/soc/codecs/sgtl5000.c
 index b22ba95bd0c0..074b9ee65717 100644
 --- a/sound/soc/codecs/sgtl5000.c

@@ -1,3 +1,7 @@
+Subject: [PATCH] linux,spidev
+
+Added compatibility linux,spidev to spidev.c
+
 Upstream-Status: Pending
 Signed-off-by: Morix Dev <morix.dev@gmail.com>
 

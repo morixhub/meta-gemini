@@ -1,3 +1,7 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
 diff --git a/drivers/clk/imx/clk-pll14xx.c b/drivers/clk/imx/clk-pll14xx.c
 index 6c17786ecb9f..88701532380a 100644
 --- a/drivers/clk/imx/clk-pll14xx.c

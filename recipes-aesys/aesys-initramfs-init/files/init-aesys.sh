@@ -54,10 +54,19 @@ ROOTFSSQUASHFS=rootfs.squashfs
 
 # Locate boot device
 # (it is necessary because the boot device changes booting from uSD or eMMC)
+MACHINE_TYPE=`uname -m`
 KERNEL_CMDLINE=`cat /proc/cmdline`
 OTHERBOOT_PART=
 BOOT_PART=`echo ${KERNEL_CMDLINE} | sed -e 's/^.*root=//' -e 's/ .*$//'`
-BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
+if [ "$MACHINE_TYPE" == "x86_64" ]; then
+    BOOT_PART_FORMAT=vfat
+    BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/.$//'`
+    PART_SEPARATOR=
+else
+    BOOT_PART_FORMAT=ext4
+    BOOT_DEVICE=`echo ${BOOT_PART} | sed 's/..$//'`
+    PART_SEPARATOR=p
+fi
 SECUREBOOT=`echo ${KERNEL_CMDLINE} | grep "secure-boot"`
 DB_CMDLINE_CURRENTHALF=`echo ${KERNEL_CMDLINE} | grep "db_active_half="`
 DB_CMDLINE_MODE=`echo ${KERNEL_CMDLINE} | grep "db_mode="`
@@ -69,28 +78,31 @@ if [ ! -z "${DB_CMDLINE_CURRENTHALF}" ] && [ ! -z "${DB_CMDLINE_MODE}" ]; then
 	DB_MODE=`echo $DB_CMDLINE_MODE | sed -e 's/^.*db_mode=//' -e 's/ .*$//'` ;
 	if [ "${DB_MODE}" == "partitions" ]; then
 		if [ "${DB_HALF}" == "a" ]; then
-			BOOT_PART=${BOOT_DEVICE}p1 ;
-            OTHERBOOT_PART=${BOOT_DEVICE}p2 ;
-			DATA_PART=${BOOT_DEVICE}p3 ;
+			BOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}1 ;
+            OTHERBOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}2 ;
+			DATA_PART=${BOOT_DEVICE}${PART_SEPARATOR}3 ;
 		elif [ "${DB_HALF}" == "b" ]; then
-			BOOT_PART=${BOOT_DEVICE}p2 ;
-            OTHERBOOT_PART=${BOOT_DEVICE}p1 ;
-			DATA_PART=${BOOT_DEVICE}p3 ;
+			BOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}2 ;
+            OTHERBOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}1 ;
+			DATA_PART=${BOOT_DEVICE}${PART_SEPARATOR}3 ;
 		else
-			BOOT_PART=${BOOT_DEVICE}p1 ;
-			OTHERBOOT_PART=${BOOT_DEVICE}p2 ;
-			DATA_PART=${BOOT_DEVICE}p3 ;
+			BOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}1 ;
+			OTHERBOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}2 ;
+			DATA_PART=${BOOT_DEVICE}${PART_SEPARATOR}3 ;
 		fi
 	else
-		BOOT_PART=${BOOT_DEVICE}p1 ;
-		DATA_PART=${BOOT_DEVICE}p2 ;
+		BOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}1 ;
+		DATA_PART=${BOOT_DEVICE}${PART_SEPARATOR}2 ;
 
 		DB_ROOTFSSQUASHFS="${ROOTFSSQUASHFS}.${DB_HALF}" ;
 	fi
 else
-	BOOT_PART=${BOOT_DEVICE}p1 ;
-	DATA_PART=${BOOT_DEVICE}p2 ;
+	BOOT_PART=${BOOT_DEVICE}${PART_SEPARATOR}1 ;
+	DATA_PART=${BOOT_DEVICE}${PART_SEPARATOR}2 ;
 fi
+
+# Log
+do_log "Expected boot partition format: ${BOOT_PART_FORMAT}" ;
 
 # Wait for block device
 if [ ! -b ${BOOT_PART} ] || [ ! -b ${DATA_PART} ]; then
@@ -104,8 +116,10 @@ if [ ! -z ${OTHERBOOT_PART} ]; then
 fi
 
 # Heal and mount relevant file systems
-e2fsck -p ${BOOT_PART} ;
-mount -t ext4 -o ro ${BOOT_PART} /boot
+if [ "${BOOT_PART_FORMAT}" == "ext"* ]; then
+    e2fsck -p ${BOOT_PART} ;
+fi
+mount -t ${BOOT_PART_FORMAT} -o ro ${BOOT_PART} /boot
 
 e2fsck -p ${DATA_PART} ;
 mount -t ext4 -o rw ${DATA_PART} /data
@@ -113,8 +127,10 @@ mount -t ext4 -o rw ${DATA_PART} /data
 if [ ! -z ${OTHERBOOT_PART} ]; then
     mkdir -p /boot-inactive ;
 
-    e2fsck -p ${OTHERBOOT_PART} ;
-    mount -t ext4 -o ro ${OTHERBOOT_PART} /boot-inactive ;
+    if [ "${BOOT_PART_FORMAT}" == "ext"* ]; then
+        e2fsck -p ${OTHERBOOT_PART} ;
+    fi
+    mount -t ${BOOT_PART_FORMAT} -o ro ${OTHERBOOT_PART} /boot-inactive ;
 fi
 
 # Create /data/.sys folder, if not there
@@ -161,11 +177,16 @@ fi
 FIRSTINIT=0
 PARTNUMBER=`mount | grep -e "^$BOOT_DEVICE" | grep /data | awk '{ print $1 }' | awk '{ print substr($0,length($0),1) }'`
 BOOT_DEVICE_DEVNAME=${BOOT_DEVICE#"/dev/"} ;
-DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}${PART_SEPARATOR}${PARTNUMBER}" | awk ' { print $4 } '` ;
 
 if [ ! -f /data/.sys/datagrow.disabled ]; then
 
 	if [ ! -z "$PARTNUMBER" ]; then
+
+        # Ensure GPT backup is in place
+        if [ "$MACHINE_TYPE" == "x86_64" ]; then
+            sgdisk -e ${BOOT_DEVICE}
+        fi
 
 		# Determine if there is unpartitioned space at the end of the disk
 		EMPTY_SPACE=`parted ${BOOT_DEVICE} print free | grep "\S" | tail -1 | grep -i "free"` ;
@@ -188,10 +209,10 @@ if [ ! -f /data/.sys/datagrow.disabled ]; then
 			do_log "Resizing data filesystem..." ;
 
 			# Resize file system
-			resize2fs ${BOOT_DEVICE}p${PARTNUMBER} ;
+			resize2fs ${BOOT_DEVICE}${PART_SEPARATOR}${PARTNUMBER} ;
 
 			# Recalculate the size of /data
-			DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}p${PARTNUMBER}" | awk ' { print $4 } '` ;
+			DATA_SIZE=`lsblk -b | grep -i -e "${BOOT_DEVICE_DEVNAME}${PART_SEPARATOR}${PARTNUMBER}" | awk ' { print $4 } '` ;
 
             # Restore WDOG
             restore_wdog ;

@@ -1,3 +1,6 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
 diff --git a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c b/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
 index 7d0ec13e1ad6..6669cd0cfdfd 100644
 --- a/drivers/gpu/drm/panel/panel-disen-ds070boe30t.c
