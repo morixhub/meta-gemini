@@ -1,3 +1,8 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
+
 diff --git a/drivers/thermal/imx_tmu.c b/drivers/thermal/imx_tmu.c
 index ca775e5c7d..b01613a22d 100644
 --- a/drivers/thermal/imx_tmu.c

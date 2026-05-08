@@ -1,3 +1,8 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
+
 diff --git a/arch/arm/mach-imx/imx8m/clock_imx8mm.c b/arch/arm/mach-imx/imx8m/clock_imx8mm.c
 index b2d79ff529e..dade9f74a32 100644
 --- a/arch/arm/mach-imx/imx8m/clock_imx8mm.c

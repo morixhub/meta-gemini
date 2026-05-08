@@ -1,3 +1,8 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
+
 diff --git a/cmd/bootm.c b/cmd/bootm.c
 index 796d5e23adb..a8ba34cb5a1 100644
 --- a/cmd/bootm.c

@@ -1,3 +1,8 @@
+Upstream-Status: Pending
+Signed-off-by: Morix Dev <morix.dev@gmail.com>
+
+
+
 diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
 index 82e3bbef7dd..f34961fe8ba 100644
 --- a/drivers/net/phy/broadcom.c
