@@ -80,6 +80,9 @@ do_after_patch() {
 	# AESYS 2511A
 	cp "${COPYSOURCE}/aesys_2414a__aesys_2511a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
     cp "${COPYSOURCE}/aesys_2414b__aesys_2511a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
+
+	# AESYS 2602A
+	cp "${COPYSOURCE}/aesys_2602a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 }
 
 addtask after_patch after do_patch before do_configure

@@ -12,6 +12,8 @@ SRC_URI =  " \
     file://aesys-2409a_70-wired0.link \
     file://aesys-2414_70-wired0.link \
     file://aesys-2414_71-wired1.link \
+    file://aesys-2602a_70-wired0.link \
+    file://aesys-2602a_71-wired1.link \
 "
 
 FILES:${PN}:aesys-2319a += " \
@@ -29,6 +31,11 @@ FILES:${PN}:aesys-2414 += " \
 "
 
 FILES:${PN}:aesys-2414-2g += " \
+    ${systemd_unitdir}/network/70-wired0.link \
+    ${systemd_unitdir}/network/71-wired1.link \
+"
+
+FILES:${PN}:aesys-2602a += " \
     ${systemd_unitdir}/network/70-wired0.link \
     ${systemd_unitdir}/network/71-wired1.link \
 "
@@ -54,6 +61,12 @@ do_install:append:aesys-2414-2g () {
     install -d ${D}${systemd_unitdir}/network/
     install -m 0644 ${WORKDIR}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
     install -m 0644 ${WORKDIR}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+}
+
+do_install:append:aesys-2602a () {
+    install -d ${D}${systemd_unitdir}/network/
+    install -m 0644 ${WORKDIR}/aesys-2602a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${WORKDIR}/aesys-2602a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

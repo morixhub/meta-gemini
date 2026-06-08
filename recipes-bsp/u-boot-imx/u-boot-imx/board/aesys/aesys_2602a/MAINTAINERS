@@ -1,0 +1,6 @@
+AESYS 2604A BOARD
+M:	Morix Dev <morix.dev@gmail.com>
+S:	Maintained
+F:	board/aesys/aesys_2602a/
+F:	include/configs/aesys_2602a.h
+F:	configs/aesys_2602a_defconfig

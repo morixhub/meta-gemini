@@ -42,6 +42,7 @@ IMAGE_FEATURES:append = " ssh-server-openssh "
 # Add support for NXP Wi-Fi (IW416)
 IMAGE_INSTALL:append:aesys-2414 = " nxp-wlan-sdk moal-auto-startup "
 IMAGE_INSTALL:append:aesys-2414-2g = " nxp-wlan-sdk moal-auto-startup "
+IMAGE_INSTALL:append:aesys-2602a = " nxp-wlan-sdk moal-auto-startup "
 
 # Add base packages (some packages cannot be included in aesys-packagegroup-base due to different architecture specialization)
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
