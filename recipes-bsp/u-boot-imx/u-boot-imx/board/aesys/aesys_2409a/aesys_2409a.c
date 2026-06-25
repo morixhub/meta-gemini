@@ -127,8 +127,14 @@ static int setup_fec(void)
 	/*   0: ENET_TD2 is input (clock from external source) */
 	/*   1: ENET_TD2 is output */
 	clrsetbits_le32(&gpr->gpr[1], IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL, 0);
+	return(0);
 
-	return 0;
+	/*
+	 * Replace the previous instructions with these ones for ENET_TD2 working as output
+	 *
+	setbits_le32(&gpr->gpr[1], IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL);
+	return(set_clk_enet(ENET_50MHZ));
+	*/
 }
 
 int board_phy_config(struct phy_device *phydev)

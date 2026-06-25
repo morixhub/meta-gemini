@@ -245,6 +245,24 @@
 	phy-mode = "rmii";
 	phy-handle = <&ethphy0>;
 	fsl,magic-packet;
+	
+	/*
+	 * Uncomment this part for ENET_TD2 to work as output
+	 *
+	assigned-clocks = <&clk IMX8MN_CLK_ENET_AXI>,
+		<&clk IMX8MN_CLK_ENET_TIMER>,
+		<&clk IMX8MN_CLK_ENET_REF>,
+		<&clk IMX8MN_CLK_ENET_PHY_REF>;
+	assigned-clock-parents = <&clk IMX8MN_SYS_PLL1_266M>,
+		<&clk IMX8MN_SYS_PLL2_100M>,
+		<&clk IMX8MN_SYS_PLL2_50M>,
+		<&clk IMX8MN_SYS_PLL2_50M>;
+	assigned-clock-rates = <0>,
+		<100000000>,
+		<50000000>,
+		<50000000>;
+	*/
+
 	status = "okay";
 
 	mdio {
