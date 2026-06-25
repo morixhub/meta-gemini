@@ -1,17 +1,26 @@
 diff --git a/arch/arm/mach-imx/imx8m/clock_imx8mm.c b/arch/arm/mach-imx/imx8m/clock_imx8mm.c
-index b2d79ff529e..dade9f74a32 100644
+index b2d79ff529e..44edc19c312 100644
 --- a/arch/arm/mach-imx/imx8m/clock_imx8mm.c
 +++ b/arch/arm/mach-imx/imx8m/clock_imx8mm.c
-@@ -1139,8 +1139,10 @@ static int imx8mp_fec_interface_init(struct udevice *dev,
+@@ -1133,14 +1133,18 @@ static int imx8mp_fec_interface_init(struct udevice *dev,
+ 	struct iomuxc_gpr_base_regs *gpr =
+ 		(struct iomuxc_gpr_base_regs *)IOMUXC_GPR_BASE_ADDR;
+ 
++       /* Following line is edited because we do not want that RMII mode selection impacts
++       on FEC clock source, initialized in setup_fec() function of the specific board */
+ 	clrbits_le32(&gpr->gpr[1],
+-		     rgmii_en |
+-		     IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL);
++                    rgmii_en /* |
++                    IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL */);
  
  	switch (interface_type) {
  	case PHY_INTERFACE_MODE_MII:
--	case PHY_INTERFACE_MODE_RMII:
+ 	case PHY_INTERFACE_MODE_RMII:
 -		setbits_le32(&gpr->gpr[1], IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL);
-+	case PHY_INTERFACE_MODE_RMII:	
-+		/* Following line is removed because we do not want that RMII mode selection impacts 
-+		   on FEC clock source, initialized in setup_fec() function of the specific board */
-+		/* setbits_le32(&gpr->gpr[1], IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL); */
++               /* Following line is removed because we do not want that RMII mode selection impacts
++               on FEC clock source, initialized in setup_fec() function of the specific board */
++               /* setbits_le32(&gpr->gpr[1], IOMUXC_GPR_GPR1_GPR_ENET1_TX_CLK_SEL); */
  		break;
  	case PHY_INTERFACE_MODE_RGMII:
  	case PHY_INTERFACE_MODE_RGMII_ID:
