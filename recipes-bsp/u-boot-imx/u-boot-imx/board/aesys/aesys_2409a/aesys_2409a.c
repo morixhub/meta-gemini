@@ -31,6 +31,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define UART_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_FSEL1)
 #define WDOG_PAD_CTRL	(PAD_CTL_DSE6 | PAD_CTL_ODE | PAD_CTL_PUE | PAD_CTL_PE)
 
+#define HWREV_PAD_CTRL_NOPULL	(PAD_CTL_DSE6)
+#define HWREV_PAD_CTRL_PULL_UP	(PAD_CTL_DSE6 | PAD_CTL_PUE | PAD_CTL_PE)
+#define HWREV_PAD_CTRL_PULL_DOWN	(PAD_CTL_DSE6 | PAD_CTL_PE)
+
 static iomux_v3_cfg_t const uart_pads[] = {
 	IMX8MN_PAD_SAI3_TXC__UART2_DTE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	IMX8MN_PAD_SAI3_TXFS__UART2_DTE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
@@ -38,6 +42,38 @@ static iomux_v3_cfg_t const uart_pads[] = {
 
 static iomux_v3_cfg_t const wdog_pads[] = {
 	IMX8MN_PAD_GPIO1_IO02__WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
+};
+
+static int const hwrev_gpios[] = {
+	IMX_GPIO_NR(2, 9),	// HW_REV7
+	IMX_GPIO_NR(2, 8),	// HW_REV6
+	IMX_GPIO_NR(2, 7),	// HW_REV5
+	IMX_GPIO_NR(2, 6),	// HW_REV4
+	IMX_GPIO_NR(2, 5),	// HW_REV3
+	IMX_GPIO_NR(2, 4),	// HW_REV2
+	IMX_GPIO_NR(2, 3),	// HW_REV1
+	IMX_GPIO_NR(2, 2),	// HW_REV0
+};
+
+static iomux_v3_cfg_t const hwrev_pads[] = {
+	IMX8MN_PAD_SD1_DATA7__GPIO2_IO9,
+	IMX8MN_PAD_SD1_DATA6__GPIO2_IO8,
+	IMX8MN_PAD_SD1_DATA5__GPIO2_IO7,
+	IMX8MN_PAD_SD1_DATA4__GPIO2_IO6,
+	IMX8MN_PAD_SD1_DATA3__GPIO2_IO5,
+	IMX8MN_PAD_SD1_DATA2__GPIO2_IO4,
+	IMX8MN_PAD_SD1_DATA1__GPIO2_IO3,
+	IMX8MN_PAD_SD1_DATA0__GPIO2_IO2,
+};
+
+struct hwrev_t {
+	const char *gpioid;
+	const char *boardid;
+};
+
+static struct hwrev_t const hwrevs[] = {
+	{ "00000001", "aesys_2409a" },
+	{ "10000001", "aesys_2409c" },
 };
 
 #ifdef CONFIG_NAND_MXS
@@ -354,13 +390,57 @@ int board_late_init(void)
 #endif
 
 #ifdef CONFIG_ENV_VARS_UBOOT_RUNTIME_CONFIG
-	env_set("board_name", "AESYS 2409A");
-	env_set("board_rev", "2409A");
+	env_set("board_name", "EVK");
+	env_set("board_rev", "iMX8MN");
 #endif
 
-	// Set hardware revision environment variables
-	env_set(GEMINI_ENVVAR_BOARD_GPIOID, "");
-	env_set(GEMINI_ENVVAR_BOARD_ID, "aesys_2409a");
+// Detect hardware revision
+	int i;
+	int pdn[8];
+	
+	char gpioid[8 + 1];
+	gpioid[8] = '\0';
+
+	char gpiolabel[32];
+
+	// 1) Request GPIOs and set as input
+	for (i = 0; i < 8; i++) {
+		if(hwrev_gpios[i] == 0)
+			continue;
+		snprintf(gpiolabel, 32, "hwrev_gpio%d", i);
+		gpio_request(hwrev_gpios[i], gpiolabel);
+		gpio_direction_input(hwrev_gpios[i]);
+	}
+
+	// 2) Set hwrev pads to pull-down & read GPIO values
+	for (i = 0; i < 8; i++) {
+		if(hwrev_pads[i] == 0 || hwrev_gpios[i] == 0)
+			continue;
+		imx_iomux_v3_setup_pad(hwrev_pads[i] | MUX_PAD_CTRL(HWREV_PAD_CTRL_PULL_DOWN));
+		pdn[i] = gpio_get_value(hwrev_gpios[i]);
+	}
+
+
+	// 3) Finalize GPIOID string
+	for (i = 0; i < 8; i++) {
+		gpioid[i] = (pdn[i] ? '1' : '0');
+	}
+
+	// 4) Determine board ID
+	char* boardid = 0;
+	for (i = 0; i < ARRAY_SIZE(hwrevs); i++) {
+		if(strcmp(hwrevs[i].gpioid, gpioid) == 0) {
+			boardid = hwrevs[i].boardid;
+			break;
+		}
+	}
+
+	if(!boardid)
+		boardid = "aesys_2409a";
+
+	// 5) Set environment variables
+	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);
+	env_set(GEMINI_ENVVAR_BOARD_ID, boardid);
 
 	return 0;
 }
