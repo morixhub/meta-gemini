@@ -3,15 +3,12 @@
  * Copyright 2019 NXP
  */
 
-#include <common.h>
+#include <config.h>
 #include <efi_loader.h>
 #include <env.h>
 #include <errno.h>
 #include <init.h>
-#include <miiphy.h>
-#include <netdev.h>
 #include <linux/delay.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm-generic/gpio.h>
@@ -20,13 +17,16 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
-#include <spl.h>
+#include <i2c.h>
 #include <asm/mach-imx/dma.h>
-#include <power/pmic.h>
-#include "../common/tcpc.h"
+#include "../../nxp/common/tcpc.h"
 #include <usb.h>
 #include <dwc3-uboot.h>
+#include <dm/uclass-internal.h>
+#include <dm/pinctrl.h>
+#include <fuse.h>
 #include <mmc.h>
+#include <spl.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -53,6 +53,10 @@ static void setup_gpmi_nand(void)
 #endif
 
 #if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
+#define IMX_BOOT_IMAGE_GUID \
+        EFI_GUID(0x928b33bc, 0xe58b, 0x4247, 0x9f, 0x1d, \
+                 0x3b, 0xf1, 0xee, 0x1c, 0xda, 0xff)
+
 struct efi_fw_image fw_images[] = {
 	{
 		.image_type_id = IMX_BOOT_IMAGE_GUID,

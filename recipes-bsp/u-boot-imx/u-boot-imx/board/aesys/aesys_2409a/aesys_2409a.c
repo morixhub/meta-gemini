@@ -3,11 +3,11 @@
  * Copyright 2019 NXP
  */
 
-#include <common.h>
+#include <config.h>
 #include <efi_loader.h>
 #include <env.h>
 #include <init.h>
-#include <asm/global_data.h>
+#include <asm/io.h>
 #include <miiphy.h>
 #include <netdev.h>
 #include <asm/mach-imx/iomux-v3.h>
@@ -18,10 +18,9 @@
 #include <asm/mach-imx/gpio.h>
 #include <asm/mach-imx/mxc_i2c.h>
 #include <i2c.h>
-#include <asm/io.h>
-#include "../common/tcpc.h"
+#include "../../nxp/common/tcpc.h"
 #include <usb.h>
-#include <asm/arch-imx8m/imx-regs.h>
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -110,6 +109,10 @@ static void setup_gpmi_nand(void)
 #endif
 
 #if CONFIG_IS_ENABLED(EFI_HAVE_CAPSULE_SUPPORT)
+#define IMX_BOOT_IMAGE_GUID \
+        EFI_GUID(0xcbabf44d, 0x12cc, 0x45dd, 0xb0, 0xc5, \
+                 0x29, 0xc5, 0xb7, 0x42, 0x2d, 0x34)
+				 
 struct efi_fw_image fw_images[] = {
 	{
 		.image_type_id = IMX_BOOT_IMAGE_GUID,

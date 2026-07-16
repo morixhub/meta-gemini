@@ -19,4 +19,4 @@ RDEPENDS:${PN}:append = " ufw "
 RDEPENDS:${PN}:append = " pv alsa-utils alsa-tools openssh-misc sshpass xdelta3 dos2unix debianutils ncurses e2fsprogs e2fsprogs-e2fsck e2fsprogs-mke2fs e2fsprogs-resize2fs parted dosfstools htop ethtool i2c-tools iperf3 util-linux minicom nano devmem2 libgpiod-tools spidev-test nmap tcpdump evtest memtester rsync zip unzip stress-ng strace screen bc curl "
 
 # Request by OS harderning scripts
-RDEPENDS:${PN}:append = " dialog iproute2-ss tcp-wrappers rsyslog cronie "
+RDEPENDS:${PN}:append = " dialog iproute2-ss rsyslog cronie "

@@ -10,12 +10,14 @@ SRC_URI = " \
     file://so-ver \
 "
 
+S = "${UNPACKDIR}"
+
 FILES:${PN} += " \
     ${sysconfdir}/so-ver \
 "
 
 do_install() {
     install -d ${D}${sysconfdir}
-    install -m 0444 ${WORKDIR}/so-ver ${D}${sysconfdir}/so-ver
+    install -m 0444 ${S}/so-ver ${D}${sysconfdir}/so-ver
 }
 

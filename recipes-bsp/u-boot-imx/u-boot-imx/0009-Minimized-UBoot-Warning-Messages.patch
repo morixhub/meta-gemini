@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/arch/arm/mach-imx/spl.c b/arch/arm/mach-imx/spl.c
 index 68f3e156b32..1f60a8861ca 100644
 --- a/arch/arm/mach-imx/spl.c

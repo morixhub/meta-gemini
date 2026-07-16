@@ -1,8 +1,10 @@
+Upstream-Status: Pending
+
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index eaf2c5d3df7..f12b6066dc7 100644
+index 7d6d3394797..ab702b01a02 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -2380,6 +2380,11 @@ source "board/phytium/durian/Kconfig"
+@@ -2459,6 +2459,11 @@ source "board/phytium/durian/Kconfig"
  source "board/phytium/pomelo/Kconfig"
  source "board/phytium/pe2201/Kconfig"
  source "board/xen/xenguest_arm64/Kconfig"
@@ -15,12 +17,12 @@ index eaf2c5d3df7..f12b6066dc7 100644
  source "arch/arm/Kconfig.debug"
  
 diff --git a/arch/arm/mach-imx/imx8m/Kconfig b/arch/arm/mach-imx/imx8m/Kconfig
-index 473cfa8e5e3..64a2541686d 100644
+index 5d86ee22d12..3245e6de808 100644
 --- a/arch/arm/mach-imx/imx8m/Kconfig
 +++ b/arch/arm/mach-imx/imx8m/Kconfig
-@@ -315,6 +315,56 @@ config TARGET_IMX8MP_EVK
- 	select ARCH_MISC_INIT
- 	select SPL_CRYPTO if SPL
+@@ -399,6 +399,91 @@ config TARGET_IMX8MP_EVK
+ 	imply BOOTSTD_FULL
+ 	imply BOOTSTD_BOOTCOMMAND
  
 +config TARGET_AESYS_2319A
 +        bool "Aesys 2319A"
@@ -31,6 +33,13 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
++		select CMD_REMOTEPROC
++		select REMOTEPROC_IMX
++		select REGMAP
++		select SYSCON
++		imply OF_UPSTREAM
++		imply BOOTSTD_FULL
++		imply BOOTSTD_BOOTCOMMAND
 +
 +config TARGET_AESYS_2409A
 +        bool "Aesys 2409A"
@@ -41,6 +50,13 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
++		select CMD_REMOTEPROC
++		select REMOTEPROC_IMX
++		select REGMAP
++		select SYSCON
++		imply OF_UPSTREAM
++		imply BOOTSTD_FULL
++		imply BOOTSTD_BOOTCOMMAND
 +
 +config TARGET_AESYS_2414
 +        bool "Aesys 2414-based boards"
@@ -51,6 +67,13 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
++		select CMD_REMOTEPROC
++		select REMOTEPROC_IMX
++		select REGMAP
++		select SYSCON
++		imply OF_UPSTREAM
++		imply BOOTSTD_FULL
++		imply BOOTSTD_BOOTCOMMAND
 +
 +config TARGET_AESYS_2414_2G
 +        bool "Aesys 2414-based boards (2GB RAM)"
@@ -61,6 +84,13 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
++		select CMD_REMOTEPROC
++		select REMOTEPROC_IMX
++		select REGMAP
++		select SYSCON
++		imply OF_UPSTREAM
++		imply BOOTSTD_FULL
++		imply BOOTSTD_BOOTCOMMAND
 +
 +config TARGET_AESYS_2602A
 +        bool "Aesys 2602A"
@@ -71,7 +101,14 @@ index 473cfa8e5e3..64a2541686d 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
++		select CMD_REMOTEPROC
++		select REMOTEPROC_IMX
++		select REGMAP
++		select SYSCON
++		imply OF_UPSTREAM
++		imply BOOTSTD_FULL
++		imply BOOTSTD_BOOTCOMMAND
 +
- config TARGET_IMX8MP_VENICE
- 	bool "Support Gateworks Venice iMX8M Plus module"
+ config TARGET_IMX8MP_FRDM
+ 	bool "imx8mp LPDDR4 frdm board"
  	select IMX8MP

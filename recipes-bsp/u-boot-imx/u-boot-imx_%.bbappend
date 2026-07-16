@@ -16,45 +16,45 @@ COPYSOURCE := "${THISDIR}/${PN}"
 do_after_patch() {
 
 	# COMMON
-	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_TEST.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/include/configs/gemini_env.h" "${WORKDIR}/git/include/configs/"
-	cp -rf "${COPYSOURCE}/board/aesys" "${WORKDIR}/git/board/"
+	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_TEST.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/include/configs/gemini_env.h" "${S}/include/configs/"
+	cp -rf "${COPYSOURCE}/board/aesys" "${S}/board/"
 	
 	# Create symlink to freescale common assets
-	ln -f -s "${WORKDIR}/git/board/freescale/common" "${WORKDIR}/git/board/aesys/common"
+	ln -f -s "${S}/board/freescale/common" "${S}/board/aesys/common"
 
 	# AESYS 2319A
-	cp "${COPYSOURCE}/aesys_2319a.dts" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2319a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/configs/aesys_2319a_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2319a.h" "${WORKDIR}/git/include/configs/"
+	cp "${COPYSOURCE}/aesys_2319a.dts" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2319a-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/configs/aesys_2319a_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2319a.h" "${S}/include/configs/"
 
 	# AESYS 2409A
-	cp "${COPYSOURCE}/aesys_2409a.dts" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2409a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/configs/aesys_2409a_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2409a.h" "${WORKDIR}/git/include/configs/"
+	cp "${COPYSOURCE}/aesys_2409a.dts" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2409a-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/configs/aesys_2409a_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2409a.h" "${S}/include/configs/"
 
 	# AESYS 2414-BASED BOARDS
-	cp "${COPYSOURCE}/configs/aesys_2414_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2414.h" "${WORKDIR}/git/include/configs/"
-	cp "${COPYSOURCE}/aesys_2414.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2414-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2414.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2414_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2414.h" "${S}/include/configs/"
+	cp "${COPYSOURCE}/aesys_2414.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2414-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2414.dts" "${S}/dts/upstream/src/arm64/freescale/"
 
     # AESYS 2414-2G-BASED BOARDS
-	cp "${COPYSOURCE}/configs/aesys_2414_2g_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2414_2g.h" "${WORKDIR}/git/include/configs/"
-	cp "${COPYSOURCE}/aesys_2414_2g.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2414_2g-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2414_2g.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2414_2g_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2414_2g.h" "${S}/include/configs/"
+	cp "${COPYSOURCE}/aesys_2414_2g.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2414_2g-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2414_2g.dts" "${S}/dts/upstream/src/arm64/freescale/"
 
 	# AESYS 2602A
-	cp "${COPYSOURCE}/aesys_2602a.dts" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2602a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/configs/aesys_2602a_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2602a.h" "${WORKDIR}/git/include/configs/"
+	cp "${COPYSOURCE}/aesys_2602a.dts" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2602a-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/configs/aesys_2602a_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2602a.h" "${S}/include/configs/"
 }
 
 addtask after_patch after do_patch before do_configure

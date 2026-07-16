@@ -11,10 +11,10 @@ SRC_URI += " \
 do_install:append(){
 
     # Install fstab
-    install -m 0644 ${WORKDIR}/fstab ${D}${sysconfdir}/
+    install -m 0644 ${UNPACKDIR}/fstab ${D}${sysconfdir}/
 
     # Install .bashrc
-    install -m 0755 ${WORKDIR}/share/dot.bashrc ${D}${sysconfdir}/skel/.bashrc
+    install -m 0755 ${UNPACKDIR}/share/dot.bashrc ${D}${sysconfdir}/skel/.bashrc
 
     # Adjust /etc/profile for OS hardening purposes
     sed -i -e "s|^umask 022|umask 027|" ${D}${sysconfdir}/profile

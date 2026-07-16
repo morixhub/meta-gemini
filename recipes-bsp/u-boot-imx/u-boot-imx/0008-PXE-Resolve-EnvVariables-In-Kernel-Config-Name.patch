@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/boot/pxe_utils.c b/boot/pxe_utils.c
 index 83bc1677856..49aabcdb46a 100644
 --- a/boot/pxe_utils.c

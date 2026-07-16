@@ -16,6 +16,8 @@ SRC_URI =  " \
     file://aesys-2602a_71-wired1.link \
 "
 
+S = "${UNPACKDIR}"
+
 FILES:${PN}:aesys-2319a += " \
     ${systemd_unitdir}/network/70-wired0.link \
     ${systemd_unitdir}/network/71-wired1.link \
@@ -42,31 +44,31 @@ FILES:${PN}:aesys-2602a += " \
 
 do_install:append:aesys-2319a () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2319a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
-    install -m 0644 ${WORKDIR}/aesys-2319a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+    install -m 0644 ${S}/aesys-2319a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${S}/aesys-2319a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 do_install:append:aesys-2409a () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2409a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${S}/aesys-2409a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
 }
 
 do_install:append:aesys-2414 () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
-    install -m 0644 ${WORKDIR}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+    install -m 0644 ${S}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${S}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 do_install:append:aesys-2414-2g () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
-    install -m 0644 ${WORKDIR}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+    install -m 0644 ${S}/aesys-2414_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${S}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 do_install:append:aesys-2602a () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2602a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
-    install -m 0644 ${WORKDIR}/aesys-2602a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+    install -m 0644 ${S}/aesys-2602a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${S}/aesys-2602a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"

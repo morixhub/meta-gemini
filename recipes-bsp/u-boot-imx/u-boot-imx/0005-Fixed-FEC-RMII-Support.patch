@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/arch/arm/mach-imx/imx8m/clock_imx8mm.c b/arch/arm/mach-imx/imx8m/clock_imx8mm.c
 index b2d79ff529e..44edc19c312 100644
 --- a/arch/arm/mach-imx/imx8m/clock_imx8mm.c

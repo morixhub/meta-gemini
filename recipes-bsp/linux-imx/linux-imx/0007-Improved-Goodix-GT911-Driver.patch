@@ -1,0 +1,24 @@
+Upstream-Status: Pending
+
+diff --git a/drivers/input/touchscreen/goodix.c b/drivers/input/touchscreen/goodix.c
+index 7c32844239ea..042fb224ad97 100644
+--- a/drivers/input/touchscreen/goodix.c
++++ b/drivers/input/touchscreen/goodix.c
+@@ -793,10 +793,13 @@ int goodix_reset_no_int_sync(struct goodix_ts_data *ts)
+ 
+ 	msleep(20);				/* T2: > 10ms */
+ 
+-	/* HIGH: 0x28/0x29, LOW: 0xBA/0xBB */
+-	error = goodix_irq_direction_output(ts, ts->client->addr == 0x14);
+-	if (error)
+-		goto error;
++	if (!device_property_read_bool(&ts->client->dev, "dont-drive-irq-for-address-configuration"))
++	{
++		/* HIGH: 0x28/0x29, LOW: 0xBA/0xBB */
++		error = goodix_irq_direction_output(ts, ts->client->addr == 0x14);
++		if (error)
++			goto error;
++	}
+ 
+ 	usleep_range(100, 2000);		/* T3: > 100us */
+ 

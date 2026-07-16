@@ -14,10 +14,12 @@ FILES:${PN} += " \
     ${sysconfdir}/ssl/certs/Aesys_ID_RootCA.pem \
 "
 
+S = "${UNPACKDIR}"
+
 do_install() {
     # Install Aesys ID RootCA certificate
     install -d ${D}${sysconfdir}/ssl/certs
-    install -m 0777 ${WORKDIR}/RootCA.ECC.cert.pem ${D}${sysconfdir}/ssl/certs/Aesys_ID_RootCA.pem
+    install -m 0777 ${S}/RootCA.ECC.cert.pem ${D}${sysconfdir}/ssl/certs/Aesys_ID_RootCA.pem
 
     # Provide hash link (required by OpenSSL for finding certificates)
     ln -s -r ${D}${sysconfdir}/ssl/certs/Aesys_ID_RootCA.pem ${D}${sysconfdir}/ssl/certs/dffb6e89.0

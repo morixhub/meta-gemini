@@ -1,12 +1,14 @@
+Upstream-Status: Pending
+
 diff --git a/drivers/spi/spidev.c b/drivers/spi/spidev.c
-index d13dc15cc191..a3f0fc4d520e 100644
+index 4d53c394101a..3aac0dfa0bcc 100644
 --- a/drivers/spi/spidev.c
 +++ b/drivers/spi/spidev.c
-@@ -732,6 +732,7 @@ static int spidev_of_check(struct device *dev)
+@@ -718,6 +718,7 @@ static int spidev_of_check(struct device *dev)
  }
  
  static const struct of_device_id spidev_dt_ids[] = {
 +	{ .compatible = "linux,spidev", .data = &spidev_of_check },
+ 	{ .compatible = "abb,spi-sensor", .data = &spidev_of_check },
  	{ .compatible = "cisco,spi-petra", .data = &spidev_of_check },
  	{ .compatible = "dh,dhcom-board", .data = &spidev_of_check },
- 	{ .compatible = "lineartechnology,ltc2488", .data = &spidev_of_check },

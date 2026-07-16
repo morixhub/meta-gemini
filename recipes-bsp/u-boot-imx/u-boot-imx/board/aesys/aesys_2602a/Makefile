@@ -4,6 +4,8 @@
 # SPDX-License-Identifier:      GPL-2.0+
 #
 
+obj-y += ../../nxp/common/
+
 obj-y += aesys_2602a.o
 
 ifdef CONFIG_SPL_BUILD

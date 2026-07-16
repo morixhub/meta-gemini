@@ -17,8 +17,8 @@ do_install:append(){
 
     # Copy helper files to image
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/aesys-ts-calibrate.sh ${D}${sbindir}
-    install -m 0755 ${WORKDIR}/aesys-ts-calibrate-store.sh ${D}${sbindir}
+    install -m 0755 ${UNPACKDIR}/aesys-ts-calibrate.sh ${D}${sbindir}
+    install -m 0755 ${UNPACKDIR}/aesys-ts-calibrate-store.sh ${D}${sbindir}
 
     # Adjust weston.service for enabling debug mode (requested by weston-screenshooter)
     sed -i -e "s|^ExecStart=.*|ExecStart=/usr/bin/weston --debug --log=\${XDG_RUNTIME_DIR}/weston.log --modules=systemd-notify.so|" ${D}${systemd_system_unitdir}/weston.service

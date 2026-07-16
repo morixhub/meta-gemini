@@ -16,6 +16,8 @@ SRC_URI = " \
     file://SW_code_signer.ECC_PKI_AESYS.publickey.pem \
 "
 
+S = "${UNPACKDIR}"
+
 FILES:${PN} += " \
     /init \
     /overlayroot-commit.sh \
@@ -26,11 +28,11 @@ FILES:${PN} += " \
 "
 
 do_install() {
-    install -m 0755 ${WORKDIR}/init-aesys.sh ${D}/init
-    install -m 0555 ${WORKDIR}/overlayroot-commit.sh ${D}/overlayroot-commit.sh
-    install -m 0555 ${WORKDIR}/xdelta-apply.sh ${D}/xdelta-apply.sh
-    install -m 0555 ${WORKDIR}/dual-tool-clone.sh ${D}/dual-tool-clone.sh
-    install -m 0555 ${WORKDIR}/dual-tool-id.sh ${D}/dual-tool-id.sh
-    install -m 0444 ${WORKDIR}/SW_code_signer.ECC_PKI_AESYS.publickey.pem ${D}/securefs.publickey.pem
+    install -m 0755 ${S}/init-aesys.sh ${D}/init
+    install -m 0555 ${S}/overlayroot-commit.sh ${D}/overlayroot-commit.sh
+    install -m 0555 ${S}/xdelta-apply.sh ${D}/xdelta-apply.sh
+    install -m 0555 ${S}/dual-tool-clone.sh ${D}/dual-tool-clone.sh
+    install -m 0555 ${S}/dual-tool-id.sh ${D}/dual-tool-id.sh
+    install -m 0444 ${S}/SW_code_signer.ECC_PKI_AESYS.publickey.pem ${D}/securefs.publickey.pem
 }
 

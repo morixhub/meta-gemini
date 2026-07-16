@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/drivers/thermal/imx_tmu.c b/drivers/thermal/imx_tmu.c
 index ca775e5c7d..b01613a22d 100644
 --- a/drivers/thermal/imx_tmu.c

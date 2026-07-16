@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/drivers/rpmsg/imx_rpmsg_tty.c b/drivers/rpmsg/imx_rpmsg_tty.c
 index 6114c686c388..fbd3dfe34301 100644
 --- a/drivers/rpmsg/imx_rpmsg_tty.c

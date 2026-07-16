@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c b/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c
 index 312eb32d1..704d001f0 100644
 --- a/plat/imx/imx8m/imx8mn/imx8mn_bl31_setup.c

@@ -1,16 +1,29 @@
+Upstream-Status: Pending
+
 diff --git a/drivers/net/phy/broadcom.c b/drivers/net/phy/broadcom.c
-index 04b2e6eeb195..06ff91978be8 100644
+index cb306f9e80cc..08331fd12970 100644
 --- a/drivers/net/phy/broadcom.c
 +++ b/drivers/net/phy/broadcom.c
-@@ -20,6 +20,7 @@
+@@ -22,6 +22,7 @@
  #include <linux/interrupt.h>
  #include <linux/irq.h>
  #include <linux/gpio/consumer.h>
 +#include <dt-bindings/leds/common.h>
  
- #define BRCM_PHY_MODEL(phydev) \
- 	((phydev)->drv->phy_id & (phydev)->drv->phy_id_mask)
-@@ -414,14 +415,102 @@ static int bcm54xx_config_init(struct phy_device *phydev)
+ #define BRCM_PHY_REV(phydev) \
+ 	((phydev)->drv->phy_id & ~((phydev)->drv->phy_id_mask))
+@@ -36,6 +37,10 @@ struct bcm54xx_phy_priv {
+ 	int	wake_irq;
+ 	bool	wake_irq_enabled;
+ 	bool	brr_mode;
++	bool leds_inited;
++	bool led_link_mode;
++	u8 leds_mode[2];
++	u8 leds_mcmode[2];
+ };
+ 
+ /* Link modes for BCM58411 PHY */
+@@ -525,14 +530,131 @@ static int bcm54xx_config_init(struct phy_device *phydev)
  	 * these settings will cause LOS to malfunction.
  	 */
  	if (!phy_on_sfp(phydev)) {
@@ -22,111 +35,149 @@ index 04b2e6eeb195..06ff91978be8 100644
 -			BCM54XX_SHD_LEDS1_LED1(BCM_LED_MULTICOLOR_LINK_ACT) |
 -			BCM54XX_SHD_LEDS1_LED3(BCM_LED_MULTICOLOR_LINK_ACT);
 -		bcm_phy_write_exp(phydev, BCM_EXP_MULTICOLOR, val);
-+		struct device_node *np = phydev->mdio.dev.of_node;
++		struct bcm54xx_phy_priv *priv = NULL;
++		struct device *dev = NULL;
++		struct device_node *np = NULL;
 +		struct device_node *leds, *led = NULL;
-+		u8 mode[2] = { BCM_LED_SRC_MULTICOLOR1, BCM_LED_SRC_MULTICOLOR1 };
-+		u8 mcmode[2] = { BCM_LED_MULTICOLOR_LINK_ACT, BCM_LED_MULTICOLOR_LINK_ACT };
 +		const char *func;
 +		const char *mcfunc;
 +		u32 val;
 +		int ret;
 +
-+		/* Handle Link LED mode, if requested */
-+		if (of_property_read_bool(np, "led-link-mode"))
++		priv = phydev->priv;
++
++		if(priv && !priv->leds_inited)
 +		{
-+			val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_SCR1);
-+			if (val >= 0)
++			priv->led_link_mode = false;
++			priv->leds_mode[0] = priv->leds_mode[1] = BCM_LED_SRC_MULTICOLOR1;
++			priv->leds_mcmode[0] = priv->leds_mcmode[1] = BCM_LED_MULTICOLOR_LINK_ACT;
++			priv->leds_inited = true;
++
++			dev = get_device(&phydev->mdio.dev);
++
++			if(dev)
 +			{
-+				val = val | BCM54XX_SHD_SCR1_LINK_LED_MODE;
-+				bcm_phy_write_shadow(phydev, BCM54XX_SHD_SCR1, val);
++				np = dev->of_node;
++				if(np)
++				{
++					/* Handle Link LED mode, if requested */
++					priv->led_link_mode = of_property_read_bool(np, "led-link-mode");
++
++					/* Handle LEDs configuration */
++					leds = of_find_node_by_name(np, "leds");
++					
++					if (leds)
++					{
++						for_each_available_child_of_node(leds, led) {
++
++							ret = of_property_read_u32(led, "reg", &val);
++							if (ret < 0 || val >= 2)
++								continue;
++
++							ret = of_property_read_string(led, "function", &func);
++							if (!ret)
++							{
++								if (!strcmp(func, LED_FUNCTION_SPEED1))
++									priv->leds_mode[val] = BCM_LED_SRC_LINKSPD1;
++								else if (!strcmp(func, LED_FUNCTION_SPEED2))
++									priv->leds_mode[val] = BCM_LED_SRC_LINKSPD2;
++								else if (!strcmp(func, LED_FUNCTION_TX))
++									priv->leds_mode[val] = BCM_LED_SRC_XMITLED;
++								else if (!strcmp(func, LED_FUNCTION_ACTIVITY))
++									priv->leds_mode[val] = BCM_LED_SRC_ACTIVITYLED;
++								else if (!strcmp(func, LED_FUNCTION_FDX))
++									priv->leds_mode[val] = BCM_LED_SRC_FDXLED;
++								else if (!strcmp(func, LED_FUNCTION_SLAVE))
++									priv->leds_mode[val] = BCM_LED_SRC_SLAVE;
++								else if (!strcmp(func, LED_FUNCTION_INTR))
++									priv->leds_mode[val] = BCM_LED_SRC_INTR;
++								else if (!strcmp(func, LED_FUNCTION_QUALITY))
++									priv->leds_mode[val] = BCM_LED_SRC_QUALITY;
++								else if (!strcmp(func, LED_FUNCTION_RX))
++									priv->leds_mode[val] = BCM_LED_SRC_RCVLED;
++								else if (!strcmp(func, LED_FUNCTION_MULTICOLOR))
++									priv->leds_mode[val] = BCM_LED_SRC_MULTICOLOR1;
++								else if (!strcmp(func, LED_FUNCTION_ENERGY))
++									priv->leds_mode[val] = BCM_LED_SRC_ENERGY;
++								else if (!strcmp(func, LED_FUNCTION_OFF))
++									priv->leds_mode[val] = BCM_LED_SRC_OFF;
++								else if (!strcmp(func, LED_FUNCTION_ON))
++									priv->leds_mode[val] = BCM_LED_SRC_ON;
++							}
++
++							ret = of_property_read_string(led, "multicolor-function", &mcfunc);
++							if (!ret)
++							{
++								if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_LINK_ACTIVITY))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_LINK_ACT;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_SPEED))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_SPEED;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_ACTIVITY_FLASH))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_ACT_FLASH;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_FDX))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_FDX;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_OFF))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_OFF;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_ON))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_ON;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_ALTERNATING))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_ALT;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_FLASHING))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_FLASH;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_LINK))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_LINK;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_ACTIVITY))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_ACT;
++								else if (!strcmp(mcfunc, LED_MC_FUNCTION_PROGRAMMABLE_BLINK))
++									priv->leds_mcmode[val] = BCM_LED_MULTICOLOR_PROGRAM;
++							}
++						}
++					}
++				}
++
++				put_device(dev);
 +			}
 +		}
 +
-+		/* Handle LEDs configuration */
-+		leds = of_find_node_by_name(np, "leds");
-+		if (leds) {
-+			for_each_available_child_of_node(leds, led) {
-+				ret = of_property_read_u32(led, "reg", &val);
-+				if (ret < 0 || val >= 2)
-+					continue;
-+
-+				ret = of_property_read_string(led, "function", &func);
-+				if (!ret)
++		if(priv && priv->leds_inited)
++		{
++			if (priv->led_link_mode)
++			{
++				val = bcm_phy_read_shadow(phydev, BCM54XX_SHD_SCR1);
++				if (val >= 0)
 +				{
-+					if (!strcmp(func, LED_FUNCTION_SPEED1))
-+						mode[val] = BCM_LED_SRC_LINKSPD1;
-+					else if (!strcmp(func, LED_FUNCTION_SPEED2))
-+						mode[val] = BCM_LED_SRC_LINKSPD2;
-+					else if (!strcmp(func, LED_FUNCTION_TX))
-+						mode[val] = BCM_LED_SRC_XMITLED;
-+					else if (!strcmp(func, LED_FUNCTION_ACTIVITY))
-+						mode[val] = BCM_LED_SRC_ACTIVITYLED;
-+					else if (!strcmp(func, LED_FUNCTION_FDX))
-+						mode[val] = BCM_LED_SRC_FDXLED;
-+					else if (!strcmp(func, LED_FUNCTION_SLAVE))
-+						mode[val] = BCM_LED_SRC_SLAVE;
-+					else if (!strcmp(func, LED_FUNCTION_INTR))
-+						mode[val] = BCM_LED_SRC_INTR;
-+					else if (!strcmp(func, LED_FUNCTION_QUALITY))
-+						mode[val] = BCM_LED_SRC_QUALITY;
-+					else if (!strcmp(func, LED_FUNCTION_RX))
-+						mode[val] = BCM_LED_SRC_RCVLED;
-+					else if (!strcmp(func, LED_FUNCTION_MULTICOLOR))
-+						mode[val] = BCM_LED_SRC_MULTICOLOR1;
-+					else if (!strcmp(func, LED_FUNCTION_ENERGY))
-+						mode[val] = BCM_LED_SRC_ENERGY;
-+					else if (!strcmp(func, LED_FUNCTION_OFF))
-+						mode[val] = BCM_LED_SRC_OFF;
-+					else if (!strcmp(func, LED_FUNCTION_ON))
-+						mode[val] = BCM_LED_SRC_ON;
-+				}
-+
-+				ret = of_property_read_string(led, "multicolor-function", &mcfunc);
-+				if (!ret)
-+				{
-+					if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_LINK_ACTIVITY))
-+						mcmode[val] = BCM_LED_MULTICOLOR_LINK_ACT;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ENCODED_SPEED))
-+						mcmode[val] = BCM_LED_MULTICOLOR_SPEED;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ACTIVITY_FLASH))
-+						mcmode[val] = BCM_LED_MULTICOLOR_ACT_FLASH;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_FDX))
-+						mcmode[val] = BCM_LED_MULTICOLOR_FDX;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_OFF))
-+						mcmode[val] = BCM_LED_MULTICOLOR_OFF;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ON))
-+						mcmode[val] = BCM_LED_MULTICOLOR_ON;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ALTERNATING))
-+						mcmode[val] = BCM_LED_MULTICOLOR_ALT;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_FLASHING))
-+						mcmode[val] = BCM_LED_MULTICOLOR_FLASH;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_LINK))
-+						mcmode[val] = BCM_LED_MULTICOLOR_LINK;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_ACTIVITY))
-+						mcmode[val] = BCM_LED_MULTICOLOR_ACT;
-+					else if (!strcmp(mcfunc, LED_MC_FUNCTION_PROGRAMMABLE_BLINK))
-+						mcmode[val] = BCM_LED_MULTICOLOR_PROGRAM;
++					val = val | BCM54XX_SHD_SCR1_LINK_LED_MODE;
++					bcm_phy_write_shadow(phydev, BCM54XX_SHD_SCR1, val);
 +				}
 +			}
++		
++			val = BCM54XX_SHD_LEDS1_LED1(priv->leds_mode[0]) |
++			BCM54XX_SHD_LEDS1_LED3(priv->leds_mode[1]);
++			bcm_phy_write_shadow(phydev, BCM54XX_SHD_LEDS1, val);
++
++			val = BCM_LED_MULTICOLOR_IN_PHASE |
++			BCM54XX_SHD_LEDS1_LED1(priv->leds_mcmode[0]) |
++			BCM54XX_SHD_LEDS1_LED3(priv->leds_mcmode[1]);
++			bcm_phy_write_exp(phydev, BCM_EXP_MULTICOLOR, val);
 +		}
-+
-+		val = BCM54XX_SHD_LEDS1_LED1(mode[0]) |
-+			BCM54XX_SHD_LEDS1_LED3(mode[1]);
-+		bcm_phy_write_shadow(phydev, BCM54XX_SHD_LEDS1, val);
-+
-+ 		val = BCM_LED_MULTICOLOR_IN_PHASE |
-+			BCM54XX_SHD_LEDS1_LED1(mcmode[0]) |
-+			BCM54XX_SHD_LEDS1_LED3(mcmode[1]);
-+ 		bcm_phy_write_exp(phydev, BCM_EXP_MULTICOLOR, val);
  	}
  
  	bcm54xx_ptp_config_init(phydev);
+@@ -1172,6 +1294,8 @@ static int bcm54xx_phy_probe(struct phy_device *phydev)
+ 	if (!priv)
+ 		return -ENOMEM;
+ 
++	priv->leds_inited = false;
++
+ 	priv->wake_irq = -ENXIO;
+ 
+ 	phydev->priv = priv;
 diff --git a/include/dt-bindings/leds/common.h b/include/dt-bindings/leds/common.h
-index 9a0d33d027ff..1b7ee5046b61 100644
+index 4f017bea0123..c6b66e60625a 100644
 --- a/include/dt-bindings/leds/common.h
 +++ b/include/dt-bindings/leds/common.h
-@@ -103,4 +103,26 @@
- #define LED_FUNCTION_WLAN "wlan"
+@@ -111,4 +111,27 @@
+ #define LED_FUNCTION_WLAN_6GHZ "wlan-6ghz"
  #define LED_FUNCTION_WPS "wps"
  
 +#define LED_FUNCTION_SPEED1 "speed-1"
@@ -151,12 +202,13 @@ index 9a0d33d027ff..1b7ee5046b61 100644
 +#define LED_MC_FUNCTION_LINK "link"
 +#define LED_MC_FUNCTION_ACTIVITY "activity"
 +#define LED_MC_FUNCTION_PROGRAMMABLE_BLINK "programmable-blink"
++
  #endif /* __DT_BINDINGS_LEDS_H */
 diff --git a/include/linux/brcmphy.h b/include/linux/brcmphy.h
-index c55810a43541..2261d511bfdd 100644
+index 115a964f3006..a035bf8e5f56 100644
 --- a/include/linux/brcmphy.h
 +++ b/include/linux/brcmphy.h
-@@ -160,6 +160,7 @@
+@@ -162,6 +162,7 @@
  #define BCM_LED_SRC_WIRESPEED	0x9
  #define BCM_LED_SRC_MULTICOLOR1	0xa
  #define BCM_LED_SRC_OPENSHORT	0xb
@@ -164,7 +216,7 @@ index c55810a43541..2261d511bfdd 100644
  #define BCM_LED_SRC_OFF		0xe	/* Tied high */
  #define BCM_LED_SRC_ON		0xf	/* Tied low */
  #define BCM_LED_SRC_MASK	GENMASK(3, 0)
-@@ -187,6 +188,10 @@
+@@ -195,6 +196,10 @@
   * register to access.
   */
  

@@ -1,0 +1,19 @@
+Upstream-Status: Pending
+
+
+diff --git a/nslcd/cfg.c b/nslcd/cfg.c
+index 86917d5..e95aec5 100644
+--- a/nslcd/cfg.c
++++ b/nslcd/cfg.c
+@@ -207,9 +207,9 @@ static int get_boolean(const char *filename, int lnr,
+   return parse_boolean(filename, lnr, token);
+ }
+ 
+-static const char *print_boolean(int bool)
++static const char *print_boolean(int b)
+ {
+-  if (bool) return "yes";
++  if (b) return "yes";
+   else      return "no";
+ }
+ 

@@ -1,13 +1,13 @@
+Upstream-Status: Pending
+
 diff --git a/cmd/pxe.c b/cmd/pxe.c
-index 21134eb7a30..bb794bd8bfa 100644
 --- a/cmd/pxe.c
 +++ b/cmd/pxe.c
-@@ -137,42 +137,48 @@ int pxe_get(ulong pxefile_addr_r, char **bootdirp, ulong *sizep, bool use_ipv6)
- 	struct pxe_context ctx;
+@@ -140,41 +140,47 @@ int pxe_get(ulong pxefile_addr_r, char **bootdirp, ulong *sizep, bool use_ipv6)
  	int i;
  
--	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
--			  env_get("bootfile"), use_ipv6))
+ 	if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
+-			  env_get("bootfile"), use_ipv6, false))
 -		return -ENOMEM;
 -
 -	if (IS_ENABLED(CONFIG_BOOTP_PXE_DHCP_OPTION) &&
@@ -42,8 +42,7 @@ index 21134eb7a30..bb794bd8bfa 100644
 -			goto done;
 -		i++;
 -	}
-+    if (pxe_setup_ctx(&ctx, cmdtp, do_get_tftp, NULL, false,
-+                env_get("bootfile"), use_ipv6))
++                env_get("bootfile"), use_ipv6, false))
 +            return -ENOMEM;
 +
 +    if (IS_ENABLED(CONFIG_BOOTP_PXE_DHCP_OPTION) &&
@@ -88,10 +87,9 @@ index 21134eb7a30..bb794bd8bfa 100644
  error_exit:
  	pxe_destroy_ctx(&ctx);
 diff --git a/net/arp.c b/net/arp.c
-index 37848ad32fb..91ddfb45c4e 100644
 --- a/net/arp.c
 +++ b/net/arp.c
-@@ -26,9 +26,14 @@ ulong		arp_wait_timer_start;
+@@ -25,9 +25,14 @@ ulong		arp_wait_timer_start;
  int		arp_wait_try;
  uchar	       *arp_tx_packet; /* THE ARP transmit packet */
  static uchar	arp_tx_packet_buf[PKTSIZE_ALIGN + PKTALIGN];
@@ -100,13 +98,13 @@ index 37848ad32fb..91ddfb45c4e 100644
  
  void arp_init(void)
  {
-+    char* str_arp_timeout;
++	char* str_arp_timeout;
 +    char* str_arp_retry_count;
 +
  	/* XXX problem with bss workaround */
  	arp_wait_packet_ethaddr = NULL;
  	net_arp_wait_packet_ip.s_addr = 0;
-@@ -36,6 +41,30 @@ void arp_init(void)
+@@ -35,6 +40,30 @@ void arp_init(void)
  	arp_wait_tx_packet_size = 0;
  	arp_tx_packet = &arp_tx_packet_buf[0] + (PKTALIGN - 1);
  	arp_tx_packet -= (ulong)arp_tx_packet % PKTALIGN;
@@ -137,7 +135,7 @@ index 37848ad32fb..91ddfb45c4e 100644
  }
  
  void arp_raw_request(struct in_addr source_ip, const uchar *target_ethaddr,
-@@ -95,12 +124,18 @@ int arp_timeout_check(void)
+@@ -94,12 +123,18 @@ int arp_timeout_check(void)
  	t = get_timer(0);
  
  	/* check for arp timeout */
@@ -159,19 +157,19 @@ index 37848ad32fb..91ddfb45c4e 100644
  			net_set_state(NETLOOP_FAIL);
  		} else {
  			arp_wait_timer_start = t;
-@@ -212,6 +247,7 @@ void arp_receive(struct ethernet_hdr *et, struct ip_udp_hdr *ip, int len)
+@@ -211,6 +246,7 @@ void arp_receive(struct ethernet_hdr *et, struct ip_udp_hdr *ip, int len)
  			net_send_packet(net_tx_packet, arp_wait_tx_packet_size);
  
  			/* no arp request pending now */
-+            arp_wait_try = 0;
++			arp_wait_try = 0;
  			net_arp_wait_packet_ip.s_addr = 0;
  			arp_wait_tx_packet_size = 0;
  			arp_wait_packet_ethaddr = NULL;
 diff --git a/net/tftp.c b/net/tftp.c
-index 2e335413492..870b43a73ef 100644
+index 5f2e0a2bc06..ee928b33393 100644
 --- a/net/tftp.c
 +++ b/net/tftp.c
-@@ -805,7 +805,7 @@ void tftp_start(enum proto_t protocol)
+@@ -806,7 +806,7 @@ void tftp_start(enum proto_t protocol)
  			tftp_timeout_count_max = simple_strtol(ep, NULL, 10);
  
  		if (tftp_timeout_count_max < 0) {

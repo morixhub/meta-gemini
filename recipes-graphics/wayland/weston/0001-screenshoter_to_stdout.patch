@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/clients/screenshot.c b/clients/screenshot.c
 index a160406b..1ec83010 100644
 --- a/clients/screenshot.c

@@ -15,6 +15,6 @@ FILES:${PN} += "\
 do_install:append(){
 
     # Install PAM configuration for weston
-    install -D -p -m 0644 ${WORKDIR}/weston-remote-access ${D}${sysconfdir}/pam.d/weston-remote-access
+    install -D -p -m 0644 ${UNPACKDIR}/weston-remote-access ${D}${sysconfdir}/pam.d/weston-remote-access
 
 }

@@ -1,10 +1,10 @@
-diff --git a/coreutils/stty.c b/coreutils/stty.c
-index ba2b783..fd9592c 100644
---- a/coreutils/stty.c
-+++ b/coreutils/stty.c
-
 Upstream-Status: Pending
 
+
+diff --git a/coreutils/stty.c b/coreutils/stty.c
+index c88ef07..477528d 100644
+--- a/coreutils/stty.c
++++ b/coreutils/stty.c
 @@ -8,6 +8,9 @@
  /* David MacKenzie <djm@gnu.ai.mit.edu>
   *
@@ -14,7 +14,7 @@ Upstream-Status: Pending
 + *   Adapted by Clemens Gruber <clemens.gruber@pqgruber.com> 2014-2016
   */
  //config:config STTY
- //config:	bool "stty (8.9 kb)"
+ //config:	bool "stty (9.2 kb)"
 @@ -37,6 +40,10 @@
  #include "libbb.h"
  #include "common_bufsiz.h"
@@ -55,7 +55,7 @@ Upstream-Status: Pending
  
  	/* Scan into temporaries since it is too much trouble to figure out
  	   the right format for 'tcflag_t' */
-@@ -978,15 +1001,30 @@ static int recover_mode(const char *arg, struct termios *mode)
+@@ -978,9 +1001,24 @@ static int recover_mode(const char *arg, struct termios *mode)
  		arg += n;
  	}
  
@@ -81,13 +81,6 @@ Upstream-Status: Pending
  
  	return 1;
  }
- 
- static void display_recoverable(const struct termios *mode,
--				int UNUSED_PARAM dummy)
-+								const struct serial_rs485 *rs485conf, int UNUSED_PARAM dummy, int rs485)
- {
- 	int i;
- 	printf("%lx:%lx:%lx:%lx",
 @@ -994,6 +1032,14 @@ static void display_recoverable(const struct termios *mode,
  		   (unsigned long) mode->c_cflag, (unsigned long) mode->c_lflag);
  	for (i = 0; i < NCCS; ++i)
@@ -194,13 +187,11 @@ Upstream-Status: Pending
  			if (tty_value_to_baud(xatou(arg)) != (speed_t) -1) break;
   invalid_argument:
  			bb_error_msg_and_die("invalid argument '%s'", arg);
-@@ -1426,15 +1511,18 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
- 	memset(&mode, 0, sizeof(mode));
+@@ -1427,14 +1512,16 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
  	if (tcgetattr(STDIN_FILENO, &mode))
  		perror_on_device_and_die("%s");
-+	
-+		rs485_supported = ioctl(STDIN_FILENO, TIOCGRS485, &rs485conf);
  
++	rs485_supported = ioctl(STDIN_FILENO, TIOCGRS485, &rs485conf);
  	if (stty_state & (STTY_verbose_output | STTY_recoverable_output | STTY_noargs)) {
  		G.max_col = get_terminal_width(STDOUT_FILENO);
 -		output_func(&mode, display_all);
@@ -214,7 +205,7 @@ Upstream-Status: Pending
  	while (argv[++k]) {
  		const struct mode_info *mp;
  		const struct control_info *cp;
-@@ -1448,6 +1536,25 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
+@@ -1448,6 +1535,25 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
  				set_mode(mp, 1 /* reversed */, &mode);
  				stty_state |= STTY_require_set_attr;
  			}
@@ -240,7 +231,7 @@ Upstream-Status: Pending
  			/* It is an option - already parsed. Skip it */
  			continue;
  		}
-@@ -1467,6 +1574,33 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
+@@ -1467,6 +1573,33 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
  			continue;
  		}
  
@@ -274,7 +265,7 @@ Upstream-Status: Pending
  		param = find_param(arg);
  		if (param & param_need_arg) {
  			++k;
-@@ -1503,9 +1637,11 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
+@@ -1503,9 +1636,11 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
  			stty_state |= (STTY_require_set_attr | STTY_speed_was_set);
  			break;
  		default:
@@ -284,19 +275,19 @@ Upstream-Status: Pending
 -			else /* true: if (tty_value_to_baud(xatou(arg)) != (speed_t) -1) */{
 +				if (rs485_supported >= 0)
 +					rs485_setconfig = 1;
-+			} else /* true: if (tty_value_to_baud(xatou(arg)) != (speed_t) -1) */{
+++			} else /* true: if (tty_value_to_baud(xatou(arg)) != (speed_t) -1) */{
  				set_speed_or_die(both_speeds, arg, &mode);
  				stty_state |= (STTY_require_set_attr | STTY_speed_was_set);
  			} /* else - impossible (caught in the first pass):
-@@ -1555,6 +1691,11 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
- 				perror_on_device_and_die("%s: cannot perform all requested operations");
+@@ -1556,5 +1691,11 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
  		}
  	}
+ 
 +	 
 +	if (rs485_setconfig) {
 +		if (ioctl (STDIN_FILENO, TIOCSRS485, &rs485conf) < 0)
 +			perror_on_device_and_die("%s: cannot set RS485 options");
 +	}
- 
++
  	return EXIT_SUCCESS;
  }

@@ -60,17 +60,17 @@ do_install:append() {
 do_install:append(){
 
     install -d ${D}${sysconfdir}/
-    install -m 0644 ${WORKDIR}/dhcpcd.enter-hook ${D}${sysconfdir}
-    install -m 0644 ${WORKDIR}/dhcpcd.exit-hook ${D}${sysconfdir}
+    install -m 0644 ${UNPACKDIR}/dhcpcd.enter-hook ${D}${sysconfdir}
+    install -m 0644 ${UNPACKDIR}/dhcpcd.exit-hook ${D}${sysconfdir}
 
     install -d ${D}${bindir}/
-    install -m 0755 ${WORKDIR}/refresh_dhcpcd_conf.sh ${D}${bindir}
+    install -m 0755 ${UNPACKDIR}/refresh_dhcpcd_conf.sh ${D}${bindir}
 
     install -d ${D}/data/.sys/dhcpcd
-    install -m 0644 ${WORKDIR}/static_wired0 ${D}/data/.sys/dhcpcd/
-    install -m 0644 ${WORKDIR}/static_wired1 ${D}/data/.sys/dhcpcd/
-    install -m 0644 ${WORKDIR}/static_mlan0 ${D}/data/.sys/dhcpcd/
-    install -m 0644 ${WORKDIR}/mode_wired0 ${D}/data/.sys/dhcpcd/
-    install -m 0644 ${WORKDIR}/mode_wired1 ${D}/data/.sys/dhcpcd/
-    install -m 0644 ${WORKDIR}/mode_mlan0 ${D}/data/.sys/dhcpcd/
+    install -m 0644 ${UNPACKDIR}/static_wired0 ${D}/data/.sys/dhcpcd/
+    install -m 0644 ${UNPACKDIR}/static_wired1 ${D}/data/.sys/dhcpcd/
+    install -m 0644 ${UNPACKDIR}/static_mlan0 ${D}/data/.sys/dhcpcd/
+    install -m 0644 ${UNPACKDIR}/mode_wired0 ${D}/data/.sys/dhcpcd/
+    install -m 0644 ${UNPACKDIR}/mode_wired1 ${D}/data/.sys/dhcpcd/
+    install -m 0644 ${UNPACKDIR}/mode_mlan0 ${D}/data/.sys/dhcpcd/
 }

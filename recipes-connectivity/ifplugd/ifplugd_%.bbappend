@@ -21,16 +21,16 @@ do_install:append(){
     # Install action files
     install -d ${D}/${sysconfdir}/ifplugd
     install -d ${D}/${sysconfdir}/ifplugd/action.d
-    install -m 0755 ${WORKDIR}/ifplugd.action ${D}${sysconfdir}/ifplugd
-    install -m 0755 ${WORKDIR}/ifupdown ${D}${sysconfdir}/ifplugd/action.d
+    install -m 0755 ${UNPACKDIR}/ifplugd.action ${D}${sysconfdir}/ifplugd
+    install -m 0755 ${UNPACKDIR}/ifupdown ${D}${sysconfdir}/ifplugd/action.d
 
     # Install systemd service script
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/ifplugd.sh ${D}${sbindir}
+    install -m 0755 ${UNPACKDIR}/ifplugd.sh ${D}${sbindir}
 
     # Install systemd service
     install -d ${D}${systemd_unitdir}/system/
-    install -m 0644 ${WORKDIR}/ifplugd.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${UNPACKDIR}/ifplugd.service ${D}${systemd_unitdir}/system
 
     # Modify configuration for supporting wired0 and wired1
     sed -i -e 's|^.*INTERFACES=.*|INTERFACES="wired0 wired1"|' ${D}${sysconfdir}/ifplugd/ifplugd.conf

@@ -13,7 +13,7 @@ FILES:${PN} += " \
     ${bindir}/greenpak-programmer \
 "
 
-S = "${WORKDIR}/git"
+S = "${UNPACKDIR}/git"
 
 DEPENDS += " i2c-tools "
 

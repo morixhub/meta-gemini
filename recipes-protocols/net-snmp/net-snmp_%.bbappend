@@ -120,38 +120,38 @@ do_install:append(){
     install -d ${D}${sysconfdir}/snmp/udp_any_22161
 
     # Install files
-    install -m 644 ${WORKDIR}/conf/snmpd_aesys_base/snmpd.conf ${D}${sysconfdir}/snmp/snmpd_aesys_base/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/snmpd_lassy_base/snmpd.conf ${D}${sysconfdir}/snmp/snmpd_lassy_base/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/snmpd_v2_base/snmpd.conf ${D}${sysconfdir}/snmp/snmpd_v2_base/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_any_2161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_any_2161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_any_3161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_any_3161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_any_4161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_any_4161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_localhost_161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_localhost_2161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_2161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_localhost_3161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_3161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/tcp_localhost_4161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_4161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_2161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_2161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_3161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_3161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_4161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_4161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_5161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_5161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_6161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_6161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_7161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_7161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_8161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_8161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_9161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_9161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_10161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_10161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_11161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_11161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_12161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_12161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_13161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_13161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_14161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_14161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_15161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_15161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_16161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_16161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_17161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_17161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_18161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_18161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_19161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_19161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_20161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_20161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_21161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_21161/snmpd.conf
-    install -m 644 ${WORKDIR}/conf/udp_any_22161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_22161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/snmpd_aesys_base/snmpd.conf ${D}${sysconfdir}/snmp/snmpd_aesys_base/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/snmpd_lassy_base/snmpd.conf ${D}${sysconfdir}/snmp/snmpd_lassy_base/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/snmpd_v2_base/snmpd.conf ${D}${sysconfdir}/snmp/snmpd_v2_base/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_any_2161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_any_2161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_any_3161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_any_3161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_any_4161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_any_4161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_localhost_161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_localhost_2161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_2161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_localhost_3161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_3161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/tcp_localhost_4161/snmpd.conf ${D}${sysconfdir}/snmp/tcp_localhost_4161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_2161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_2161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_3161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_3161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_4161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_4161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_5161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_5161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_6161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_6161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_7161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_7161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_8161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_8161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_9161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_9161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_10161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_10161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_11161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_11161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_12161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_12161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_13161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_13161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_14161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_14161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_15161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_15161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_16161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_16161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_17161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_17161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_18161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_18161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_19161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_19161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_20161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_20161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_21161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_21161/snmpd.conf
+    install -m 644 ${UNPACKDIR}/conf/udp_any_22161/snmpd.conf ${D}${sysconfdir}/snmp/udp_any_22161/snmpd.conf
 }
 
 

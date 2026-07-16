@@ -1,3 +1,5 @@
+Upstream-Status: Pending
+
 diff --git a/Documentation/ABI/testing/debugfs-aufs b/Documentation/ABI/testing/debugfs-aufs
 new file mode 100644
 index 000000000000..45b739879d76

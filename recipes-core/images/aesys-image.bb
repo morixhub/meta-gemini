@@ -31,7 +31,7 @@ IMAGE_FEATURES:remove = "tools-sdk"
 IMAGE_NAME = "${IMAGE_LINK_NAME}-image"
 
 # Set the desired image formats
-IMAGE_FSTYPES="wic.bmap wic.zst squashfs"
+IMAGE_FSTYPES = "wic.bmap wic.zst squashfs"
 
 # Add features
 IMAGE_FEATURES:append = " ssh-server-openssh "

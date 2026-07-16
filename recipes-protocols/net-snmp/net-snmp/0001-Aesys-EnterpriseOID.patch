@@ -1,5 +1,8 @@
+Upstream-Status: Pending
+
 --- ./include/net-snmp/net-snmp-config.h.in	2023-08-15 20:32:01.000000000 +0000
 +++ ../net-snmp-5.9.4.modified/include/net-snmp/net-snmp-config.h.in	2025-01-13 11:18:18.460338542 +0000
+
 @@ -2185,19 +2189,19 @@
  /* Optionally, this may point to the location in the tree your  */
  /* company/organization has been allocated.                     */

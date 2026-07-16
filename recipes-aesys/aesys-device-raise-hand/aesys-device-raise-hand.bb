@@ -17,12 +17,14 @@ FILES:${PN} += " \
     ${systemd_unitdir}/system/aesys-device-raise-hand.service \
 "
 
+S = "${UNPACKDIR}"
+
 do_install() {
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/raise-hand.sh ${D}${sbindir}
+    install -m 0755 ${S}/raise-hand.sh ${D}${sbindir}
 
     install -d ${D}${systemd_unitdir}/system/
-    install -m 0644 ${WORKDIR}/aesys-device-raise-hand.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${S}/aesys-device-raise-hand.service ${D}${systemd_unitdir}/system
 }
 
 NATIVE_SYSTEMD_SUPPORT = "1"

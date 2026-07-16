@@ -1,0 +1,24 @@
+Upstream-Status: Pending
+
+diff --git a/coreutils/stty.c b/coreutils/stty.c
+index 477528d..d586ecf 100644
+--- a/coreutils/stty.c
++++ b/coreutils/stty.c
+@@ -1024,7 +1024,7 @@ static int recover_mode(const char *arg, struct termios *mode, struct serial_rs4
+ }
+ 
+ static void display_recoverable(const struct termios *mode,
+-				int UNUSED_PARAM dummy)
++								const struct serial_rs485 *rs485conf, int UNUSED_PARAM dummy, int rs485)
+ {
+ 	int i;
+ 	printf("%lx:%lx:%lx:%lx",
+@@ -1640,7 +1640,7 @@ int stty_main(int argc UNUSED_PARAM, char **argv)
+ 				stty_state |= STTY_require_set_attr;
+ 				if (rs485_supported >= 0)
+ 					rs485_setconfig = 1;
+-+			} else /* true: if (tty_value_to_baud(xatou(arg)) != (speed_t) -1) */{
++			} else /* true: if (tty_value_to_baud(xatou(arg)) != (speed_t) -1) */{
+ 				set_speed_or_die(both_speeds, arg, &mode);
+ 				stty_state |= (STTY_require_set_attr | STTY_speed_was_set);
+ 			} /* else - impossible (caught in the first pass):

@@ -16,9 +16,9 @@ inherit allarch
 do_install() {
     if ${@bb.utils.contains('DISTRO_FEATURES', 'systemd', 'true', 'false', d)}; then
         install -d ${D}${sysconfdir}/modules-load.d
-        install -m 0644 ${WORKDIR}/moal_startup.conf ${D}${sysconfdir}/modules-load.d/moal.conf
+        install -m 0644 ${UNPACKDIR}/moal_startup.conf ${D}${sysconfdir}/modules-load.d/moal.conf
 
         install -d ${D}${sysconfdir}/modprobe.d
-        install -m 0644 ${WORKDIR}/moal_params.conf ${D}${sysconfdir}/modprobe.d/moal.conf
+        install -m 0644 ${UNPACKDIR}/moal_params.conf ${D}${sysconfdir}/modprobe.d/moal.conf
     fi
 }

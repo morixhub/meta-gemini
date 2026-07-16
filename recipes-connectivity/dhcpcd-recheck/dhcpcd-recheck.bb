@@ -23,14 +23,14 @@ FILES:${PN} += " \
 
 do_install() {
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/dhcp-recheck.sh ${D}${sbindir}
+    install -m 0755 ${UNPACKDIR}/dhcp-recheck.sh ${D}${sbindir}
 
     install -d ${D}${systemd_unitdir}/system
-    install -m 0644 ${WORKDIR}/dhcp-recheck.service ${D}${systemd_unitdir}/system
-    install -m 0644 ${WORKDIR}/dhcp-recheck.timer ${D}${systemd_unitdir}/system
+    install -m 0644 ${UNPACKDIR}/dhcp-recheck.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${UNPACKDIR}/dhcp-recheck.timer ${D}${systemd_unitdir}/system
 
     install -d ${D}${datadir}/nmap/scripts
-    install -m 0644 ${WORKDIR}/broadcast-dhcp-discover-from-any.nse ${D}${datadir}/nmap/scripts
+    install -m 0644 ${UNPACKDIR}/broadcast-dhcp-discover-from-any.nse ${D}${datadir}/nmap/scripts
 }
 
 NATIVE_SYSTEMD_SUPPORT = "1"

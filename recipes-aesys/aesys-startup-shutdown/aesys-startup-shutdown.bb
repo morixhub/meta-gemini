@@ -14,6 +14,8 @@ SRC_URI = " \
     file://aesys-startup-shutdown.service \
 "
 
+S = "${UNPACKDIR}"
+
 FILES:${PN} += " \
     ${sbindir}/firstinit.png \
     ${sbindir}/aesys-startup.sh \
@@ -23,12 +25,12 @@ FILES:${PN} += " \
 
 do_install() {
     install -d ${D}/${sbindir}
-    install -m 0755 ${WORKDIR}/firstinit.png ${D}${sbindir}
-    install -m 0755 ${WORKDIR}/aesys-startup.sh ${D}${sbindir}
-    install -m 0755 ${WORKDIR}/aesys-shutdown.sh ${D}${sbindir}
+    install -m 0755 ${S}/firstinit.png ${D}${sbindir}
+    install -m 0755 ${S}/aesys-startup.sh ${D}${sbindir}
+    install -m 0755 ${S}/aesys-shutdown.sh ${D}${sbindir}
 
     install -d ${D}${systemd_unitdir}/system/
-    install -m 0644 ${WORKDIR}/aesys-startup-shutdown.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${S}/aesys-startup-shutdown.service ${D}${systemd_unitdir}/system
 }
 
 NATIVE_SYSTEMD_SUPPORT = "1"

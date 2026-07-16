@@ -7,6 +7,7 @@ While checking things out, please verify that everything is according to the fol
 
 | layer branch | Yocto release | NXP i.MX release manifest | Notes |
 | :----------: | :-----------: | :-----------------------: | :---: |
+| 2026.1       | wrynose       | 6.18.20-2.0.0             |       |
 | 2024.1       | scarthgap     | 6.6.36-2.1.0              |       |
 | master       | mickledore    | legacy                    |       |
 
@@ -34,12 +35,12 @@ Instructions contained in this README should always be aligned with the most rec
 ### Yocto preparation
 - `mkdir -p /data/imx-yocto-bsp`
 - `cd /data/imx-yocto-bsp`
-- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-scarthgap -m imx-6.6.36-2.1.0.xml`
+- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-scarthgap -m imx-6.18.20-2.0.0.xml`
 - `repo sync`
 
 ### meta-gemini preparation
 - `cd /data/imx-yocto-bsp`
-- `git clone -b 2024.1 https://github.com/morixhub/meta-gemini.git`
+- `git clone -b 2026.1 https://github.com/morixhub/meta-gemini.git`
 - `cd /data/imx-yocto-bsp/sources`
 - `bitbake-layers add-layer meta-gemini`
 
