@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Process events at OS level
 if [ "$reason" = "STATIC" ]; then
     # If a static profile is assigned to the interface, then write a proper file
 	if [ ! -z "$profile" ];	then
@@ -29,6 +30,11 @@ elif [ "$reason" = "BOUND" ]; then
     if [ -x /etc/network/if-up.d/custom-routing ]; then
         IFACE=$interface /etc/network/if-up.d/custom-routing ;
     fi
+fi
+
+# Process events at application level, if possible
+if [ -f /app/dhcp.exit-hook.sh ]; then
+    source /app/dhcp.exit-hook.sh ;
 fi
 
 
