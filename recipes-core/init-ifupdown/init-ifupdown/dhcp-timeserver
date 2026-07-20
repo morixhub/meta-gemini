@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# Clear NTP features
+if [ -f "/var/run/dhcp.$IFACE.timeserver" ]; then
+        rm "/var/run/dhcp.$IFACE.timeserver" ;
+fi
