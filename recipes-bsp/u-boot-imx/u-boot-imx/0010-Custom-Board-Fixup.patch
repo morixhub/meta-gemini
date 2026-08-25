@@ -1,0 +1,57 @@
+diff --git a/arch/arm/include/asm/global_data.h b/arch/arm/include/asm/global_data.h
+index be8e9e950e9..f6a9fbf338b 100644
+--- a/arch/arm/include/asm/global_data.h
++++ b/arch/arm/include/asm/global_data.h
+@@ -110,6 +110,9 @@ struct arch_global_data {
+ #if defined(CONFIG_SCMI_FIRMWARE) && defined(CONFIG_IMX9)
+ 	struct udevice *scmi_dev;
+ #endif
++#if defined(CONFIG_OF_BOARD_FIXUP) && defined(CONFIG_OF_CUSTOM_BOARD_FIXUP)
++	ulong custom_board_fixup_status;
++#endif
+ };
+ 
+ #include <asm-generic/global_data.h>
+diff --git a/common/board_f.c b/common/board_f.c
+index 987a1e980e2..ba7368cece1 100644
+--- a/common/board_f.c
++++ b/common/board_f.c
+@@ -756,7 +756,20 @@ static int setup_reloc(void)
+ #ifdef CONFIG_OF_BOARD_FIXUP
+ static int fix_fdt(void)
+ {
++#ifdef CONFIG_OF_CUSTOM_BOARD_FIXUP
++	int r1, r2;
++	r1 = board_fix_fdt((void *)gd->fdt_blob);
++	r2 = custom_board_fix_fdt((void*)gd->fdt_blob);
++
++	if(r1)
++		return(r1);
++	if(r2)
++		return(r2);
++
++	return(0);
++#else
+ 	return board_fix_fdt((void *)gd->fdt_blob);
++#endif
+ }
+ #endif
+ 
+diff --git a/dts/Kconfig b/dts/Kconfig
+index 00c0aeff893..796f49a2b16 100644
+--- a/dts/Kconfig
++++ b/dts/Kconfig
+@@ -45,6 +45,13 @@ config OF_BOARD_FIXUP
+ 	  enables the board initialization to modifiy the Device Tree. The
+ 	  modified copy is subsequently used by U-Boot after relocation.
+ 
++config OF_CUSTOM_BOARD_FIXUP
++	bool "Custom board-specific manipulation of Device Tree"
++	select OF_BOARD_FIXUP
++	help
++	  This option make the board-specific "custom_board_fix_fdt" callback
++	  to be called right after "board_fix_fdt"
++
+ config SPL_OF_CONTROL
+ 	bool "Enable run-time configuration via Device Tree in SPL"
+ 	depends on SPL && OF_CONTROL

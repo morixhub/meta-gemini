@@ -22,6 +22,8 @@
 #include "../common/tcpc.h"
 #include <usb.h>
 #include <asm/arch-imx8m/imx-regs.h>
+#include <linux/libfdt.h>
+#include <fdt_support.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -35,24 +37,48 @@ DECLARE_GLOBAL_DATA_PTR;
 #define HWREV_PAD_CTRL_PULL_UP	(PAD_CTL_DSE6 | PAD_CTL_PUE | PAD_CTL_PE)
 #define HWREV_PAD_CTRL_PULL_DOWN	(PAD_CTL_DSE6 | PAD_CTL_PE)
 
-static iomux_v3_cfg_t const uart_pads[] = {
+static iomux_v3_cfg_t const uart_pads_dte[] = {
 	IMX8MN_PAD_SAI3_TXC__UART2_DTE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 	IMX8MN_PAD_SAI3_TXFS__UART2_DTE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
+};
+
+static iomux_v3_cfg_t const uart_pads_dce[] = {
+	IMX8MN_PAD_SAI3_TXC__UART2_DCE_TX | MUX_PAD_CTRL(UART_PAD_CTRL),
+	IMX8MN_PAD_SAI3_TXFS__UART2_DCE_RX | MUX_PAD_CTRL(UART_PAD_CTRL),
 };
 
 static iomux_v3_cfg_t const wdog_pads[] = {
 	IMX8MN_PAD_GPIO1_IO02__WDOG1_WDOG_B  | MUX_PAD_CTRL(WDOG_PAD_CTRL),
 };
 
-static int const hwrev_gpios[] = {
-	IMX_GPIO_NR(2, 9),	// HW_REV7
-	IMX_GPIO_NR(2, 8),	// HW_REV6
-	IMX_GPIO_NR(2, 7),	// HW_REV5
-	IMX_GPIO_NR(2, 6),	// HW_REV4
-	IMX_GPIO_NR(2, 5),	// HW_REV3
-	IMX_GPIO_NR(2, 4),	// HW_REV2
-	IMX_GPIO_NR(2, 3),	// HW_REV1
-	IMX_GPIO_NR(2, 2),	// HW_REV0
+// GPIO defines
+#define GPIO_DR     0x00
+#define GPIO_GDIR   0x04
+#define GPIO_PSR    0x08
+
+// GPIO banks base on i.MX8MN
+static const u32 gpio_bases[] = {
+    0x30200000, // GPIO1
+    0x30210000, // GPIO2
+    0x30220000, // GPIO3
+    0x30230000, // GPIO4
+    0x30240000  // GPIO5
+};
+
+struct gpio_t {
+	const int bank;
+	const int number;
+};
+
+static struct gpio_t const hwrev_gpios[] = {
+	{ 2, 9 }, // HW_REV7
+	{ 2, 8 }, // HW_REV6
+	{ 2, 7 }, // HW_REV5
+	{ 2, 6 }, // HW_REV4
+	{ 2, 5 }, // HW_REV3
+	{ 2, 4 }, // HW_REV2
+	{ 2, 3 }, // HW_REV1
+	{ 2, 2 }, // HW_REV0
 };
 
 static iomux_v3_cfg_t const hwrev_pads[] = {
@@ -65,6 +91,9 @@ static iomux_v3_cfg_t const hwrev_pads[] = {
 	IMX8MN_PAD_SD1_DATA1__GPIO2_IO3,
 	IMX8MN_PAD_SD1_DATA0__GPIO2_IO2,
 };
+
+#define HWREV_GPIOID_SIZE 8
+#define HWREV_BOARDID_MAXSIZE 32
 
 struct hwrev_t {
 	const char *gpioid;
@@ -126,23 +155,108 @@ struct efi_capsule_update_info update_info = {
 
 #endif /* EFI_HAVE_CAPSULE_SUPPORT */
 
-static void setup_dtemode_uart(void)
+int imx_read_gpio_input(int bank, int pin)
 {
-	/* Set UART2 DTE mode */
-	setbits_le32((u32 *)(UART2_BASE_ADDR + UFCR), UFCR_DCEDTE);
+    u32 base_addr;
+    u32 val;
+
+	// Check input
+    if (bank < 1 || bank > 5 || pin < 0 || pin > 31)
+        return -EINVAL;
+
+	// Retrieve GPIO bank base address
+    base_addr = gpio_bases[bank - 1];
+
+	// Ensure GPIO is configured as input
+    clrbits_le32(base_addr + GPIO_GDIR, (1 << pin));
+
+	// Read GPIO value
+    val = readl(base_addr + GPIO_PSR);
+
+    return (val & (1 << pin)) ? 1 : 0;
 }
+
+void detect_board(char* gpioid, char* boardid)
+{
+	// Declare vars
+	int i;
+	int pdn[HWREV_GPIOID_SIZE];
+	
+	// Initialize vars
+	memset(gpioid, 0, (HWREV_GPIOID_SIZE + 1));
+	memset(boardid, 0, (HWREV_BOARDID_MAXSIZE + 1));
+
+	// 1) Set hwrev pads to pull-down & read GPIO values
+	for (i = 0; i < HWREV_GPIOID_SIZE; i++) {
+		imx_iomux_v3_setup_pad(hwrev_pads[i] | MUX_PAD_CTRL(HWREV_PAD_CTRL_PULL_DOWN));
+		pdn[i] = imx_read_gpio_input(hwrev_gpios[i].bank, hwrev_gpios[i].number);
+	}
+
+	// 3) Finalize GPIOID string
+	for (i = 0; i < HWREV_GPIOID_SIZE; i++) {
+		gpioid[i] = (pdn[i] ? '1' : '0');
+	}
+
+	// 4) Determine board ID
+	for (i = 0; i < ARRAY_SIZE(hwrevs); i++) {
+		if(strcmp(hwrevs[i].gpioid, gpioid) == 0) {
+			strncpy(boardid, hwrevs[i].boardid, HWREV_BOARDID_MAXSIZE);
+			return;
+		}
+	}
+
+	// 5) Provide default if here
+	strncpy(boardid, hwrevs[0].boardid, HWREV_BOARDID_MAXSIZE);
+}
+
+#ifdef CONFIG_OF_BOARD_FIXUP
+#ifdef CONFIG_OF_CUSTOM_BOARD_FIXUP
+int custom_board_fix_fdt(void *rw_fdt_blob)
+{
+	int nodeoffset;
+
+	gd->arch.custom_board_fixup_status = 1;
+
+	nodeoffset = fdt_path_offset(rw_fdt_blob, "/soc@0/bus@30800000/spba-bus@30800000/serial@30890000");
+	if(nodeoffset >= 0)
+	{
+		gd->arch.custom_board_fixup_status = 2;
+
+		// Detect board
+		char gpioid[HWREV_GPIOID_SIZE + 1];
+		char boardid[HWREV_BOARDID_MAXSIZE + 1];
+		detect_board(gpioid, boardid);
+		
+		// Initialize console UART
+		if(strcmp(boardid, "aesys_2409c") == 0)
+		{
+			gd->arch.custom_board_fixup_status = 3;
+
+			imx_iomux_v3_setup_multiple_pads(uart_pads_dce, ARRAY_SIZE(uart_pads_dce));
+			fdt_delprop((void*)rw_fdt_blob, nodeoffset, "fsl,dte-mode");
+		}
+		else
+		{
+			gd->arch.custom_board_fixup_status = 4;
+
+			imx_iomux_v3_setup_multiple_pads(uart_pads_dte, ARRAY_SIZE(uart_pads_dte));
+			fdt_setprop_empty((void*)rw_fdt_blob, nodeoffset, "fsl,dte-mode");
+		}
+	}
+
+	return 0;
+}
+#endif
+#endif
 
 int board_early_init_f(void)
 {
+	// Initialize WDOG
 	struct wdog_regs *wdog = (struct wdog_regs *)WDOG1_BASE_ADDR;
-
 	imx_iomux_v3_setup_multiple_pads(wdog_pads, ARRAY_SIZE(wdog_pads));
-
 	set_wdog_reset(wdog);
 
-	setup_dtemode_uart();
-	imx_iomux_v3_setup_multiple_pads(uart_pads, ARRAY_SIZE(uart_pads));
-
+	// Initialize UART clock
 	init_uart_clk(1);
 
 #ifdef CONFIG_NAND_MXS
@@ -394,51 +508,22 @@ int board_late_init(void)
 	env_set("board_rev", "iMX8MN");
 #endif
 
-// Detect hardware revision
-	int i;
-	int pdn[8];
-	
-	char gpioid[8 + 1];
-	gpioid[8] = '\0';
+	// Detect board
+	char gpioid[HWREV_GPIOID_SIZE + 1];
+	char boardid[HWREV_BOARDID_MAXSIZE + 1];
+	detect_board(gpioid, boardid);
 
-	char gpiolabel[32];
+#ifdef CONFIG_OF_BOARD_FIXUP
+	printf("Compiled with board FIXUP\n");
+#ifdef CONFIG_OF_CUSTOM_BOARD_FIXUP
+	printf("Compiled with custom board FIXUP (status=%lu)\n", gd->arch.custom_board_fixup_status);
+#endif
+#endif
 
-	// 1) Request GPIOs and set as input
-	for (i = 0; i < 8; i++) {
-		if(hwrev_gpios[i] == 0)
-			continue;
-		snprintf(gpiolabel, 32, "hwrev_gpio%d", i);
-		gpio_request(hwrev_gpios[i], gpiolabel);
-		gpio_direction_input(hwrev_gpios[i]);
-	}
+	printf("Detected gpioid: %s\n", gpioid);
+	printf("Detected boardid: %s\n", boardid);
 
-	// 2) Set hwrev pads to pull-down & read GPIO values
-	for (i = 0; i < 8; i++) {
-		if(hwrev_pads[i] == 0 || hwrev_gpios[i] == 0)
-			continue;
-		imx_iomux_v3_setup_pad(hwrev_pads[i] | MUX_PAD_CTRL(HWREV_PAD_CTRL_PULL_DOWN));
-		pdn[i] = gpio_get_value(hwrev_gpios[i]);
-	}
-
-
-	// 3) Finalize GPIOID string
-	for (i = 0; i < 8; i++) {
-		gpioid[i] = (pdn[i] ? '1' : '0');
-	}
-
-	// 4) Determine board ID
-	char* boardid = 0;
-	for (i = 0; i < ARRAY_SIZE(hwrevs); i++) {
-		if(strcmp(hwrevs[i].gpioid, gpioid) == 0) {
-			boardid = hwrevs[i].boardid;
-			break;
-		}
-	}
-
-	if(!boardid)
-		boardid = "aesys_2409a";
-
-	// 5) Set environment variables
+	// Set environment variables for gpioid and boardid
 	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);
 	env_set(GEMINI_ENVVAR_BOARD_ID, boardid);
 

@@ -10,6 +10,7 @@ SRC_URI += " file://0006-Dump-CPU-TripPoints.patch"
 SRC_URI += " file://0007-Introduced-PXEQuick-Option-And-ARP-Timeout-Configurability.patch"
 SRC_URI += " file://0008-PXE-Resolve-EnvVariables-In-Kernel-Config-Name.patch"
 SRC_URI += " file://0009-Minimized-UBoot-Warning-Messages.patch"
+SRC_URI += " file://0010-Custom-Board-Fixup.patch"
 
 # Copy additional stuff to working copy after patching
 COPYSOURCE := "${THISDIR}/${PN}"
