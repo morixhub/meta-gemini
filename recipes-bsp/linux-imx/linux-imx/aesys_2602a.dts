@@ -264,6 +264,10 @@
 	status = "okay";
 };
 
+&aud2htx {
+	status = "okay";
+};
+
 &ecspi2 {
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -458,9 +462,9 @@
 	sda-gpios = <&gpio5 17 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 	
-	eeprom: eeprom@50 {
+	eeprom: eeprom@54 {
 		compatible = "st,24c08";
-		reg = <0x50>;
+		reg = <0x54>;
 		pagesize = <16>;
 		num-addresses = <4>;
 	};
@@ -481,7 +485,11 @@
 
 	adc: adc@49 {
 		compatible = "ti,ads1015";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_adc>;
 		reg = <0x49>;
+		interrupt-parent = <&gpio1>;
+		interrupts = <5 IRQ_TYPE_EDGE_FALLING>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 		channel@0 {
@@ -517,11 +525,11 @@
         gpio-controller;
     };
 
-	i2c_temp: temp@48 {
+	i2c_temp: temp@4a {
 		compatible = "ti,tmp1075";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_temp>;
-		reg = <0x48>;
+		reg = <0x4a>;
 	};
 };
 
@@ -565,6 +573,13 @@
 
 &lcdif2 {
 	status = "okay";
+};
+
+&lcdif3 {
+	status = "okay";
+
+	thres-low  = <1 2>;             //** (FIFO * 1 / 2)
+	thres-high = <3 4>;             //** (FIFO * 3 / 4)
 };
 
 &mipi_dsi {
@@ -802,10 +817,16 @@
 		MX8MP_IOMUXC_UART4_RXD__GPIO5_IO28	0x00000006		// TEMP_SENS_nINT
 		>;
 	};
+
+	pinctrl_adc: pin_adc {
+		fsl,pins = <
+		MX8MP_IOMUXC_GPIO1_IO05__GPIO1_IO05    0x00000006 // ADC_nALERT
+		>;
+	};
 	
 	pinctrl_pin_gpios: pin_gpios {
 		fsl,pins = <
-		MX8MP_IOMUXC_HDMI_DDC_SCL__GPIO3_IO26		0x00000006		// GP_IN0
+		MX8MP_IOMUXC_NAND_DATA00__GPIO3_IO06		0x00000006		// GP_IN0
 		MX8MP_IOMUXC_NAND_DATA01__GPIO3_IO07		0x00000006		// GP_IN1
 		MX8MP_IOMUXC_NAND_DATA02__GPIO3_IO08		0x00000006		// GP_IN2
 		MX8MP_IOMUXC_NAND_DATA03__GPIO3_IO09		0x00000006		// GP_IN3

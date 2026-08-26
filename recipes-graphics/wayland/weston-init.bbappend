@@ -52,8 +52,3 @@ do_install:append:aesys-2414-2g () {
     # Set the kiosk shell
     sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
 }
-
-do_install:append:aesys-2602a () {
-    # Set the kiosk shell
-    sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
-}
