@@ -47,6 +47,8 @@ IMAGE_INSTALL:append:aesys-2602a = " nxp-wlan-sdk moal-auto-startup "
 # Add base packages (some packages cannot be included in aesys-packagegroup-base due to different architecture specialization)
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
 IMAGE_INSTALL:append = " glibc-utils "
+IMAGE_INSTALL:append = " libxml2-utils xmlstarlet "
+IMAGE_INSTALL:append = " zic-target "
 
 # Add SQLite-related packages
 IMAGE_INSTALL:append = " sqlite3 "
