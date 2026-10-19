@@ -1,11 +1,13 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 PACKAGECONFIG:append = " vnc"
+PACKAGECONFIG:append = " lcms"
 
 SRC_URI += " \
     file://weston-remote-access \
     file://0001-screenshoter_to_stdout.patch \
     file://0002-image_full_screen.patch \
+    file://0003-force-color-transforms-format.patch \
 "
 
 FILES:${PN} += "\
