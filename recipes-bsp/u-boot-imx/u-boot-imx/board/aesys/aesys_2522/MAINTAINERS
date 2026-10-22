@@ -1,0 +1,6 @@
+AESYS 2522 BOARD
+M:	Morix Dev <morix.dev@gmail.com>
+S:	Maintained
+F:	board/aesys/aesys_2522/
+F:	include/configs/aesys_2522.h
+F:	configs/aesys_2522_defconfig

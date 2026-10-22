@@ -56,6 +56,12 @@ do_after_patch() {
 	cp "${COPYSOURCE}/aesys_2602a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/configs/aesys_2602a_defconfig" "${WORKDIR}/git/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2602a.h" "${WORKDIR}/git/include/configs/"
+
+	# AESYS 2522
+	cp "${COPYSOURCE}/aesys_2522.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2522-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2522_defconfig" "${WORKDIR}/git/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2522.h" "${WORKDIR}/git/include/configs/"
 }
 
 addtask after_patch after do_patch before do_configure
