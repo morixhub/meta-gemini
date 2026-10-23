@@ -594,7 +594,7 @@ int board_late_init(void)
 	}
 
 	if(!boardid)
-		boardid = "aesys_2414_2g";
+		boardid = "aesys_2414b";
 
 	// 6) Set environment variables
 	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);

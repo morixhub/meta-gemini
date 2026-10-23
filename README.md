@@ -49,7 +49,7 @@ Instructions contained in this README should always be aligned with the most rec
 ### Multiconfig setup
 - `cp -rf ../sources/meta-gemini/multiconfig ./conf/`
 - Add the following line to `conf/local.conf`:
-  - `BBMULTICONFIG = "aesys-2319a aesys-2409a aesys-2414 aesys-2414-2g aesys-2602a aesys-2522"`
+  - `BBMULTICONFIG = "aesys-2319a aesys-2409 aesys-2414 aesys-2414-2g aesys-2602 aesys-2522"`
 
 ### Image cooking
 Image cooking takes advantage of BitBake's multiconfig features, so command can be placed in the format `mc:<config_name>:<recipe>`, such as:

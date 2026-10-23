@@ -7,7 +7,7 @@
 #define __AESYS_2602A_H
 
 // Remember to define GEMINI_PXE_UUID before including "gemini_env.h"
-#define GEMINI_PXE_UUID "00000000-2602-aaaa-0000-000000000000"
+#define GEMINI_PXE_UUID "00000000-2602-0000-0000-000000000000"
 
 #include <linux/sizes.h>
 #include <linux/stringify.h>

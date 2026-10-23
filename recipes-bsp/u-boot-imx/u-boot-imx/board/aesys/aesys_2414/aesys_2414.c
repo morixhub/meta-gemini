@@ -548,7 +548,7 @@ int board_late_init(void)
 		snprintf(gpiolabel, 32, "hwrev_gpio%d", i);
 		gpio_request(hwrev_gpios[i], gpiolabel);
 		gpio_direction_input(hwrev_gpios[i]);
-	}
+	}2522
 
 	// 2) Set hwrev pads to pull-up & read GPIO values
 	for (i = 0; i < 9; i++) {
@@ -585,7 +585,7 @@ int board_late_init(void)
 	}
 
 	if(!boardid)
-		boardid = "aesys_2414";
+		boardid = "aesys_2414a";
 
 	// 6) Set environment variables
 	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);

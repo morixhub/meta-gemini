@@ -142,7 +142,7 @@ static void setup_gpmi_nand(void)
 struct efi_fw_image fw_images[] = {
 	{
 		.image_type_id = IMX_BOOT_IMAGE_GUID,
-		.fw_name = u"AESYS-2409A-RAW",
+		.fw_name = u"AESYS-2409-RAW",
 		.image_index = 1,
 	},
 };

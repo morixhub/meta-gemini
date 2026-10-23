@@ -46,11 +46,9 @@ do_after_patch() {
 	cp "${COPYSOURCE}/aesys_2319a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 	cp "${COPYSOURCE}/aesys_2319a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
-	# AESYS 2409A
+	# AESYS 2409
 	cp "${COPYSOURCE}/aesys_2409a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 	cp "${COPYSOURCE}/aesys_2409a_m7.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
-
-	# AESYS 2409C
 	cp "${COPYSOURCE}/aesys_2409c.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
 	# AESYS 2414-BASED BOARDS
@@ -84,11 +82,11 @@ do_after_patch() {
 	cp "${COPYSOURCE}/aesys_2414a__aesys_2511a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
     cp "${COPYSOURCE}/aesys_2414b__aesys_2511a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
-	# AESYS 2602A
+	# AESYS 2602
 	cp "${COPYSOURCE}/aesys_2602a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 
 	# AESYS 2522
-	cp "${COPYSOURCE}/aesys_2522.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
+	cp "${COPYSOURCE}/aesys_2522a.dts" "${WORKDIR}/git/arch/arm64/boot/dts/freescale"
 }
 
 addtask after_patch after do_patch before do_configure

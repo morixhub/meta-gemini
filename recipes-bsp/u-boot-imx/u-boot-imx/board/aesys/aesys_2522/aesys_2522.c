@@ -66,7 +66,7 @@ struct hwrev_t {
 };
 
 static struct hwrev_t const hwrevs[] = {
-	{ "0000_xxxx", "aesys_2522" },
+	{ "0000_xxxx", "aesys_2522a" },
 };
 
 #ifdef CONFIG_NAND_MXS
@@ -572,7 +572,7 @@ int board_late_init(void)
 	}
 
 	if(!boardid)
-		boardid = "aesys_2522";
+		boardid = "aesys_2522a";
 
 	// 6) Set environment variables
 	env_set(GEMINI_ENVVAR_BOARD_GPIOID, gpioid);

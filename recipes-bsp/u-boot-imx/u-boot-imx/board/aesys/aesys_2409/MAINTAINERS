@@ -1,0 +1,6 @@
+AESYS 2409 board
+M:	Morix Dev <morix.dev@gmail.com>
+S:	Maintained
+F:	board/aesys/aesys_2409/
+F:	include/configs/aesys_2409.h
+F:	configs/aesys_2409_defconfig

@@ -9,11 +9,11 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI =  " \
     file://aesys-2319a_70-wired0.link \
     file://aesys-2319a_71-wired1.link \
-    file://aesys-2409a_70-wired0.link \
+    file://aesys-2409_70-wired0.link \
     file://aesys-2414_70-wired0.link \
     file://aesys-2414_71-wired1.link \
-    file://aesys-2602a_70-wired0.link \
-    file://aesys-2602a_71-wired1.link \
+    file://aesys-2602_70-wired0.link \
+    file://aesys-2602_71-wired1.link \
     file://aesys-2522_70-wired0.link \
     file://aesys-2522_71-wired1.link \
 "
@@ -29,9 +29,9 @@ do_install:append:aesys-2319a () {
     install -m 0644 ${WORKDIR}/aesys-2319a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
-do_install:append:aesys-2409a () {
+do_install:append:aesys-2409 () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2409a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${WORKDIR}/aesys-2409_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
 }
 
 do_install:append:aesys-2414 () {
@@ -46,10 +46,10 @@ do_install:append:aesys-2414-2g () {
     install -m 0644 ${WORKDIR}/aesys-2414_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
-do_install:append:aesys-2602a () {
+do_install:append:aesys-2602 () {
     install -d ${D}${systemd_unitdir}/network/
-    install -m 0644 ${WORKDIR}/aesys-2602a_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
-    install -m 0644 ${WORKDIR}/aesys-2602a_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
+    install -m 0644 ${WORKDIR}/aesys-2602_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
+    install -m 0644 ${WORKDIR}/aesys-2602_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 do_install:append:aesys-2522 () {

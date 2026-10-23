@@ -8,7 +8,7 @@
 #include "imx8mp.dtsi"
 
 / {
-	model = "AESYS 2522";
+	model = "AESYS 2522A";
 	compatible = "fsl,imx8mp-evk", "fsl,imx8mp";
 	
 	aliases {

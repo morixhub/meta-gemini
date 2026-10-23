@@ -1,0 +1,15 @@
+if TARGET_AESYS_2602
+
+config SYS_BOARD
+	default "aesys_2602"
+
+config SYS_VENDOR
+	default "aesys"
+
+config SYS_CONFIG_NAME
+	default "aesys_2602"
+
+config IMX_CONFIG
+	default "board/aesys/aesys_2602/aesys_2602-lpddr4.cfg"
+
+endif

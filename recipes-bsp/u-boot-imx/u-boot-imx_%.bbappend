@@ -31,11 +31,11 @@ do_after_patch() {
 	cp "${COPYSOURCE}/configs/aesys_2319a_defconfig" "${WORKDIR}/git/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2319a.h" "${WORKDIR}/git/include/configs/"
 
-	# AESYS 2409A
-	cp "${COPYSOURCE}/aesys_2409a.dts" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2409a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/configs/aesys_2409a_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2409a.h" "${WORKDIR}/git/include/configs/"
+	# AESYS 2409
+	cp "${COPYSOURCE}/aesys_2409.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2409-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2409_defconfig" "${WORKDIR}/git/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2409.h" "${WORKDIR}/git/include/configs/"
 
 	# AESYS 2414-BASED BOARDS
 	cp "${COPYSOURCE}/configs/aesys_2414_defconfig" "${WORKDIR}/git/configs/"
@@ -51,11 +51,11 @@ do_after_patch() {
 	cp "${COPYSOURCE}/aesys_2414_2g-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
 	cp "${COPYSOURCE}/aesys_2414_2g.dts" "${WORKDIR}/git/arch/arm/dts/"
 
-	# AESYS 2602A
-	cp "${COPYSOURCE}/aesys_2602a.dts" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/aesys_2602a-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
-	cp "${COPYSOURCE}/configs/aesys_2602a_defconfig" "${WORKDIR}/git/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2602a.h" "${WORKDIR}/git/include/configs/"
+	# AESYS 2602
+	cp "${COPYSOURCE}/aesys_2602.dts" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2602-u-boot.dtsi" "${WORKDIR}/git/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2602_defconfig" "${WORKDIR}/git/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2602.h" "${WORKDIR}/git/include/configs/"
 
 	# AESYS 2522
 	cp "${COPYSOURCE}/aesys_2522.dts" "${WORKDIR}/git/arch/arm/dts/"

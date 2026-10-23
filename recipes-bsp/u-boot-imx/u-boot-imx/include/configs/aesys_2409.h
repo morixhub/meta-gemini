@@ -3,11 +3,11 @@
  * Copyright 2019 NXP
  */
 
-#ifndef __AESYS_2409A_H
-#define __AESYS_2409A_H
+#ifndef __AESYS_2409_H
+#define __AESYS_2409_H
 
 // Remember to define GEMINI_PXE_UUID before including "gemini_env.h"
-#define GEMINI_PXE_UUID "00000000-2409-aaaa-0000-000000000000"
+#define GEMINI_PXE_UUID "00000000-2409-0000-0000-000000000000"
 
 #include <linux/sizes.h>
 #include <linux/stringify.h>

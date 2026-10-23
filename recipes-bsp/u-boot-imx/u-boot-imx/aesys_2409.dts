@@ -8,7 +8,7 @@
 #include "aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi"
 
 / {
-    model = "AESYS 2409A";
+    model = "AESYS 2409";
 	compatible = "fsl,imx8mn-evk", "fsl,imx8mn";
 
 	aliases {
