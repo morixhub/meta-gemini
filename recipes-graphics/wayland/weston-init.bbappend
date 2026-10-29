@@ -46,9 +46,17 @@ do_install:append(){
 do_install:append:aesys-2414 () {
     # Set the kiosk shell
     sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
+
+    # Disable screen-sharing by default
+    # (temporarily only on 2414 and 2414-2g boards; to be extended to all boards when VNC enabling will be managed by UD, too)
+    sed -i -e "s|^modules=screen-share.so|#modules=screen-share.so|" ${D}${sysconfdir}/xdg/weston/weston.ini
 }
 
 do_install:append:aesys-2414-2g () {
     # Set the kiosk shell
     sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
+
+    # Disable screen-sharing by default
+    # (temporarily only on 2414 and 2414-2g boards; to be extended to all boards when VNC enabling will be managed by UD, too)
+    sed -i -e "s|^modules=screen-share.so|#modules=screen-share.so|" ${D}${sysconfdir}/xdg/weston/weston.ini
 }
