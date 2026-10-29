@@ -24,7 +24,7 @@ do_install:append(){
     sed -i -e "s|^ExecStart=.*|ExecStart=/usr/bin/weston --debug --log=\${XDG_RUNTIME_DIR}/weston.log --modules=systemd-notify.so|" ${D}${systemd_system_unitdir}/weston.service
 
     # Adjust weston.ini for enabling screen-share through vnc-backend
-    sed -i -e "/^\[core\]/a modules=screen-share.so" ${D}${sysconfdir}/xdg/weston/weston.ini
+    sed -i -e "/^\[core\]/a modules=#screen-share.so" ${D}${sysconfdir}/xdg/weston/weston.ini
     sed -i -e "s|^command=${bindir}/weston .*|command=${bindir}/weston --backend=vnc-backend.so --vnc-tls-cert=/etc/vnc/keys/tls.crt --vnc-tls-key=/etc/vnc/keys/tls.key --shell=fullscreen-shell.so --no-config|" ${D}${sysconfdir}/xdg/weston/weston.ini
     sed -i -e "s|^#start-on-startup=true|start-on-startup=true|" ${D}${sysconfdir}/xdg/weston/weston.ini
 
@@ -46,17 +46,9 @@ do_install:append(){
 do_install:append:aesys-2414 () {
     # Set the kiosk shell
     sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
-
-    # Disable screen-sharing by default
-    # (temporarily only on 2414 and 2414-2g boards; to be extended to all boards when VNC enabling will be managed by UD, too)
-    sed -i -e "s|^modules=screen-share.so|#modules=screen-share.so|" ${D}${sysconfdir}/xdg/weston/weston.ini
 }
 
 do_install:append:aesys-2414-2g () {
     # Set the kiosk shell
     sed -i -e "/^\[core\]/a shell=kiosk-shell.so" ${D}${sysconfdir}/xdg/weston/weston.ini
-
-    # Disable screen-sharing by default
-    # (temporarily only on 2414 and 2414-2g boards; to be extended to all boards when VNC enabling will be managed by UD, too)
-    sed -i -e "s|^modules=screen-share.so|#modules=screen-share.so|" ${D}${sysconfdir}/xdg/weston/weston.ini
 }
