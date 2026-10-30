@@ -555,10 +555,10 @@
 		interrupts = <7 IRQ_TYPE_EDGE_FALLING>;
 	};
 
-	i2c_sgtl5000: sgtl5000@10 {
+	i2c_sgtl5000: sgtl5000@0a {
         #sound-dai-cells = <0>;
 		compatible = "fsl,sgtl5000";
-		reg = <0x10>;
+		reg = <0x0a>;
 		clocks = <&sai1 1>;
         VDDD-supply = <&reg_sound_1p8_vddd>;
         VDDA-supply = <&reg_sound_3p3_vdda>;

@@ -1,0 +1,14 @@
+[Unit]
+Description=Set dynamic host name depending on app's logic
+DefaultDependencies=no
+Requires=local-fs.target
+After=local-fs.target
+Before=sysinit.target network.target systemd-hostnamed.service
+
+[Service]
+Type=oneshot
+ExecStart=-/sbin/hostname-from-app.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target
