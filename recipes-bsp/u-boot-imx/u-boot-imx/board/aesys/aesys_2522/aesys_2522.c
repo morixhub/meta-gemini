@@ -49,15 +49,15 @@ static iomux_v3_cfg_t const wdog_pads[] = {
 static int const hwrev_gpios[] = {
 	IMX_GPIO_NR(4, 30),	// HW_REV3
 	IMX_GPIO_NR(4, 27),	// HW_REV2
-	IMX_GPIO_NR(5, 27),	// HW_REV1
-	IMX_GPIO_NR(4, 18),	// HW_REV0
+	IMX_GPIO_NR(4, 26),	// HW_REV1
+	IMX_GPIO_NR(4, 19),	// HW_REV0
 };
 
 static iomux_v3_cfg_t const hwrev_pads[] = {
 	MX8MP_PAD_SAI3_RXD__GPIO4_IO30,
 	MX8MP_PAD_SAI2_MCLK__GPIO4_IO27,
-	MX8MP_PAD_UART3_TXD__GPIO5_IO27,
-	MX8MP_PAD_SAI1_TXD6__GPIO4_IO18,
+	MX8MP_PAD_SAI2_TXD0__GPIO4_IO26,
+	MX8MP_PAD_SAI1_TXD7__GPIO4_IO19,
 };
 
 struct hwrev_t {
