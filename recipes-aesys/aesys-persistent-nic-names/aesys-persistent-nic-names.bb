@@ -15,7 +15,6 @@ SRC_URI =  " \
     file://aesys-2602_70-wired0.link \
     file://aesys-2602_71-wired1.link \
     file://aesys-2522_70-wired0.link \
-    file://aesys-2522_71-wired1.link \
 "
 
 FILES:${PN} += " \
@@ -55,7 +54,6 @@ do_install:append:aesys-2602 () {
 do_install:append:aesys-2522 () {
     install -d ${D}${systemd_unitdir}/network/
     install -m 0644 ${WORKDIR}/aesys-2522_70-wired0.link ${D}${systemd_unitdir}/network/70-wired0.link
-    install -m 0644 ${WORKDIR}/aesys-2522_71-wired1.link ${D}${systemd_unitdir}/network/71-wired1.link
 }
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
