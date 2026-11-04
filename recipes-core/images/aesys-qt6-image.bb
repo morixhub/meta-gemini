@@ -38,6 +38,10 @@ IMAGE_INSTALL += " \
     ${IMAGE_INSTALL_PKCS11TOOL} \
 "
 
+IMAGE_INSTALL += " \
+    libdrm-tests \
+"
+
 IMAGE_INSTALL_PKCS11TOOL = ""
 IMAGE_INSTALL_PKCS11TOOL:mx8-nxp-bsp = "opensc pkcs11-provider"
 IMAGE_INSTALL_PKCS11TOOL:mx9-nxp-bsp = "opensc pkcs11-provider"
