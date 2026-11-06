@@ -17,6 +17,10 @@ SRC_URI += " file://0014-Added-Fixed-Clock-Disable-For-RTC-pcf85063.patch"
 SRC_URI += " file://0015-Fixed-RTC-pcf85063-For-SysFS-Entries.patch"
 SRC_URI += " file://0017-SGTL5000-Added-MCLK-Generation_For_I2C.patch"
 SRC_URI += " file://0018-iMX8-Added-Scaling-Frequencies.patch"
+SRC_URI += " file://0019-CVE-2026-98432.patch"
+
+# Explicitly mark CVE as patched
+CVE_STATUS[CVE-2026-98432] = "patched: manually applied patch from https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/patch/?id=11a03ce3c4a62d84c10ccdfe47f8075006498568"
 
 # Include AuFS patches, if requested by distribution
 SRC_URI += " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', 'file://0016-AuFS-Support.patch', '', d)}"
