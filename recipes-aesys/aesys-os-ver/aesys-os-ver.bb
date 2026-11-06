@@ -7,15 +7,18 @@ PR = "r1"
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI = " \
-    file://so-ver \
+    file://os-ver \
 "
 
 FILES:${PN} += " \
-    ${sysconfdir}/so-ver \
+    ${sysconfdir}/os-ver \
 "
 
 do_install() {
     install -d ${D}${sysconfdir}
-    install -m 0444 ${WORKDIR}/so-ver ${D}${sysconfdir}/so-ver
+    install -m 0444 ${WORKDIR}/os-ver ${D}${sysconfdir}/os-ver
+
+    # Provide hash link (required by OpenSSL for finding certificates)
+    ln -s -r ${D}${sysconfdir}/os-ver ${D}${sysconfdir}/so-ver
 }
 
