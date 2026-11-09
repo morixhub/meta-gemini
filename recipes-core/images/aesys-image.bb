@@ -83,6 +83,10 @@ IMAGE_PREPROCESS_COMMAND += " aesys_image_customization; "
 # Add rootfs customization
 ROOTFS_POSTPROCESS_COMMAND += " aesys_rootfs_customization; "
 
+# Fix audio cards order (on selected boards)
+ROOTFS_POSTPROCESS_COMMAND:aesys-2522 += " aesys_soundcards_order_fix; "
+ROOTFS_POSTPROCESS_COMMAND:aesys-2602 += " aesys_soundcards_order_fix; "
+
 # If requested, then inject the default IP address intended for development into the image
 ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-development-ip', " aesys_development_ip; ", "", d)}'
 
@@ -189,6 +193,13 @@ aesys_rootfs_customization () {
     # Enable bash customization for root user
     cp ${IMAGE_ROOTFS}/etc/skel/.bashrc ${IMAGE_ROOTFS}/root/ ;
     cp ${IMAGE_ROOTFS}/etc/skel/.profile ${IMAGE_ROOTFS}/root/ ;
+}
+
+# Sound cards order fix
+aesys_soundcards_order_fix () {
+
+    # Override ctl.default in asound.conf
+    printf '\n\nctl.!default{ \ntype hw \ncard "SGTL5000Card" \n}\n\n' >> ${IMAGE_ROOTFS}/etc/asound.conf ;
 }
 
 # Managing of development IP address
