@@ -84,8 +84,8 @@ IMAGE_PREPROCESS_COMMAND += " aesys_image_customization; "
 ROOTFS_POSTPROCESS_COMMAND += " aesys_rootfs_customization; "
 
 # Fix audio cards order (on selected boards)
-ROOTFS_POSTPROCESS_COMMAND:aesys-2522 += " aesys_soundcards_order_fix; "
-ROOTFS_POSTPROCESS_COMMAND:aesys-2602 += " aesys_soundcards_order_fix; "
+ROOTFS_POSTPROCESS_COMMAND:append:aesys-2522 = " aesys_soundcards_order_fix; "
+ROOTFS_POSTPROCESS_COMMAND:append:aesys-2602 = " aesys_soundcards_order_fix; "
 
 # If requested, then inject the default IP address intended for development into the image
 ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-development-ip', " aesys_development_ip; ", "", d)}'
