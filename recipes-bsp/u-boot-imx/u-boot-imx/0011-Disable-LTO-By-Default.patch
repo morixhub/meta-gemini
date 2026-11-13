@@ -1,0 +1,16 @@
+Upstream-Status: Pending
+
+
+diff --git a/arch/arm/mach-imx/imx8m/Kconfig b/arch/arm/mach-imx/imx8m/Kconfig
+index 0749cd069aa..fe655876994 100644
+--- a/arch/arm/mach-imx/imx8m/Kconfig
++++ b/arch/arm/mach-imx/imx8m/Kconfig
+@@ -4,7 +4,7 @@ config IMX8M
+ 	bool
+ 	select GICV3 if ARMV8_PSCI
+ 	select HAS_CAAM
+-	select LTO
++	imply LTO
+ 	select ROM_UNIFIED_SECTIONS
+ 	select ARMV8_CRYPTO
+ 	imply CPU

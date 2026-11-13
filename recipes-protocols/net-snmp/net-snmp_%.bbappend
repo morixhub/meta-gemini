@@ -1,9 +1,10 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
+#//!! Patch 0002-Added-Linux-6.7-Compatibility.patch commented out and should be deleted
+
 # Patches
 SRC_URI += " \
     file://0001-Aesys-EnterpriseOID.patch \
-    file://0002-Added-Linux-6.7-Compatibility.patch \
     file://snmp.conf \
     file://snmpd.conf \
     file://conf/snmpd_aesys_base/snmpd.conf \

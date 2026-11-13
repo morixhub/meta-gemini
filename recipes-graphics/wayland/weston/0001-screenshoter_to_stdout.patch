@@ -1,19 +1,21 @@
 Upstream-Status: Pending
 
+
 diff --git a/clients/screenshot.c b/clients/screenshot.c
-index a160406b..1ec83010 100644
+index 939bdf29..ce252b45 100644
 --- a/clients/screenshot.c
 +++ b/clients/screenshot.c
-@@ -307,9 +307,18 @@ screenshooter_output_capture(struct screenshooter_output *output)
+@@ -396,9 +396,19 @@ screenshooter_output_capture(struct screenshooter_output *output)
  	output->app->waitcount++;
  }
  
-+static void write_to_png_func(void* closure,
++static cairo_status_t write_to_png_func(void* closure,
 +                              const unsigned char *data,
 +                              unsigned int length)
 +{
 +	fwrite(data, sizeof(unsigned char), length, stdout);
 +	fflush(stdout);
++   return(0);
 +}
 +
  static void
@@ -24,7 +26,7 @@ index a160406b..1ec83010 100644
  {
  	pixman_image_t *shot;
  	cairo_surface_t *surface;
-@@ -339,11 +348,15 @@ screenshot_write_png(const struct buffer_size *buff_size,
+@@ -432,11 +441,15 @@ screenshot_write_png(const struct buffer_size *buff_size,
  						      pixman_image_get_height(shot),
  						      pixman_image_get_stride(shot));
  
@@ -45,28 +47,46 @@ index a160406b..1ec83010 100644
  	}
  	cairo_surface_destroy(surface);
  	pixman_image_unref(shot);
-@@ -390,6 +403,15 @@ main(int argc, char *argv[])
- 	struct screenshooter_output *tmp_output;
+@@ -603,6 +616,7 @@ main(int argc, char *argv[])
  	struct buffer_size buff_size = {};
  	struct screenshooter_app app = {};
+ 	int c, option_index;
 +	int directoutput = 0;
-+	int i = 0;
-+
-+	for(i = 0; i < argc; i++) {
-+		if(strcmp(argv[i], "-o") == 0) {
+ 
+ 	app.src_type = WESTON_CAPTURE_V1_SOURCE_FRAMEBUFFER;
+ 	app.buffer_type = CLIENT_BUFFER_TYPE_SHM;
+@@ -610,13 +624,14 @@ main(int argc, char *argv[])
+ 	static struct option long_options[] = {
+ 		{"help",        no_argument,       NULL, 'h'},
+ 		{"verbose",     no_argument,       NULL, 'v'},
++		{"direct-output", no_argument,	   NULL, 'o'},
+ 		{"format",      required_argument, NULL, 'f'},
+ 		{"source-type",	required_argument, NULL, 's'},
+ 		{"buffer-type", required_argument, NULL, 'b'},
+ 		{0, 0, 0, 0}
+ 	};
+ 
+-	while ((c = getopt_long(argc, argv, "hvf:s:b:",
++	while ((c = getopt_long(argc, argv, "hvof:s:b:",
+ 			long_options, &option_index)) != -1) {
+ 		const struct weston_enum_map *entry;
+ 
+@@ -624,6 +639,9 @@ main(int argc, char *argv[])
+ 		case 'v':
+ 			app.verbose = true;
+ 			break;
++		case 'o':
 +			directoutput = 1;
 +			break;
-+		}
-+	}
- 
- 	wl_list_init(&app.output_list);
- 
-@@ -434,7 +456,7 @@ main(int argc, char *argv[])
- 	if (!app.failed) {
- 		if (screenshot_set_buffer_size(&buff_size, &app.output_list) < 0)
- 			return -1;
--		screenshot_write_png(&buff_size, &app.output_list);
-+		screenshot_write_png(&buff_size, &app.output_list, directoutput);
+ 		case 'f':
+ 			app.requested_format = pixel_format_get_info_by_drm_name(optarg);
+ 			if (!app.requested_format) {
+@@ -725,7 +743,7 @@ main(int argc, char *argv[])
+ 		if (all_output_formats_are_yuv(&app.output_list))
+ 			screenshot_write_yuv(&buff_size, &app.output_list);
+ 		else
+-			screenshot_write_png(&buff_size, &app.output_list);
++			screenshot_write_png(&buff_size, &app.output_list, directoutput);
  	} else {
  		fprintf(stderr, "Error: screenshot or protocol failure\n");
  	}

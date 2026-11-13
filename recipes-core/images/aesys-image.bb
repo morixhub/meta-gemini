@@ -42,11 +42,14 @@ IMAGE_FEATURES:append = " ssh-server-openssh "
 # Add support for NXP Wi-Fi (IW416)
 IMAGE_INSTALL:append:aesys-2414 = " nxp-wlan-sdk moal-auto-startup "
 IMAGE_INSTALL:append:aesys-2414-2g = " nxp-wlan-sdk moal-auto-startup "
-IMAGE_INSTALL:append:aesys-2602a = " nxp-wlan-sdk moal-auto-startup "
+IMAGE_INSTALL:append:aesys-2522 = " nxp-wlan-sdk moal-auto-startup "
+IMAGE_INSTALL:append:aesys-2602 = " nxp-wlan-sdk moal-auto-startup "
 
 # Add base packages (some packages cannot be included in aesys-packagegroup-base due to different architecture specialization)
 IMAGE_INSTALL:append = " aesys-packagegroup-base "
 IMAGE_INSTALL:append = " glibc-utils "
+IMAGE_INSTALL:append = " libxml2-utils xmlstarlet "
+IMAGE_INSTALL:append = " zic-target "
 
 # Add SQLite-related packages
 IMAGE_INSTALL:append = " sqlite3 "
@@ -70,7 +73,7 @@ IMAGE_INSTALL:append = " pulseaudio pulseaudio-server pulseaudio-misc pulseaudio
 IMAGE_INSTALL:append = " ${@bb.utils.contains('DISTRO_FEATURES', 'aufs', ' aufs-utils ', '', d)}"
 
 # Add aesys packages
-IMAGE_INSTALL:append = " aesys-so-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown aesys-ca-certificates "
+IMAGE_INSTALL:append = " aesys-os-ver aesys-hw-wdog aesys-automount aesys-persistent-nic-names aesys-firstinit aesys-startup-shutdown aesys-ca-certificates aesys-dynamic-hostname "
 IMAGE_INSTALL:append:aesys-2414 = " aesys-greenpak-programmer "
 IMAGE_INSTALL:append:aesys-2414-2g = " aesys-greenpak-programmer "
 
@@ -79,6 +82,10 @@ IMAGE_PREPROCESS_COMMAND += " aesys_image_customization; "
 
 # Add rootfs customization
 ROOTFS_POSTPROCESS_COMMAND += " aesys_rootfs_customization; "
+
+# Fix audio cards order (on selected boards)
+ROOTFS_POSTPROCESS_COMMAND:append:aesys-2522 = " aesys_soundcards_order_fix; "
+ROOTFS_POSTPROCESS_COMMAND:append:aesys-2602 = " aesys_soundcards_order_fix; "
 
 # If requested, then inject the default IP address intended for development into the image
 ROOTFS_POSTPROCESS_COMMAND += '${@bb.utils.contains_any("IMAGE_FEATURES", 'aesys-development-ip', " aesys_development_ip; ", "", d)}'
@@ -186,6 +193,13 @@ aesys_rootfs_customization () {
     # Enable bash customization for root user
     cp ${IMAGE_ROOTFS}/etc/skel/.bashrc ${IMAGE_ROOTFS}/root/ ;
     cp ${IMAGE_ROOTFS}/etc/skel/.profile ${IMAGE_ROOTFS}/root/ ;
+}
+
+# Sound cards order fix
+aesys_soundcards_order_fix () {
+
+    # Override ctl.default in asound.conf
+    printf '\n\nctl.!default{ \ntype hw \ncard "SGTL5000Card" \n}\n\n' >> ${IMAGE_ROOTFS}/etc/asound.conf ;
 }
 
 # Managing of development IP address

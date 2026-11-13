@@ -7,6 +7,8 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 RDEPENDS:${PN} += "bash"
 
+S = "${UNPACKDIR}"
+
 SRC_URI += " \
     file://dhcp-recheck.sh \
     file://dhcp-recheck.service \
@@ -23,14 +25,14 @@ FILES:${PN} += " \
 
 do_install() {
     install -d ${D}/${sbindir}
-    install -m 0755 ${UNPACKDIR}/dhcp-recheck.sh ${D}${sbindir}
+    install -m 0755 ${S}/dhcp-recheck.sh ${D}${sbindir}
 
     install -d ${D}${systemd_unitdir}/system
-    install -m 0644 ${UNPACKDIR}/dhcp-recheck.service ${D}${systemd_unitdir}/system
-    install -m 0644 ${UNPACKDIR}/dhcp-recheck.timer ${D}${systemd_unitdir}/system
+    install -m 0644 ${S}/dhcp-recheck.service ${D}${systemd_unitdir}/system
+    install -m 0644 ${S}/dhcp-recheck.timer ${D}${systemd_unitdir}/system
 
     install -d ${D}${datadir}/nmap/scripts
-    install -m 0644 ${UNPACKDIR}/broadcast-dhcp-discover-from-any.nse ${D}${datadir}/nmap/scripts
+    install -m 0644 ${S}/broadcast-dhcp-discover-from-any.nse ${D}${datadir}/nmap/scripts
 }
 
 NATIVE_SYSTEMD_SUPPORT = "1"

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Process events at OS level
 if [ "$reason" = "PREINIT" ]; then
     # Get rid of interface routers
     if [ -f /var/run/gw.$interface ]; then
@@ -15,3 +16,7 @@ if [ "$reason" = "PREINIT" ]; then
     fi
 fi
 
+# Process events at application level, if possible
+if [ -f /app/dhcp.enter-hook.sh ]; then
+    source /app/dhcp.enter-hook.sh ;
+fi

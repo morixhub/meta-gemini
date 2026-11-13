@@ -7,7 +7,7 @@ While checking things out, please verify that everything is according to the fol
 
 | layer branch | Yocto release | NXP i.MX release manifest | Notes |
 | :----------: | :-----------: | :-----------------------: | :---: |
-| 2026.1       | wrynose       | 6.18.20-2.0.0             |       |
+| 2026.1       | wrynose       | 6.18.37-2.1.0             |       |
 | 2024.1       | scarthgap     | 6.6.36-2.1.0              |       |
 | master       | mickledore    | legacy                    |       |
 
@@ -35,8 +35,13 @@ Instructions contained in this README should always be aligned with the most rec
 ### Yocto preparation
 - `mkdir -p /data/imx-yocto-bsp`
 - `cd /data/imx-yocto-bsp`
-- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-scarthgap -m imx-6.18.20-2.0.0.xml`
+- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-wrynose -m imx-6.18.37-2.1.0.xml`
 - `repo sync`
+
+### Yocto preparation (if a previous versione of the NXP manifest was used)
+- `repo init -u https://github.com/nxp-imx/imx-manifest -b imx-linux-wrynose -m imx-6.18.37-2.1.0.xml`
+- `repo sync -d`
+- `rm -rf tmp/ sstate-cache/`
 
 ### meta-gemini preparation
 - `cd /data/imx-yocto-bsp`
@@ -50,7 +55,7 @@ Instructions contained in this README should always be aligned with the most rec
 ### Multiconfig setup
 - `cp -rf ../sources/meta-gemini/multiconfig ./conf/`
 - Add the following line to `conf/local.conf`:
-  - `BBMULTICONFIG = "aesys-2319a aesys-2409a aesys-2414 aesys-2414-2g aesys-2602a"`
+  - `BBMULTICONFIG = "aesys-2319a aesys-2409 aesys-2414 aesys-2414-2g aesys-2602 aesys-2522"`
 
 ### Image cooking
 Image cooking takes advantage of BitBake's multiconfig features, so command can be placed in the format `mc:<config_name>:<recipe>`, such as:
@@ -58,7 +63,7 @@ Image cooking takes advantage of BitBake's multiconfig features, so command can 
 
 # Useful notes
 ## Chromium settings
-- remove `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line) (currently managed in `recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` recipe)
+- Recipe `recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` actually removes `--disable-features=VizDisplayCompositor --in-process-gpu --disable-gpu-rasterization` from `CHROMIUM_EXTRA_FLAGS` in `meta-imx/meta-imx-sdk/dynamic-layers/chromium-browser-layer/recipes-browser/chromium/chromium-ozone-wayland_%.bbappend` (for being able to change the full configuration directly on chromium command line)
 - Chromium flags:
   - `#enable-rdrc=enabled`
   - `#canvas-oop-rasterization=enabled`
@@ -68,4 +73,4 @@ Image cooking takes advantage of BitBake's multiconfig features, so command can 
 - `zstdcat <imagename>.wic.zst | pv | sudo dd of=/dev/sdX bs=1M conv=fsync`
 
 ## Toolchain + SDK
-- `bitbake -c populate_sdk mc:aesys-2319a:<image-name>`
+- `bitbake -c populate_sdk mc:aesys-2409:<image-name>`

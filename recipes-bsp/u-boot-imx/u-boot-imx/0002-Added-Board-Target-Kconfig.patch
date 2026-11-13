@@ -1,26 +1,27 @@
 Upstream-Status: Pending
 
 diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
-index 7d6d3394797..ab702b01a02 100644
+index 7d6d3394797..9812eddb494 100644
 --- a/arch/arm/Kconfig
 +++ b/arch/arm/Kconfig
-@@ -2459,6 +2459,11 @@ source "board/phytium/durian/Kconfig"
+@@ -2459,6 +2459,12 @@ source "board/phytium/durian/Kconfig"
  source "board/phytium/pomelo/Kconfig"
  source "board/phytium/pe2201/Kconfig"
  source "board/xen/xenguest_arm64/Kconfig"
 +source "board/aesys/aesys_2319a/Kconfig"
-+source "board/aesys/aesys_2409a/Kconfig"
++source "board/aesys/aesys_2409/Kconfig"
 +source "board/aesys/aesys_2414/Kconfig"
 +source "board/aesys/aesys_2414_2g/Kconfig"
-+source "board/aesys/aesys_2602a/Kconfig"
++source "board/aesys/aesys_2602/Kconfig"
++source "board/aesys/aesys_2522/Kconfig"
  
  source "arch/arm/Kconfig.debug"
  
 diff --git a/arch/arm/mach-imx/imx8m/Kconfig b/arch/arm/mach-imx/imx8m/Kconfig
-index 5d86ee22d12..3245e6de808 100644
+index 5d86ee22d12..0749cd069aa 100644
 --- a/arch/arm/mach-imx/imx8m/Kconfig
 +++ b/arch/arm/mach-imx/imx8m/Kconfig
-@@ -399,6 +399,91 @@ config TARGET_IMX8MP_EVK
+@@ -399,6 +399,101 @@ config TARGET_IMX8MP_EVK
  	imply BOOTSTD_FULL
  	imply BOOTSTD_BOOTCOMMAND
  
@@ -33,16 +34,16 @@ index 5d86ee22d12..3245e6de808 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
-+		select CMD_REMOTEPROC
-+		select REMOTEPROC_IMX
-+		select REGMAP
-+		select SYSCON
-+		imply OF_UPSTREAM
-+		imply BOOTSTD_FULL
-+		imply BOOTSTD_BOOTCOMMAND
++               select CMD_REMOTEPROC
++               select REMOTEPROC_IMX
++               select REGMAP
++               select SYSCON
++               imply OF_UPSTREAM
++               imply BOOTSTD_FULL
++               imply BOOTSTD_BOOTCOMMAND
 +
-+config TARGET_AESYS_2409A
-+        bool "Aesys 2409A"
++config TARGET_AESYS_2409
++        bool "Aesys 2409"
 +        select IMX8MN
 +        select SUPPORT_SPL
 +        select IMX8M_LPDDR4
@@ -50,13 +51,13 @@ index 5d86ee22d12..3245e6de808 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
-+		select CMD_REMOTEPROC
-+		select REMOTEPROC_IMX
-+		select REGMAP
-+		select SYSCON
-+		imply OF_UPSTREAM
-+		imply BOOTSTD_FULL
-+		imply BOOTSTD_BOOTCOMMAND
++               select CMD_REMOTEPROC
++               select REMOTEPROC_IMX
++               select REGMAP
++               select SYSCON
++               imply OF_UPSTREAM
++               imply BOOTSTD_FULL
++               imply BOOTSTD_BOOTCOMMAND
 +
 +config TARGET_AESYS_2414
 +        bool "Aesys 2414-based boards"
@@ -67,13 +68,13 @@ index 5d86ee22d12..3245e6de808 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
-+		select CMD_REMOTEPROC
-+		select REMOTEPROC_IMX
-+		select REGMAP
-+		select SYSCON
-+		imply OF_UPSTREAM
-+		imply BOOTSTD_FULL
-+		imply BOOTSTD_BOOTCOMMAND
++               select CMD_REMOTEPROC
++               select REMOTEPROC_IMX
++               select REGMAP
++               select SYSCON
++               imply OF_UPSTREAM
++               imply BOOTSTD_FULL
++               imply BOOTSTD_BOOTCOMMAND
 +
 +config TARGET_AESYS_2414_2G
 +        bool "Aesys 2414-based boards (2GB RAM)"
@@ -84,16 +85,16 @@ index 5d86ee22d12..3245e6de808 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
-+		select CMD_REMOTEPROC
-+		select REMOTEPROC_IMX
-+		select REGMAP
-+		select SYSCON
-+		imply OF_UPSTREAM
-+		imply BOOTSTD_FULL
-+		imply BOOTSTD_BOOTCOMMAND
++               select CMD_REMOTEPROC
++               select REMOTEPROC_IMX
++               select REGMAP
++               select SYSCON
++               imply OF_UPSTREAM
++               imply BOOTSTD_FULL
++               imply BOOTSTD_BOOTCOMMAND
 +
-+config TARGET_AESYS_2602A
-+        bool "Aesys 2602A"
++config TARGET_AESYS_2602
++        bool "Aesys 2602"
 +        select IMX8MP
 +        select SUPPORT_SPL
 +        select IMX8M_LPDDR4
@@ -101,13 +102,23 @@ index 5d86ee22d12..3245e6de808 100644
 +        select FSL_BLOB
 +        select ARCH_MISC_INIT
 +        select SPL_CRYPTO if SPL
-+		select CMD_REMOTEPROC
-+		select REMOTEPROC_IMX
-+		select REGMAP
-+		select SYSCON
-+		imply OF_UPSTREAM
-+		imply BOOTSTD_FULL
-+		imply BOOTSTD_BOOTCOMMAND
++
++config TARGET_AESYS_2522
++        bool "Aesys 2522"
++        select IMX8MP
++        select SUPPORT_SPL
++        select IMX8M_LPDDR4
++        select FSL_CAAM
++        select FSL_BLOB
++        select ARCH_MISC_INIT
++        select SPL_CRYPTO if SPL
++               select CMD_REMOTEPROC
++               select REMOTEPROC_IMX
++               select REGMAP
++               select SYSCON
++               imply OF_UPSTREAM
++               imply BOOTSTD_FULL
++               imply BOOTSTD_BOOTCOMMAND
 +
  config TARGET_IMX8MP_FRDM
  	bool "imx8mp LPDDR4 frdm board"

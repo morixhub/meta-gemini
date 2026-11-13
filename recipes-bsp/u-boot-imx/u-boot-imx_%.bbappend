@@ -10,51 +10,60 @@ SRC_URI += " file://0006-Dump-CPU-TripPoints.patch"
 SRC_URI += " file://0007-Introduced-PXEQuick-Option-And-ARP-Timeout-Configurability.patch"
 SRC_URI += " file://0008-PXE-Resolve-EnvVariables-In-Kernel-Config-Name.patch"
 SRC_URI += " file://0009-Minimized-UBoot-Warning-Messages.patch"
+SRC_URI += " file://0010-Custom-Board-Fixup.patch"
+#//!! SRC_URI += " file://0011-Disable-LTO-By-Default.patch"
+SRC_URI += " file://0012-Debug-Drivers-Core.patch"
 
 # Copy additional stuff to working copy after patching
 COPYSOURCE := "${THISDIR}/${PN}"
 do_after_patch() {
 
 	# COMMON
-	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_TEST.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_TEST.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_bootloader_pubkeys_PKI_AESYS_iMX8_RSA2048.dtsi" "${S}/arch/arm/dts/"
 	cp "${COPYSOURCE}/include/configs/gemini_env.h" "${S}/include/configs/"
 	cp -rf "${COPYSOURCE}/board/aesys" "${S}/board/"
 	
-	# Create symlink to freescale common assets
-	ln -f -s "${S}/board/freescale/common" "${S}/board/aesys/common"
+	# Create symlink to NXP common assets
+	ln -f -s "${S}/board/nxp/common" "${S}/board/aesys/common"
 
 	# AESYS 2319A
-	cp "${COPYSOURCE}/aesys_2319a.dts" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2319a-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2319a.dts" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2319a-u-boot.dtsi" "${S}/arch/arm/dts/"
 	cp "${COPYSOURCE}/configs/aesys_2319a_defconfig" "${S}/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2319a.h" "${S}/include/configs/"
 
-	# AESYS 2409A
-	cp "${COPYSOURCE}/aesys_2409a.dts" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2409a-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/configs/aesys_2409a_defconfig" "${S}/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2409a.h" "${S}/include/configs/"
+	# AESYS 2409
+	cp "${COPYSOURCE}/aesys_2409.dts" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2409-u-boot.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2409_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2409.h" "${S}/include/configs/"
 
 	# AESYS 2414-BASED BOARDS
 	cp "${COPYSOURCE}/configs/aesys_2414_defconfig" "${S}/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2414.h" "${S}/include/configs/"
-	cp "${COPYSOURCE}/aesys_2414.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2414-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2414.dts" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2414.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2414-u-boot.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2414.dts" "${S}/arch/arm/dts/"
 
     # AESYS 2414-2G-BASED BOARDS
 	cp "${COPYSOURCE}/configs/aesys_2414_2g_defconfig" "${S}/configs/"
 	cp "${COPYSOURCE}/include/configs/aesys_2414_2g.h" "${S}/include/configs/"
-	cp "${COPYSOURCE}/aesys_2414_2g.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2414_2g-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2414_2g.dts" "${S}/dts/upstream/src/arm64/freescale/"
+	cp "${COPYSOURCE}/aesys_2414_2g.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2414_2g-u-boot.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2414_2g.dts" "${S}/arch/arm/dts/"
 
-	# AESYS 2602A
-	cp "${COPYSOURCE}/aesys_2602a.dts" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/aesys_2602a-u-boot.dtsi" "${S}/dts/upstream/src/arm64/freescale/"
-	cp "${COPYSOURCE}/configs/aesys_2602a_defconfig" "${S}/configs/"
-	cp "${COPYSOURCE}/include/configs/aesys_2602a.h" "${S}/include/configs/"
+	# AESYS 2602
+	cp "${COPYSOURCE}/aesys_2602.dts" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2602-u-boot.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2602_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2602.h" "${S}/include/configs/"
+
+	# AESYS 2522
+	cp "${COPYSOURCE}/aesys_2522.dts" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/aesys_2522-u-boot.dtsi" "${S}/arch/arm/dts/"
+	cp "${COPYSOURCE}/configs/aesys_2522_defconfig" "${S}/configs/"
+	cp "${COPYSOURCE}/include/configs/aesys_2522.h" "${S}/include/configs/"
 }
 
 addtask after_patch after do_patch before do_configure

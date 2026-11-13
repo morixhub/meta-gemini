@@ -8,38 +8,35 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 RDEPENDS:${PN} += "bash"
 
+S = "${UNPACKDIR}"
+
 SRC_URI = " \
-    file://aesys-2409a-hw-wdog-toggle.sh \
-    file://aesys-2409a-hw-wdog-status.sh \
-    file://aesys-2409a-hw-wdog-refresh.sh \
+    file://aesys-2409-hw-wdog-toggle.sh \
+    file://aesys-2409-hw-wdog-status.sh \
+    file://aesys-2409-hw-wdog-refresh.sh \
     file://aesys-2414-hw-wdog-toggle.sh \
     file://aesys-2414-hw-wdog-status.sh \
     file://aesys-2414-hw-wdog-refresh.sh \
-    file://aesys-2602a-hw-wdog-toggle.sh \
-    file://aesys-2602a-hw-wdog-status.sh \
-    file://aesys-2602a-hw-wdog-refresh.sh \
+    file://aesys-2602-hw-wdog-toggle.sh \
+    file://aesys-2602-hw-wdog-status.sh \
+    file://aesys-2602-hw-wdog-refresh.sh \
+    file://aesys-2522-hw-wdog-toggle.sh \
+    file://aesys-2522-hw-wdog-status.sh \
+    file://aesys-2522-hw-wdog-refresh.sh \
 "
 
-S = "${UNPACKDIR}"
-
-FILES:${PN}:aesys-2409a += " \
+FILES:${PN} += " \
     ${bindir}/hw-wdog-toggle.sh \
     ${bindir}/hw-wdog-status.sh \
     ${bindir}/hw-wdog-refresh.sh \
 "
 
-do_install:aesys-2409a () {
+do_install:aesys-2409 () {
     install -d ${D}${bindir}
-    install -m 0544 ${S}/aesys-2409a-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
-    install -m 0544 ${S}/aesys-2409a-hw-wdog-status.sh ${D}${bindir}/hw-wdog-status.sh
-    install -m 0544 ${S}/aesys-2409a-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
+    install -m 0544 ${S}/aesys-2409-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
+    install -m 0544 ${S}/aesys-2409-hw-wdog-status.sh ${D}${bindir}/hw-wdog-status.sh
+    install -m 0544 ${S}/aesys-2409-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
-
-FILES:${PN}:aesys-2414 += " \
-    ${bindir}/hw-wdog-toggle.sh \
-    ${bindir}/hw-wdog-status.sh \
-    ${bindir}/hw-wdog-refresh.sh \
-"
 
 do_install:aesys-2414 () {
     install -d ${D}${bindir}
@@ -48,12 +45,6 @@ do_install:aesys-2414 () {
     install -m 0544 ${S}/aesys-2414-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
 
-FILES:${PN}:aesys-2414-2g += " \
-    ${bindir}/hw-wdog-toggle.sh \
-    ${bindir}/hw-wdog-status.sh \
-    ${bindir}/hw-wdog-refresh.sh \
-"
-
 do_install:aesys-2414-2g () {
     install -d ${D}${bindir}
     install -m 0544 ${S}/aesys-2414-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
@@ -61,17 +52,18 @@ do_install:aesys-2414-2g () {
     install -m 0544 ${S}/aesys-2414-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
 
-FILES:${PN}:aesys-2602a += " \
-    ${bindir}/hw-wdog-toggle.sh \
-    ${bindir}/hw-wdog-status.sh \
-    ${bindir}/hw-wdog-refresh.sh \
-"
-
-do_install:aesys-2602a () {
+do_install:aesys-2602 () {
     install -d ${D}${bindir}
-    install -m 0544 ${S}/aesys-2602a-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
-    install -m 0544 ${S}/aesys-2602a-hw-wdog-status.sh ${D}${bindir}/hw-wdog-status.sh
-    install -m 0544 ${S}/aesys-2602a-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
+    install -m 0544 ${S}/aesys-2602-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
+    install -m 0544 ${S}/aesys-2602-hw-wdog-status.sh ${D}${bindir}/hw-wdog-status.sh
+    install -m 0544 ${S}/aesys-2602-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
+}
+
+do_install:aesys-2522 () {
+    install -d ${D}${bindir}
+    install -m 0544 ${S}/aesys-2522-hw-wdog-toggle.sh ${D}${bindir}/hw-wdog-toggle.sh
+    install -m 0544 ${S}/aesys-2522-hw-wdog-status.sh ${D}${bindir}/hw-wdog-status.sh
+    install -m 0544 ${S}/aesys-2522-hw-wdog-refresh.sh ${D}${bindir}/hw-wdog-refresh.sh
 }
 
 

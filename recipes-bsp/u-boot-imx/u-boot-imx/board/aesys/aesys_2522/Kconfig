@@ -1,0 +1,15 @@
+if TARGET_AESYS_2522
+
+config SYS_BOARD
+	default "aesys_2522"
+
+config SYS_VENDOR
+	default "aesys"
+
+config SYS_CONFIG_NAME
+	default "aesys_2522"
+
+config IMX_CONFIG
+	default "board/aesys/aesys_2522/aesys_2522-lpddr4.cfg"
+
+endif
